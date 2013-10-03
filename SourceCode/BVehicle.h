@@ -6,11 +6,18 @@
 
 #pragma once
 
-#include "BaseClasses.h"
-#include "..\PakoonPhysicsEngine\PakoonPhysicsEngine.h"
-#include "gl\gl.h"
-#include "gl\glu.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
+#include "BaseClasses.h"
+#include "../PakoonPhysicsEngine/PakoonPhysicsEngine.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+
+#include <string>
+
+using namespace std;
 
 //*************************************************************************************************
 class BTrailPoint {
@@ -127,8 +134,8 @@ public:
 
   // General properties
 
-  CString       m_sName;
-  CString       m_sImageFilename;
+  string       m_sName;
+  string       m_sImageFilename;
 
   bool          m_bVerified;
 
@@ -209,11 +216,11 @@ public:
   BVehicle();
   virtual ~BVehicle();
 
-  bool   LoadWheelFromFile(CString sFilename, 
+  bool   LoadWheelFromFile(string sFilename, 
                            int nWheel, 
                            BWheel *pWheel);
 
-  void LoadVehicleFromFile(CString sFilename, bool bLocalCar = true);
+  void LoadVehicleFromFile(string sFilename, bool bLocalCar = true);
   void PrepareVehicle();
   void LoadTextures();
   void InitAll();
@@ -229,7 +236,7 @@ public:
                                    double &rdThermoLoss,    // [OUT] Thermodynamic loss at the collision point  
                                    bool   &rbCarCollision); // [OUT] Was this a car-to-car collision?
 
-  void    Move(BVector& vRelMove);
+  void    Move(BVector vRelMove);
   BVector GetHomeLocation() {return m_vHomeLocation;}
   void    Paint(int m_nPhysicsSteps);
   void    DrawPropeller();

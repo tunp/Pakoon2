@@ -4,9 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#pragma once
-
-#include "stdafx.h"
 #include "BSceneEditor.h"
 #include "BGame.h"
 #include "BSimulation.h"
@@ -64,17 +61,17 @@ void BSceneEditor::Deactivate() {
 
 
 //*****************************************************************************
-void BSceneEditor::Draw(CRect &rectWnd) {
+void BSceneEditor::Draw(SDL_Rect &rectWnd) {
 
   // Always draw the "Scene Editor Mode" indicator
   OpenGLHelpers::SwitchToTexture(0);
-  BTextures::Use(BTextures::Texture::PANEL);
+  BTextures::Use(BTextures::PANEL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
   double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
   OpenGLHelpers::SetColorFull(dAlpha / 2, dAlpha / 2, 1, 1);
   glPushMatrix();
-  glTranslated(30, rectWnd.Height() - 70.0, 0);
+  glTranslated(30, rectWnd.h - 70.0, 0);
 
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(255.0 / 512.0, (512.0 - 32.0) / 512.0);   glVertex3f(0, 0, 0);
@@ -89,47 +86,47 @@ void BSceneEditor::Draw(CRect &rectWnd) {
   switch(m_phase) {
     case SELECTING_SCENE_OBJECT:
       OpenGLHelpers::DrawVeil(0, 0, 0.25, 0.5, rectWnd);
-      BGame::GetSimulation()->GetScene()->m_sellistSceneObjects.DrawAt(rectWnd.Width() / 2.0,
-                                                                       rectWnd.Height() / 2.0,
-                                                                       BTextRenderer::TTextAlign::ALIGN_CENTER);
+      BGame::GetSimulation()->GetScene()->m_sellistSceneObjects.DrawAt(rectWnd.w / 2.0,
+                                                                       rectWnd.h / 2.0,
+                                                                       BTextRenderer::ALIGN_CENTER);
       break;
     case SELECTING_SCENE_OBJECT_TO_DELETE:
       OpenGLHelpers::DrawVeil(0.25, 0, 0, 0.5, rectWnd);
-      BGame::GetSimulation()->GetScene()->m_sellistSceneObjects.DrawAt(rectWnd.Width() / 2.0,
-                                                                       rectWnd.Height() / 2.0,
-                                                                       BTextRenderer::TTextAlign::ALIGN_CENTER);
+      BGame::GetSimulation()->GetScene()->m_sellistSceneObjects.DrawAt(rectWnd.w / 2.0,
+                                                                       rectWnd.h / 2.0,
+                                                                       BTextRenderer::ALIGN_CENTER);
       break;
     case ASKING_OBJECT_NAME:
     case ASKING_SCENE_DISPLAY_NAME:
     case ASKING_SCENE_FILENAME:
       OpenGLHelpers::DrawVeil(0, 0, 0.25, 0.5, rectWnd);
-      m_edit.DrawAt(rectWnd.Width() / 2.0,
-                    rectWnd.Height() / 2.0,
+      m_edit.DrawAt(rectWnd.w / 2.0,
+                    rectWnd.h / 2.0,
                     true);
       break;
     case SELECTING_OBJECT_TYPE:
       OpenGLHelpers::DrawVeil(0, 0, 0.25, 0.5, rectWnd);
-      m_sellistObjectType.DrawAt(rectWnd.Width() / 2.0,
-                                 rectWnd.Height() / 2.0,
-                                 BTextRenderer::TTextAlign::ALIGN_CENTER);
+      m_sellistObjectType.DrawAt(rectWnd.w / 2.0,
+                                 rectWnd.h / 2.0,
+                                 BTextRenderer::ALIGN_CENTER);
       break;
     case SELECTING_OBJECT_SHADOW:
       OpenGLHelpers::DrawVeil(0, 0, 0.25, 0.5, rectWnd);
-      m_sellistObjectShadow.DrawAt(rectWnd.Width() / 2.0,
-                                   rectWnd.Height() / 2.0,
-                                   BTextRenderer::TTextAlign::ALIGN_CENTER);
+      m_sellistObjectShadow.DrawAt(rectWnd.w / 2.0,
+                                   rectWnd.h / 2.0,
+                                   BTextRenderer::ALIGN_CENTER);
       break;
     case SELECTING_OBJECT_FILE:
       OpenGLHelpers::DrawVeil(0, 0, 0.25, 0.5, rectWnd);
-      m_sellistAllObjects.DrawAt(rectWnd.Width() / 2.0,
-                                 rectWnd.Height() / 2.0,
-                                 BTextRenderer::TTextAlign::ALIGN_CENTER);
+      m_sellistAllObjects.DrawAt(rectWnd.w / 2.0,
+                                 rectWnd.h / 2.0,
+                                 BTextRenderer::ALIGN_CENTER);
       break;
     case OVERWRITE_SCENE_FILE_QUESTION:
       OpenGLHelpers::DrawVeil(0, 0, 0.25, 0.5, rectWnd);
-      m_sellistOverwrite.DrawAt(rectWnd.Width() / 2.0,
-                                rectWnd.Height() / 2.0,
-                                BTextRenderer::TTextAlign::ALIGN_CENTER);
+      m_sellistOverwrite.DrawAt(rectWnd.w / 2.0,
+                                rectWnd.h / 2.0,
+                                BTextRenderer::ALIGN_CENTER);
       break;
     case BASIC:
       break;
@@ -140,7 +137,7 @@ void BSceneEditor::Draw(CRect &rectWnd) {
   // Draw active object name
 
   glPushMatrix();
-  glTranslated(30, rectWnd.Height() - 70.0, 0);
+  glTranslated(30, rectWnd.h - 70.0, 0);
 
   double dColor = 1.0;
   if((m_phase == BASIC) || (m_phase == MOVING_OBJECT)) {
@@ -149,45 +146,45 @@ void BSceneEditor::Draw(CRect &rectWnd) {
 
   BUI::TextRenderer()->StartRenderingText();
 
-  if(!m_sActiveObject.IsEmpty()) {
-    CString sText;
+  if(!m_sActiveObject.empty()) {
+    string sText;
     sText = "ACTIVE OBJECT:" + m_sActiveObject;
-    BUI::TextRenderer()->DrawTextAt(0, -40, sText, BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+    BUI::TextRenderer()->DrawTextAt(0, -40, sText, BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
   }
 
   switch(m_phase) {
     case SELECTING_SCENE_OBJECT:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Select scene object", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Select scene object", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case SELECTING_SCENE_OBJECT_TO_DELETE:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object to be deleted", BTextRenderer::TTextAlign::ALIGN_LEFT, 1, 0, 0);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object to be deleted", BTextRenderer::ALIGN_LEFT, 1, 0, 0);
       break;
     case ASKING_OBJECT_NAME:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Enter object name", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Enter object name", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case ASKING_SCENE_DISPLAY_NAME:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Enter scene display name", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Enter scene display name", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case ASKING_SCENE_FILENAME:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Enter scene filename", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Enter scene filename", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case SELECTING_OBJECT_TYPE:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object type", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object type", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case SELECTING_OBJECT_SHADOW:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object shadow", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object shadow", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case SELECTING_OBJECT_FILE:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object file", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Select object file", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case BASIC:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Camera mode", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Camera mode", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case MOVING_OBJECT:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Place object", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Place object", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
     case OVERWRITE_SCENE_FILE_QUESTION:
-      BUI::TextRenderer()->DrawTextAt(0, -15, "Confirm file overwrite", BTextRenderer::TTextAlign::ALIGN_LEFT, dColor, dColor, dColor);
+      BUI::TextRenderer()->DrawTextAt(0, -15, "Confirm file overwrite", BTextRenderer::ALIGN_LEFT, dColor, dColor, dColor);
       break;
   }
 
@@ -225,14 +222,14 @@ void BSceneEditor::AdvancePhase() {
         BUIEdit::TStatus statusEdit;
         pScene->m_sFilename = m_edit.GetValue(statusEdit);
 
-        if((pScene->m_sFilename.GetLength() < 1) || 
+        if((pScene->m_sFilename.length() < 1) || 
           (pScene->m_sFilename[0] != '.')) {
           pScene->m_sFilename = "./" + pScene->m_sFilename;
         }
 
         // Check for file overwrite
         FILE *fp;
-        fp = fopen(pScene->m_sFilename, "r");
+        fp = fopen(pScene->m_sFilename.c_str(), "r");
         if(fp) {
           m_phase = OVERWRITE_SCENE_FILE_QUESTION;
           BUI::StartUsingSelectionList(&(BGame::GetSceneEditor()->m_sellistOverwrite), &CPakoon1View::OnKeyDownSceneEditor);
@@ -245,9 +242,9 @@ void BSceneEditor::AdvancePhase() {
     case OVERWRITE_SCENE_FILE_QUESTION:
       m_phase = BASIC;
       {
-        CString sTmp = "";
+        string sTmp = "";
         m_sellistOverwrite.GetSelectedItem(sTmp);
-        if(sTmp.CompareNoCase("overwrite existing scene file") == 0) {
+        if(sTmp.compare("overwrite existing scene file") == 0) {
           // Save scene
           pScene->Save();
         }
@@ -281,7 +278,7 @@ void BSceneEditor::AdvancePhase() {
         pScene->m_pObjects[pScene->m_nObjects].m_sName = m_sActiveObject;
 
         // Type
-        pScene->m_pObjects[pScene->m_nObjects].m_type = BObject::TType::USER_DEF;
+        pScene->m_pObjects[pScene->m_nObjects].m_type = BObject::USER_DEF;
 
         // Object file
         m_sellistAllObjects.GetSelectedItem(pScene->m_pObjects[pScene->m_nObjects].m_sObjectFilename);
@@ -297,7 +294,7 @@ void BSceneEditor::AdvancePhase() {
         pScene->m_pObjects[pScene->m_nObjects].m_dZRotation = 0.0;
 
         // Shadow
-        pScene->m_pObjects[pScene->m_nObjects].m_bHasShadow = (m_sObjectShadow.CompareNoCase("no shadow") != 0);
+        pScene->m_pObjects[pScene->m_nObjects].m_bHasShadow = (m_sObjectShadow.compare("no shadow") != 0);
 
         // Load shape from file
         pScene->m_pObjects[pScene->m_nObjects].LoadObjectFromFile("", "", true);
@@ -333,12 +330,12 @@ void BSceneEditor::AdvancePhase() {
     case SELECTING_SCENE_OBJECT_TO_DELETE:
       // Delete active object
       {
-        CString sTmp = "";
+        string sTmp = "";
         pScene->m_sellistSceneObjects.GetSelectedItem(sTmp);
 
         // Delete object
         for(int i = 0; i < pScene->m_nObjects; ++i) {
-          if(pScene->m_pObjects[i].m_sName.CompareNoCase(sTmp) == 0) {
+          if(pScene->m_pObjects[i].m_sName.compare(sTmp) == 0) {
             pScene->m_pObjects[i] = pScene->m_pObjects[pScene->m_nObjects - 1];
             pScene->m_pObjects[pScene->m_nObjects - 1].m_pCollDetPart = 0;
             pScene->m_pObjects[pScene->m_nObjects - 1].m_pPart = 0;
@@ -360,13 +357,14 @@ void BSceneEditor::AdvancePhase() {
 
 
 //*****************************************************************************
-void BSceneEditor::RecurseObjectFiles(CString sPath, CString sSubDir) {
+void BSceneEditor::RecurseObjectFiles(string sPath, string sSubDir) {
   // Iterate all directories and search for *.object files
-  CFileFind finder;
+  //FIXME
+  /*CFileFind finder;
 
   // start working for files
   // build a string with wildcards
-  CString strWildcard(sPath);
+  string strWildcard(sPath);
   strWildcard += _T("\\*.object");
 
   BOOL bWorking = finder.FindFile(strWildcard);
@@ -388,7 +386,7 @@ void BSceneEditor::RecurseObjectFiles(CString sPath, CString sSubDir) {
 
   // Recurse subdirectories
 
-  CString strWildcard2(sPath);
+  string strWildcard2(sPath);
   strWildcard2 += _T("\\*.*");
 
   bWorking = finder.FindFile(strWildcard2);
@@ -403,12 +401,12 @@ void BSceneEditor::RecurseObjectFiles(CString sPath, CString sSubDir) {
 
     // if it's a directory, recursively search it
     if(finder.IsDirectory()) {
-       CString sDirPath = finder.GetFilePath();
+       string sDirPath = finder.GetFilePath();
        RecurseObjectFiles(sDirPath, sSubDir + finder.GetFileTitle() + "/");
     }
   }
 
-  finder.Close();
+  finder.Close();*/
 }
 
 
@@ -431,7 +429,7 @@ BObject *BSceneEditor::GetActiveObject() {
   // Look for active object from scene
   BScene *pScene = BGame::GetSimulation()->GetScene();
   for(int i = 0; i < pScene->m_nObjects; ++i) {
-    if(pScene->m_pObjects[i].m_sName.CompareNoCase(m_sActiveObject) == 0) {
+    if(pScene->m_pObjects[i].m_sName.compare(m_sActiveObject) == 0) {
       return &(pScene->m_pObjects[i]);
     }
   }
@@ -446,11 +444,11 @@ void BSceneEditor::HighlightActiveObject() {
   // Also, if the object is BASE or CLIENT, draw it's active radius.
   double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
 
-  if(!m_sActiveObject.IsEmpty()) {
+  if(!m_sActiveObject.empty()) {
     // Find the active object from scene
     BScene *pScene = BGame::GetSimulation()->GetScene();
     for(int i = 0; i < pScene->m_nObjects; ++i) {
-      if(pScene->m_pObjects[i].m_sName.CompareNoCase(m_sActiveObject) == 0) {
+      if(pScene->m_pObjects[i].m_sName.compare(m_sActiveObject) == 0) {
         // Object found, draw sphere
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE);

@@ -12,6 +12,9 @@
 #include "BObject.h" 
 #include "stdio.h"
 
+#include <string>
+
+using namespace std;
 
 const int    cnBlockTiles    = 64;
 const double cdBlockTileSize = 5.0; // was 6.0
@@ -153,7 +156,7 @@ public:
   BVector               m_vCameraLookDir; // Current looking direction for the camera     
   double                m_dBlockSize;     // Size of individual blocks in world units
 
-  CString               m_sSceneName;
+  string               m_sSceneName;
   static GLfloat        m_fGroundTextureScaler1;
   static GLfloat        m_fGroundTextureScaler2;
 
@@ -170,7 +173,7 @@ public:
   // Selects the given resolution for rendering
   void PreProcessVisualization();
   // Creates texture objetcs.
-  void LoadTerrainCache(CString sFilenamePrefix);
+  void LoadTerrainCache(string sFilenamePrefix);
   // Creates initial terrain cache
   static void    GetColorForHeight(double dHeight, double &rdR, double &rdG, double &rdB); 
   // Returns the terrain color for the given height
@@ -195,7 +198,7 @@ public:
 
   void           RenderAlphaCircle(BVector vCenter, double dTileSize, double dRadius);
 
-  void           StartUsingScene(CString sSceneName, BVector vOrigin, double dGroundTextureScaler1, double dGroundTextureScaler2);
+  void           StartUsingScene(string sSceneName, BVector vOrigin, double dGroundTextureScaler1, double dGroundTextureScaler2);
   void           CreateTerrainDisplayLists();
   void           StopUsingScene();
 };

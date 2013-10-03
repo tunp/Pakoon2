@@ -6,10 +6,11 @@
 
 #include "BaseClasses.h"
 
+#include <SDL2/SDL.h>
 
 class BNavSatWnd {
   bool             m_bTracking;
-  HANDLE           m_hThread;
+  SDL_Thread		*m_hThread;
 public:
   BNavSatWnd();
   ~BNavSatWnd();

@@ -8,6 +8,10 @@
 
 #include "BaseClasses.h"
 
+#include <string>
+
+using namespace std;
+
 //*****************************************************************************
 class BTexLetter {
 public:
@@ -37,7 +41,7 @@ public:
   void   StartRenderingText();
   void   DrawTextAt(double nX, 
                     double nY, 
-                    CString sText, 
+                    string sText, 
                     TTextAlign textalign = ALIGN_LEFT,
                     double dRed = 1, 
                     double dGreen = 1, 
@@ -45,7 +49,7 @@ public:
                     double dAlpha = 1);
   void DrawSmallTextAt(double dX, 
                        double dY, 
-                       CString sText, 
+                       string sText, 
                        int     nChars,
                        TTextAlign textalign = ALIGN_LEFT,
                        double dRed = 1, 
@@ -56,7 +60,7 @@ public:
   void   StopRenderingText();
   double GetCharHeight() {return m_dCharHeight;}
   double GetCharWidth()  {return m_dCharWidth;}
-  double GetStringWidth(CString sTxt);
+  double GetStringWidth(string sTxt);
 };
 
 

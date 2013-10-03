@@ -9,6 +9,10 @@
 #include "BaseClasses.h"
 #include "BTextRenderer.h"
 
+#include <string>
+
+using namespace std;
+
 class CPakoon1View;
 class BMenu;
 class BMenuItem;
@@ -17,48 +21,48 @@ class BMenuItem;
 //*************************************************************************************************
 class BUIEdit {
   int     m_nMaxLength;
-  CString m_sPrompt;
+  string m_sPrompt;
 
 public:
 
-  CString m_sValue;
+  string m_sValue;
   enum TStatus {EDITING, READY, CANCELED};
   TStatus status;
 
 public:
   BUIEdit();
-  void    Setup(CString sPrompt, CString sValue, int nMaxLength);
+  void    Setup(string sPrompt, string sValue, int nMaxLength);
   void    ProcessChar(unsigned char c);
-  CString GetValue(TStatus &rStatus);
+  string GetValue(TStatus &rStatus);
   void    DrawAt(double dX, 
                  double dY, 
                  bool bCursor,
-                 BTextRenderer::TTextAlign textAlign = BTextRenderer::TTextAlign::ALIGN_CENTER,
+                 BTextRenderer::TTextAlign textAlign = BTextRenderer::ALIGN_CENTER,
                  BMenuItem *pMenuItem = 0);
 };
 
 
 //*************************************************************************************************
 class BUISelectionList {
-  CString  m_sPrompt;
+  string  m_sPrompt;
 public:
   int      m_nSelected;
-  CString *m_psItems;
+  string *m_psItems;
   int      m_nSavedSelection;
   int      m_nItems;
 public:
   double   m_dOffsetToLeft;
   BUISelectionList();
-  void SetItems(CString *psItems, int nItems, CString sPrompt = "");
+  void SetItems(string *psItems, int nItems, string sPrompt = "");
   int  GetNofItems() {return m_nItems;}
-  int  SelectItem(CString sItem);
+  int  SelectItem(string sItem);
   void AdvanceSelection(int nAmount);
   void SaveSelection();
   void Cancel();
-  int  GetSelectedItem(CString &sItemText);
+  int  GetSelectedItem(string &sItemText);
   void DrawAt(double dX, 
               double dY, 
-              BTextRenderer::TTextAlign textAlign = BTextRenderer::TTextAlign::ALIGN_LEFT,
+              BTextRenderer::TTextAlign textAlign = BTextRenderer::ALIGN_LEFT,
               double dRed = 1, 
               double dGreen = 1, 
               double dBlue = 1,
@@ -78,23 +82,23 @@ public:
   static BTextRenderer    *TextRenderer()  {return &m_textRenderer;}
   static BUISelectionList *GetActiveSelectionList() {return m_pSelList;}
   static void              StartUsingSelectionList(BUISelectionList *pList, 
-                                                   void (CPakoon1View::*pPrevKeyDownFunction)(UINT, UINT, UINT));
-  static void (CPakoon1View::*StopUsingSelectionList())(UINT, UINT, UINT) {m_pSelList = 0; return m_pPrevKeyDownFunction;}
+                                                   void (CPakoon1View::*pPrevKeyDownFunction)(unsigned, unsigned, unsigned));
+  static void (CPakoon1View::*StopUsingSelectionList())(unsigned, unsigned, unsigned) {m_pSelList = 0; return m_pPrevKeyDownFunction;}
   static void              StartUsingSlider(int *pnSliderValue, 
-                                            void (CPakoon1View::*pPrevKeyDownFunction)(UINT, UINT, UINT));
-  static void (CPakoon1View::*StopUsingSlider())(UINT, UINT, UINT) {m_pnSliderValue = 0; return m_pPrevKeyDownFunction;}
+                                            void (CPakoon1View::*pPrevKeyDownFunction)(unsigned, unsigned, unsigned));
+  static void (CPakoon1View::*StopUsingSlider())(unsigned, unsigned, unsigned) {m_pnSliderValue = 0; return m_pPrevKeyDownFunction;}
 
-  static void              StartUsingEditbox(CString *psValue, 
-                                             void (CPakoon1View::*pPrevKeyDownFunction)(UINT, UINT, UINT));
-  static void (CPakoon1View::*StopUsingEditbox())(UINT, UINT, UINT) {return m_pPrevKeyDownFunction;}
+  static void              StartUsingEditbox(string *psValue, 
+                                             void (CPakoon1View::*pPrevKeyDownFunction)(unsigned, unsigned, unsigned));
+  static void (CPakoon1View::*StopUsingEditbox())(unsigned, unsigned, unsigned) {return m_pPrevKeyDownFunction;}
 
-  static CString              m_sPrevSValue;
-  static CString             *m_psValue;
+  static string              m_sPrevSValue;
+  static string             *m_psValue;
   static int                  m_nPrevSliderValue;
   static int                 *m_pnSliderValue;
   static BTextRenderer        m_textRenderer;
   static BUISelectionList    *m_pSelList;
-  static void (CPakoon1View::*m_pPrevKeyDownFunction)(UINT, UINT, UINT);
+  static void (CPakoon1View::*m_pPrevKeyDownFunction)(unsigned, unsigned, unsigned);
 };
 
 

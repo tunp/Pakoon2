@@ -6,8 +6,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-
-#include "stdafx.h"
 #include "BTerrain.h"
 #include "HeightMap.h"
 #include "OpenGLHelpers.h"
@@ -745,7 +743,7 @@ BTerrain::BTerrain() {
   // m_vOffset.Set(381056.0, 281728.0, 0.0);
   m_vCameraLoc.Set(0, 0, 0);
   m_vCameraLookDir.Set(0, 1, 0);
-  m_sSceneName = _T("");
+  m_sSceneName = "";
 
   SetRenderResolution(RENDER_MEDIUM);
 }
@@ -954,13 +952,13 @@ int BTerrain::Render(int nSkyDetail, BVector vCamLoc, BVector vLookingTo, BTerra
 
   if(OpenGLHelpers::m_bMultiTexturing) {
     OpenGLHelpers::SwitchToTexture(0);
-    BTextures::Use(BTextures::Texture::GROUND_COLOR_MAP);
+    BTextures::Use(BTextures::GROUND_COLOR_MAP);
 
     OpenGLHelpers::SwitchToTexture(1);
-    BTextures::Use(BTextures::Texture::GROUND_BASE);
+    BTextures::Use(BTextures::GROUND_BASE);
   } else {
     OpenGLHelpers::SwitchToTexture(0);
-    BTextures::Use(BTextures::Texture::GROUND_BASE);
+    BTextures::Use(BTextures::GROUND_BASE);
   }
 
   int nTriangles = 0;
@@ -1133,7 +1131,7 @@ void BTerrain::CreateTerrainDisplayLists() {
 
 
 //*****************************************************************************
-void BTerrain::StartUsingScene(CString sSceneName, 
+void BTerrain::StartUsingScene(string sSceneName, 
                                BVector vOrigin, 
                                double dGroundTextureScaler1, 
                                double dGroundTextureScaler2) {
@@ -1150,8 +1148,8 @@ void BTerrain::StartUsingScene(CString sSceneName,
 //*****************************************************************************
 void BTerrain::StopUsingScene() {
   // Save and free scene's terrain cache
-  if(!m_sSceneName.IsEmpty()) {
-    m_sSceneName = _T("");
+  if(!m_sSceneName.empty()) {
+    m_sSceneName = "";
   }
 
   m_ringVisible.RemoveAll();
@@ -1164,13 +1162,13 @@ void BTerrain::RenderAlphaCircle(BVector vCenter, double dTileSize, double dRadi
 
   if(OpenGLHelpers::m_bMultiTexturing) {
     OpenGLHelpers::SwitchToTexture(0);
-    BTextures::Use(BTextures::Texture::GROUND_COLOR_MAP);
+    BTextures::Use(BTextures::GROUND_COLOR_MAP);
 
     OpenGLHelpers::SwitchToTexture(1);
-    BTextures::Use(BTextures::Texture::GROUND_BASE);
+    BTextures::Use(BTextures::GROUND_BASE);
   } else {
     OpenGLHelpers::SwitchToTexture(0);
-    BTextures::Use(BTextures::Texture::GROUND_BASE);
+    BTextures::Use(BTextures::GROUND_BASE);
   }
 
   glEnable(GL_CULL_FACE);
@@ -1258,7 +1256,7 @@ void BTerrain::RenderAlphaCircle(BVector vCenter, double dTileSize, double dRadi
 
 
 //*****************************************************************************
-void BTerrain::LoadTerrainCache(CString sFilenamePrefix) {
+void BTerrain::LoadTerrainCache(string sFilenamePrefix) {
   // Create precache(s)
 
   int nCreated = 1;
@@ -1275,7 +1273,7 @@ void BTerrain::LoadTerrainCache(CString sFilenamePrefix) {
     }
   }
 
-  CString sTmp;
+  string sTmp;
   time_t timeStart, timeNow;
   time(&timeStart);
   int nDone = 0;

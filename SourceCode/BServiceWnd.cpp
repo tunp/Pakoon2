@@ -1,13 +1,13 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BServiceWnd.h"
 #include "OpenGLHelpers.h"
 #include "OpenGLExtFunctions.h"
 #include "BTextures.h"
 #include "BGame.h"
 
+#include <SDL2/SDL.h>
 
 // Just use global variables for inter-thread communication. 
 //*****************************************************************************
@@ -16,9 +16,9 @@ BServiceWnd::BServiceWnd() {
   m_nCursor = 0;
   for(int i = 0; i < 41 * 17; ++i) {
     m_sText[i] = ' ';
-    m_cColors[i * 3 + 0] = unsigned char(255);
-    m_cColors[i * 3 + 1] = unsigned char(255);
-    m_cColors[i * 3 + 2] = unsigned char(255);
+    m_cColors[i * 3 + 0] = (unsigned char) 255;
+    m_cColors[i * 3 + 1] = (unsigned char) 255;
+    m_cColors[i * 3 + 2] = (unsigned char) 255;
     m_cBright[i] = 0;
   }
   Output("SERVICE COMMAND INTERPRETER V1.2");
@@ -32,7 +32,7 @@ BServiceWnd::~BServiceWnd() {
 //*****************************************************************************
 void BServiceWnd::AddChar(char c, double dR, double dG, double dB) {
 
-  if(c == VK_BACK) {
+  if(c == SDLK_BACKSPACE) {
     // Eat one character
     if((m_nCursor > 0) && (m_nCursor > m_nCommandStart)) {
       m_nCursor -= 1;
@@ -41,13 +41,14 @@ void BServiceWnd::AddChar(char c, double dR, double dG, double dB) {
     return;
   }
 
-  if(c == VK_RETURN) {
+  if(c == SDLK_RETURN) {
     // Issue command
-    CString sCommand;
+    string sCommand;
     if(m_nCommandStart < 0) {
       m_nCommandStart = 0;
     }
-    sCommand.Format("%.*s", m_nCursor - m_nCommandStart, m_sText + m_nCommandStart);
+	string valText = m_sText;
+    sCommand = valText.substr(m_nCommandStart, m_nCursor - m_nCommandStart);
     Newline();
     m_bPrompting = false;
     BGame::Command()->Run(sCommand);
@@ -57,14 +58,15 @@ void BServiceWnd::AddChar(char c, double dR, double dG, double dB) {
     return;
   }
 
-  AddString(c, dR, dG, dB);
+	char str[] = {c, '\0'};
+  AddString(str, dR, dG, dB);
 }
 
 
 //*****************************************************************************
-void BServiceWnd::AddString(CString sText, double dR, double dG, double dB) {
+void BServiceWnd::AddString(string sText, double dR, double dG, double dB) {
   // Make room for string
-  while((m_nCursor + sText.GetLength()) >= 41 * 17) {
+  while((m_nCursor + sText.length()) >= 41 * 17) {
     memmove(m_sText, m_sText + 41, 41 * 17 - 41);
     memset(m_sText + 41 * 17 - 41, ' ', 41);
     memmove(m_cColors, m_cColors + 41 * 3, (41 * 17 - 41) * 3);
@@ -73,14 +75,14 @@ void BServiceWnd::AddString(CString sText, double dR, double dG, double dB) {
     m_nCommandStart -= 41;
   }
   // Insert string
-  for(int i = 0; i < sText.GetLength(); ++i) {
-    m_sText[m_nCursor + i] = sText.GetAt(i);
-    m_cColors[(m_nCursor + i) * 3 + 0] = unsigned char(dR * 255.0);
-    m_cColors[(m_nCursor + i) * 3 + 1] = unsigned char(dG * 255.0);
-    m_cColors[(m_nCursor + i) * 3 + 2] = unsigned char(dB * 255.0);
+  for(int i = 0; i < sText.length(); ++i) {
+    m_sText[m_nCursor + i] = sText.at(i);
+    m_cColors[(m_nCursor + i) * 3 + 0] = (unsigned char) dR * 255.0;
+    m_cColors[(m_nCursor + i) * 3 + 1] = (unsigned char) dG * 255.0;
+    m_cColors[(m_nCursor + i) * 3 + 2] = (unsigned char) dB * 255.0;
     m_cBright[m_nCursor + i] = 20;
   }
-  m_nCursor += sText.GetLength();
+  m_nCursor += sText.length();
 }
 
 //*****************************************************************************
@@ -109,7 +111,7 @@ void BServiceWnd::Prompt() {
 }
 
 //*****************************************************************************
-void BServiceWnd::Output(CString sText, double dR, double dG, double dB) {
+void BServiceWnd::Output(string sText, double dR, double dG, double dB) {
   if(!m_bPrompting) {
     AddString(sText, dR, dG, dB);
   }

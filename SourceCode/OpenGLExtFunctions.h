@@ -6,11 +6,13 @@
 
 #pragma once
 
-#include "gl/glext.h"
+#include <GL/glext.h>
 
 // Multitexturing support functions
-extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
+#ifdef _WIN32
+extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB; 
 extern PFNGLACTIVETEXTUREARBPROC   glActiveTextureARB;
+#endif
 
 
 // PAKOON! Game, Source Code and Developer Package Copyright

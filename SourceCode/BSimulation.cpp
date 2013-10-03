@@ -4,8 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
-#include "initguid.h"
 #include "BSimulation.h"
 #include "BObject.h"
 #include "OpenGLHelpers.h"
@@ -13,7 +11,6 @@
 #include "BTextures.h"
 #include "SoundModule.h"
 #include "Settings.h"
-#include "DInput.h"
 #include "BGame.h"
 #include "BMessages.h"
 #include "HeightMap.h"
@@ -74,12 +71,13 @@ BSimulation::BSimulation() {
   m_nClouds = 3;
 
   // setup game resolution to be initially same as current
-  DEVMODE devmode;
+  //already set on CPakoon1View
+  /*DEVMODE devmode;
   EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode);
   BGame::m_nDispWidth  = devmode.dmPelsWidth;
   BGame::m_nDispHeight = devmode.dmPelsHeight;
   BGame::m_nDispBits   = devmode.dmBitsPerPel;
-  BGame::m_nDispHz     = devmode.dmDisplayFrequency;
+  BGame::m_nDispHz     = devmode.dmDisplayFrequency;*/
 
   // Setup camera and car location
   BVector vLocation(0, 0, 0);
@@ -110,11 +108,12 @@ void BSimulation::PreProcessVisualization() {
 }
 
 //*****************************************************************************
-void BSimulation::PrePaint(CDC *pDC) {  
+void BSimulation::PrePaint() {  
 
   g_vInternalOffset = GetTerrain()->m_vOffset;
 
-  if(ControllerModule::m_bInitialized && 
+	//FIXME
+  /*if(ControllerModule::m_bInitialized && 
      (BGame::m_nController == 1) && 
      (ControllerModule::m_nCurrent >= 0)) {
     DIJOYSTATE stateRaw;
@@ -145,7 +144,7 @@ void BSimulation::PrePaint(CDC *pDC) {
         SwitchCameraMode();
       }      
     }
-  } 
+  }*/
 
   m_nPhysicsSteps = m_nPhysicsStepsBetweenRender;
 
@@ -200,9 +199,9 @@ void BSimulation::PrePaint(CDC *pDC) {
       if(m_vehicle.m_vLocation.m_dY > 6000.0) {
         if(fabs(m_vehicle.m_vLocation.m_dX - GetScene()->m_vGoal.m_dX) < 25.0) {
           BGame::BroadcastInGoal();
-          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::FINISHED;
+          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::FINISHED;
         } else {
-          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::MISSED_GOAL;
+          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::MISSED_GOAL;
         }
         BGame::BroadcastStateChange();
 
@@ -213,7 +212,7 @@ void BSimulation::PrePaint(CDC *pDC) {
   }
 
   if(BGame::m_bRaceStarted && !BGame::m_bRaceFinished) {
-    if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+    if(BGame::m_gameMode == BGame::AIRTIME) {
       BGame::m_dRaceTime -= (double(nPhysicsSteps) + dSimTimeFraction);
     } else {
       BGame::m_dRaceTime += (double(nPhysicsSteps) + dSimTimeFraction);
@@ -494,17 +493,17 @@ void BSimulation::PaintSky(float fBrightness, bool bFog) {
 
 
 //*****************************************************************************
-int BSimulation::Paint(CDC *pDC, bool bCreateDLs, bool bWireframe, bool bNormals, CRect &rectWnd) {
+int BSimulation::Paint(bool bCreateDLs, bool bWireframe, bool bNormals, SDL_Rect &rectWnd) {
 
   // Render sky
-  if(BGame::m_nVisualize & BGame::TAnalyzerVis::SKY) {
+  if(BGame::m_nVisualize & BGame::SKY) {
     PaintSky(1.0f, false);
   }
 
   // Update terrain database
   int nOffTime = 0;
   glPushMatrix();
-  if(BGame::m_nVisualize & BGame::TAnalyzerVis::TERRAIN) {
+  if(BGame::m_nVisualize & BGame::TERRAIN) {
     clock_t clockStart = clock();
     m_terrain.MakeTerrainValid(m_vehicle.m_vLocation, 
                                m_camera.m_vLocation, 
@@ -536,7 +535,7 @@ int BSimulation::Paint(CDC *pDC, bool bCreateDLs, bool bWireframe, bool bNormals
   }
 
   // Render Objects
-  if(BGame::m_nVisualize & BGame::TAnalyzerVis::OBJECTS) {
+  if(BGame::m_nVisualize & BGame::OBJECTS) {
     PaintSceneObjects();
   }
 
@@ -544,7 +543,7 @@ int BSimulation::Paint(CDC *pDC, bool bCreateDLs, bool bWireframe, bool bNormals
   OpenGLHelpers::SetColorFull(1, 1, 1, 1);
 
   // Render shadows and trail marks (they all use same texture)
-  if(BGame::m_nVisualize & BGame::TAnalyzerVis::DUSTANDCLOUDS) {
+  if(BGame::m_nVisualize & BGame::DUSTANDCLOUDS) {
     if(!BGame::m_bSceneEditorMode) {
       OpenGLHelpers::SwitchToTexture(0);
       BTextures::Use(BTextures::SHADOW);
@@ -562,7 +561,7 @@ int BSimulation::Paint(CDC *pDC, bool bCreateDLs, bool bWireframe, bool bNormals
   glPopMatrix();
 
   // Render vehicle
-  if(BGame::m_nVisualize & BGame::TAnalyzerVis::VEHICLE) {
+  if(BGame::m_nVisualize & BGame::VEHICLE) {
     if((GetCamera()->m_locMode != BCamera::INCAR) && (!BGame::m_bSceneEditorMode)) {
       glEnable(GL_CULL_FACE);
       glCullFace(GL_BACK);
@@ -841,7 +840,7 @@ double BSimulation::PointInsideRemoteCar(BVector& rvPoint, BVector& rvNormal, do
     // Check against remote car box
     double dTimePassed = 0;
 
-    DWORD dwNow = BGame::GetMultiplayClock();
+    int dwNow = BGame::GetMultiplayClock();
     if(dwNow > BGame::m_remotePlayer[nCar].m_clockLocationSent) {
       dTimePassed = double(dwNow - BGame::m_remotePlayer[nCar].m_clockLocationSent);
     } else {
@@ -1018,8 +1017,7 @@ double BSimulation::PointUnderGround(BVector vPoint,
       return rdBaseDepth;
     }
   } else {
-    // Something's wrong. Correct block was not found. 
-    ASSERT(FALSE);
+    // Something's wrong. Correct block was not found.
     rdFriction = 0.5; 
     rdBaseDepth = vPoint.m_dZ;
     rvNormal.Set(0.0, 0.0, -1.0);
@@ -1082,8 +1080,7 @@ double BSimulation::PointUnderGroundAccurate(BVector vPoint,
     rdBaseDepth = rvNormal.ScalarProduct(BVector(0, 0, -rdBaseDepth));
     return rdBaseDepth;
   } else {
-    // Something's wrong. Correct block was not found. 
-    ASSERT(FALSE);
+    // Something's wrong. Correct block was not found.
     rdFriction = 0.5; 
     rdBaseDepth = vPoint.m_dZ;
     rvNormal.Set(0.0, 0.0, -1.0);
@@ -1134,7 +1131,6 @@ double BSimulation::PointUnderGroundShadow(BVector vPoint, BVector& rvNormal) {
     }
   } else {
     // Something's wrong. Correct block was not found. 
-    ASSERT(FALSE);
     rvNormal.Set(0.0, 0.0, -1.0);
     return vPoint.m_dZ;
   }
@@ -1206,7 +1202,7 @@ extern double g_dRate;
 
 
 //*****************************************************************************
-void BSimulation::SetUpCamera(CRect *pRect) {
+void BSimulation::SetUpCamera(SDL_Rect *pRect) {
   // Always point towards the camera, always try to stay behind car
   static int nMode = 0;
   const static double cdTransitionSpeedMax = 0.025;
@@ -1604,7 +1600,7 @@ void BSimulation::DrawShadowAndTrails() {
 
   glDisable(GL_CULL_FACE);
   // Shadow
-  if(m_camera.m_locMode != BCamera::TCameraLoc::INCAR) {
+  if(m_camera.m_locMode != BCamera::INCAR) {
     OpenGLHelpers::SetColorFull(1, 1, 1, 1);
 
     vShadow[0] = m_vehicle.m_vLocation + m_vehicle.m_orientation.m_vRight * -(m_vehicle.m_dVisualWidth / 2.0) + m_vehicle.m_orientation.m_vForward *  (m_vehicle.m_dVisualLength / 2.0);
@@ -1643,7 +1639,7 @@ void BSimulation::DrawShadowAndTrails() {
 
       double dTimePassed = 0;
 
-      DWORD dwNow = BGame::GetMultiplayClock();
+      int dwNow = BGame::GetMultiplayClock();
       if(dwNow > pRemCar->m_clockLocationSent) {
         dTimePassed = double(dwNow - pRemCar->m_clockLocationSent);
       } else {
@@ -1969,7 +1965,7 @@ void BSimulation::DrawDustClouds() {
 
 
 //*****************************************************************************
-void BSimulation::AddTrackingTarget(CString sId, BVector vLoc, double dRed, double dGreen, double dBlue) {
+void BSimulation::AddTrackingTarget(string sId, BVector vLoc, double dRed, double dGreen, double dBlue) {
   // Add a tracking target to the tracking list
   // targets are drawn in the multi-purpose compass panel
   BTrackingTarget *pNew = new BTrackingTarget;
@@ -1994,11 +1990,11 @@ void BSimulation::AddTrackingTarget(CString sId, BVector vLoc, double dRed, doub
 
 
 //*****************************************************************************
-void BSimulation::RemoveTrackingTarget(CString sId) {
+void BSimulation::RemoveTrackingTarget(string sId) {
   BTrackingTarget *pPrev = m_targets;
   BTrackingTarget *p = m_targets;
   while(p) {
-    if(p->m_sId.CompareNoCase(sId) == 0) {
+    if(p->m_sId.compare(sId) == 0) {
       if(p == m_targets) {
         // delete first
         m_targets = p->m_pNext;

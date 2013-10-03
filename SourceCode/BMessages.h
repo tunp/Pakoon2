@@ -11,6 +11,9 @@
 #include "BSimulation.h"
 #include "BCmdModule.h"
 
+#include <string>
+
+using namespace std;
 
 //*****************************************************************************
 class BLetter {
@@ -32,8 +35,8 @@ public:
   double    m_dB;
   bool      m_blink;
   int       m_nCharsPerLine;
-  CString   m_sId;
-  CString   m_sText;
+  string   m_sId;
+  string   m_sText;
   time_t    m_timeRemove;
   clock_t   m_clockStarted;
   bool      m_bFaint;
@@ -50,8 +53,8 @@ public:
   ~BMessages();
 
   static void Show(int nCharsPerLine, 
-                   CString sId, 
-                   CString sText, 
+                   string sId, 
+                   string sText, 
                    int nSeconds, 
                    bool blink = false, 
                    double dR = 1, 
@@ -59,10 +62,10 @@ public:
                    double dB = 1,
                    bool bFaint = false,
                    bool bSecondary = false);
-  static void      Remove(CString sId);
+  static void      Remove(string sId);
   static void      RemoveAll();
   static void      Render();
-  static bool      Find(CString sId);
+  static bool      Find(string sId);
 
   static BMessage *RenderMessage(BMessage *pMsg);
   static void      RenderLetter(BMessage *pMsg, char c, bool bInside);

@@ -4,7 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "OpenGLHelpers.h"
 #include "BGame.h"
 
@@ -16,8 +15,10 @@ bool OpenGLHelpers::m_bMultiTexturing = false;
 
 
 // Multitexturing support functions
-PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB = NULL;
-PFNGLACTIVETEXTUREARBPROC   glActiveTextureARB = NULL;
+#ifdef _WIN32
+//PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB = NULL;
+//PFNGLACTIVETEXTUREARBPROC   glActiveTextureARB = NULL;
+#endif
 
 GLuint OpenGLHelpers::m_nDLTex = 0;
 
@@ -65,11 +66,13 @@ void OpenGLHelpers::SwitchToTexture(int nTexture, bool bDisable) {
 
 bool OpenGLHelpers::LoadExtensionFunctions() {
   // Check for multitexturing support
-  CString sExt = glGetString(GL_EXTENSIONS);
-  if(sExt.Find("GL_ARB_multitexture") != -1) {
+  string sExt = (char *) glGetString(GL_EXTENSIONS);
+  if(sExt.find("GL_ARB_multitexture") != -1) {
     // Load extension functions
+    #ifdef _WIN32
     glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC) wglGetProcAddress("glMultiTexCoord2fARB");
     glActiveTextureARB   = (PFNGLACTIVETEXTUREARBPROC)   wglGetProcAddress("glActiveTextureARB");
+    #endif
     m_bMultiTexturing = true;
     // m_bMultiTexturing = false; // no need for multitexturing yet
     return true;
@@ -377,7 +380,7 @@ void OpenGLHelpers::TriangleFanWithNormals(BVector *pvPoints, BVector *pvNormals
   glEnd();
 }
 
-void OpenGLHelpers::Line(BVector& p1, BVector& p2) {
+void OpenGLHelpers::Line(BVector p1, BVector p2) {
   glBegin(GL_LINES);
   glVertex3f(p1.m_dX, p1.m_dY, p1.m_dZ);
   glVertex3f(p2.m_dX, p2.m_dY, p2.m_dZ);
@@ -478,15 +481,15 @@ void OpenGLHelpers::SetTexCoord(double x, double y) {
 }
 
 
-void OpenGLHelpers::DrawVeil(double dRed, double dGreen, double dBlue, double dAlpha, CRect &rectWnd) {
+void OpenGLHelpers::DrawVeil(double dRed, double dGreen, double dBlue, double dAlpha, SDL_Rect &rectWnd) {
   OpenGLHelpers::SetColorFull(dRed, dGreen, dBlue, dAlpha);
   glDisable(GL_TEXTURE_2D);
 
   glBegin(GL_TRIANGLE_STRIP);
   glVertex3f(0, 0, 0);
-  glVertex3f(0, rectWnd.Height(), 0);
-  glVertex3f(rectWnd.Width(), 0, 0);
-  glVertex3f(rectWnd.Width(), rectWnd.Height(), 0);
+  glVertex3f(0, rectWnd.h, 0);
+  glVertex3f(rectWnd.w, 0, 0);
+  glVertex3f(rectWnd.w, rectWnd.h, 0);
   glEnd();
   glEnable(GL_TEXTURE_2D);
 }

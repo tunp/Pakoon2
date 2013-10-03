@@ -1,6 +1,5 @@
-#include "stdafx.h"
 #include "PerlinNoise.h"
-#include <math.h>
+#include <cmath>
 
 //********************
 //** PERLIN NOISE FUNCTIONS

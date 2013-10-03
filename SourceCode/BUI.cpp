@@ -4,7 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BUI.h"
 #include "BSimulation.h"
 #include "BTextRenderer.h"
@@ -13,16 +12,18 @@
 #include "Pakoon1View.h"
 #include "BMenu.h"
 
+#include <SDL2/SDL.h>
+
 BTextRenderer BUI::m_textRenderer;
 BUISelectionList *BUI::m_pSelList = 0;
-void (CPakoon1View::* (BUI::m_pPrevKeyDownFunction))(UINT, UINT, UINT) = 0;
+void (CPakoon1View::* (BUI::m_pPrevKeyDownFunction))(unsigned, unsigned, unsigned) = 0;
 int BUI::m_nPrevSliderValue = 0;
 int *BUI::m_pnSliderValue = 0;
-CString BUI::m_sPrevSValue = "";
-CString *BUI::m_psValue = 0;
+string BUI::m_sPrevSValue = "";
+string *BUI::m_psValue = 0;
 
 //*************************************************************************************************
-void BUI::StartUsingSelectionList(BUISelectionList *pList, void (CPakoon1View::*pPrevKeyDownFunction)(UINT, UINT, UINT)) {
+void BUI::StartUsingSelectionList(BUISelectionList *pList, void (CPakoon1View::*pPrevKeyDownFunction)(unsigned, unsigned, unsigned)) {
   m_pSelList = pList;
   pList->SaveSelection();
   m_pPrevKeyDownFunction = pPrevKeyDownFunction;
@@ -32,7 +33,7 @@ void BUI::StartUsingSelectionList(BUISelectionList *pList, void (CPakoon1View::*
 }
 
 //*************************************************************************************************
-void BUI::StartUsingSlider(int *pnSliderValue, void (CPakoon1View::*pPrevKeyDownFunction)(UINT, UINT, UINT)) {
+void BUI::StartUsingSlider(int *pnSliderValue, void (CPakoon1View::*pPrevKeyDownFunction)(unsigned, unsigned, unsigned)) {
   m_pnSliderValue = pnSliderValue;
   m_nPrevSliderValue = *pnSliderValue;
   m_pPrevKeyDownFunction = pPrevKeyDownFunction;
@@ -42,7 +43,7 @@ void BUI::StartUsingSlider(int *pnSliderValue, void (CPakoon1View::*pPrevKeyDown
 }
 
 //*************************************************************************************************
-void BUI::StartUsingEditbox(CString *psValue, void (CPakoon1View::*pPrevKeyDownFunction)(UINT, UINT, UINT)) {
+void BUI::StartUsingEditbox(string *psValue, void (CPakoon1View::*pPrevKeyDownFunction)(unsigned, unsigned, unsigned)) {
   m_psValue = psValue;
   m_sPrevSValue = *psValue;
   m_pPrevKeyDownFunction = pPrevKeyDownFunction;
@@ -73,7 +74,7 @@ void BUISelectionList::Cancel() {
 
 
 //*************************************************************************************************
-void BUISelectionList::SetItems(CString *psItems, int nItems, CString sPrompt) {
+void BUISelectionList::SetItems(string *psItems, int nItems, string sPrompt) {
   m_psItems = psItems;
   m_nItems = nItems;
   m_sPrompt = sPrompt;
@@ -81,11 +82,11 @@ void BUISelectionList::SetItems(CString *psItems, int nItems, CString sPrompt) {
 
 
 //*************************************************************************************************
-int BUISelectionList::SelectItem(CString sItem) {
+int BUISelectionList::SelectItem(string sItem) {
   // Search for the string and select that item.
   // Return selected item's index
   for(int i = 0; i < m_nItems; ++i) {
-    if(sItem.CompareNoCase(m_psItems[i]) == 0) {
+    if(sItem.compare(m_psItems[i]) == 0) {
       m_nSelected = i;
       return i;
     }
@@ -114,7 +115,7 @@ void BUISelectionList::AdvanceSelection(int nAmount) {
 
 
 //*************************************************************************************************
-int BUISelectionList::GetSelectedItem(CString &sItemText) {
+int BUISelectionList::GetSelectedItem(string &sItemText) {
   if(m_nSelected != -1) {
     sItemText = m_psItems[m_nSelected];
   }
@@ -157,9 +158,9 @@ void BUISelectionList::DrawAt(double dX,
       }
     }
     double dXOffset = 0;
-    if(textAlign == BTextRenderer::TTextAlign::ALIGN_CENTER) {
+    if(textAlign == BTextRenderer::ALIGN_CENTER) {
       dXOffset = -dMaxLen / 2.0;
-    } else if(textAlign == BTextRenderer::TTextAlign::ALIGN_RIGHT) {
+    } else if(textAlign == BTextRenderer::ALIGN_RIGHT) {
       dXOffset = -dMaxLen;
     }
 
@@ -203,9 +204,9 @@ void BUISelectionList::DrawAt(double dX,
     double dYBase = double(m_nSelected) * -dCharHeight;
 
     double dXOffset = 0;
-    if(textAlign == BTextRenderer::TTextAlign::ALIGN_CENTER) {
+    if(textAlign == BTextRenderer::ALIGN_CENTER) {
       dXOffset = -dLen / 2.0;
-    } else if(textAlign == BTextRenderer::TTextAlign::ALIGN_RIGHT) {
+    } else if(textAlign == BTextRenderer::ALIGN_RIGHT) {
       dXOffset = -dLen;
     }
 
@@ -341,11 +342,11 @@ void BUISelectionList::DrawAt(double dX,
   BUI::TextRenderer()->StartRenderingText();
   for(i = 0; i < m_nItems; ++i) {
 
-    double dLen = double(m_psItems[i].GetLength()) * dCharWidth;
+    double dLen = double(m_psItems[i].length()) * dCharWidth;
     double dXOffset = 0;
-    if(textAlign == BTextRenderer::TTextAlign::ALIGN_CENTER) {
+    if(textAlign == BTextRenderer::ALIGN_CENTER) {
       dXOffset = -dLen / 2.0;
-    } else if(textAlign == BTextRenderer::TTextAlign::ALIGN_RIGHT) {
+    } else if(textAlign == BTextRenderer::ALIGN_RIGHT) {
       dXOffset = -dLen;
     }
 
@@ -385,7 +386,7 @@ BUIEdit::BUIEdit() {
 
 
 //*************************************************************************************************
-void BUIEdit::Setup(CString sPrompt, CString sValue, int nMaxLength) {
+void BUIEdit::Setup(string sPrompt, string sValue, int nMaxLength) {
   m_sPrompt = sPrompt;
   m_sValue = sValue;
   m_nMaxLength = nMaxLength;
@@ -404,33 +405,33 @@ void BUIEdit::ProcessChar(unsigned char c) {
        (toupper(c) <= 96) || 
        (c == '.') ||
        (c == '/') ||
-       (c == VK_BACK) ||
-       (c == VK_RETURN) || 
-       (c == VK_ESCAPE))) {
+       (c == SDLK_BACKSPACE) ||
+       (c == SDLK_RETURN) || 
+       (c == SDLK_ESCAPE))) {
     // Bad character, no go
     return;
   }
 
-  if(c == VK_BACK) {
+  if(c == SDLK_BACKSPACE) {
     // Eat one character
-    if(m_sValue.GetLength() > 0) {
-      m_sValue.Delete(m_sValue.GetLength() - 1, 1);
+    if(m_sValue.length() > 0) {
+      m_sValue.erase(m_sValue.length() - 1, 1);
     }
     return;
   }
 
-  if(c == VK_RETURN) {
+  if(c == SDLK_RETURN) {
     status = READY;
     return;
   }
 
-  if(c == VK_ESCAPE) {
+  if(c == SDLK_ESCAPE) {
     status = CANCELED;
     return;
   }
 
   // Add writable character
-  if(m_sValue.GetLength() < m_nMaxLength) {
+  if(m_sValue.length() < m_nMaxLength) {
     m_sValue += c;
   }
   return;
@@ -438,7 +439,7 @@ void BUIEdit::ProcessChar(unsigned char c) {
 
 
 //*************************************************************************************************
-CString BUIEdit::GetValue(TStatus &rStatus) {
+string BUIEdit::GetValue(TStatus &rStatus) {
   rStatus = status;
   return m_sValue;
 }
@@ -453,7 +454,7 @@ void BUIEdit::DrawAt(double dX, double dY, bool bCursor, BTextRenderer::TTextAli
 
   glTranslated(dX, dY, 0);
 
-  if(textAlign == BTextRenderer::TTextAlign::ALIGN_LEFT) {
+  if(textAlign == BTextRenderer::ALIGN_LEFT) {
     glTranslated(BUI::TextRenderer()->GetStringWidth(m_sPrompt), 0, 0);
   }
 
@@ -468,7 +469,7 @@ void BUIEdit::DrawAt(double dX, double dY, bool bCursor, BTextRenderer::TTextAli
   BUI::TextRenderer()->DrawTextAt(0, 
                                   0, 
                                   m_sPrompt,
-                                  BTextRenderer::TTextAlign::ALIGN_RIGHT,
+                                  BTextRenderer::ALIGN_RIGHT,
                                   1,
                                   0.75,
                                   0.5,
@@ -479,7 +480,7 @@ void BUIEdit::DrawAt(double dX, double dY, bool bCursor, BTextRenderer::TTextAli
   BUI::TextRenderer()->DrawTextAt(0, 
                                   0, 
                                   m_sValue,
-                                  BTextRenderer::TTextAlign::ALIGN_LEFT,
+                                  BTextRenderer::ALIGN_LEFT,
                                   0.75,
                                   0.75,
                                   0.75,

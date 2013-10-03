@@ -4,14 +4,16 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#pragma once
-
-#include "stdafx.h"
 #include "BTextures.h"
 #include "OpenGLHelpers.h"
 #include "BTerrain.h"
 #include "BGame.h"
-#include "time.h"
+#include "ctime"
+
+#include <sstream>
+#include <fstream>
+
+using namespace std;
 
 int      BTextures::m_nTextures = 0;
 BTexture BTextures::m_textures[100]; // We allow at most 100 textures
@@ -46,56 +48,56 @@ void BTextures::Exit() {
 void BTextures::LoadAllInternalTextures() {
 
   m_nTextures = 0;
-  LoadTextureFromTGA(".\\Textures\\MainGameMenu.tga", MAIN_GAME_MENU, false);
-  LoadTextureFromTGA(".\\Textures\\Wheeldetailed.tga", WHEEL, true);
-  LoadTextureFromTGA(".\\Textures\\NavSatWndBigLetters.tga", PANEL, false);
-  LoadTextureFromTGA(".\\Textures\\ShadowETC.tga", SHADOW, true);
-  LoadTextureFromTGA(".\\Textures\\DustCloud.tga", DUSTCLOUD, true);
-  LoadTextureFromTGA(".\\Textures\\EnvMap.tga", ENVMAP, true);
-  LoadTextureFromTGA(".\\Textures\\EnvMapShiny.tga", ENVMAP_SHINY, true);
-  LoadTextureFromTGA(".\\Textures\\QuickHelp.tga", QUICK_HELP, false);
-  CString sTitle;
+  LoadTextureFromTGA("Textures/MainGameMenu.tga", MAIN_GAME_MENU, false);
+  LoadTextureFromTGA("Textures/wheeldetailed.tga", WHEEL, true);
+  LoadTextureFromTGA("Textures/NavSatWndBigLetters.tga", PANEL, false);
+  LoadTextureFromTGA("Textures/shadowetc.tga", SHADOW, true);
+  LoadTextureFromTGA("Textures/DustCloud.tga", DUSTCLOUD, true);
+  LoadTextureFromTGA("Textures/EnvMap.tga", ENVMAP, true);
+  LoadTextureFromTGA("Textures/EnvMapShiny.tga", ENVMAP_SHINY, true);
+  LoadTextureFromTGA("Textures/QuickHelp.tga", QUICK_HELP, false);
+  stringstream sTitle;
   srand((unsigned)time(NULL));
-  sTitle.Format(".\\Textures\\MenuTitle_%d.tga", rand() % 6);
-  LoadTextureFromTGA(sTitle, MENU_TITLES, true);
-  LoadTextureFromTGA(".\\Textures\\OnScreenGameTexts.tga", ONSCREEN_GAME_TEXTS, false);
-  LoadTextureFromTGA(".\\Textures\\ExtraScreenMessages.tga", EXTRA_SCREEN_MESSAGES, false);
-  LoadTextureFromTGA(".\\Textures\\Earth.tga", EARTH, true);
-  LoadTextureFromTGA(".\\Textures\\EarthSpecularMap.tga", EARTH_SPECULAR_MAP, true);
-  LoadTextureFromTGA(".\\Textures\\Letters.tga", LETTERS, true);
-  LoadTextureFromTGA(".\\Textures\\Pakoon2Logo.tga", LOGO, false);
-  LoadTextureFromTGA(".\\Textures\\OldTube.tga", OLDTUBE, false);
-  LoadTextureFromTGA(".\\Textures\\MOSLogo.tga", MOS_LOGO, false);
-  LoadTextureFromTGA(".\\Textures\\FTCLogo_Dim.tga", FTC_LOGO, false);
-  LoadTextureFromTGA(".\\Textures\\FTCLogo_Light.tga", FTC_LOGO2, false);
+  sTitle << "Textures/MenuTitle_" << rand() % 6 << ".tga";
+  LoadTextureFromTGA(sTitle.str(), MENU_TITLES, true);
+  LoadTextureFromTGA("Textures/OnScreenGameTexts.tga", ONSCREEN_GAME_TEXTS, false);
+  LoadTextureFromTGA("Textures/ExtraScreenMessages.tga", EXTRA_SCREEN_MESSAGES, false);
+  LoadTextureFromTGA("Textures/Earth.tga", EARTH, true);
+  LoadTextureFromTGA("Textures/EarthSpecularMap.tga", EARTH_SPECULAR_MAP, true);
+  LoadTextureFromTGA("Textures/Letters.tga", LETTERS, true);
+  LoadTextureFromTGA("Textures/Pakoon2Logo.tga", LOGO, false);
+  LoadTextureFromTGA("Textures/OldTube.tga", OLDTUBE, false);
+  LoadTextureFromTGA("Textures/MOSLogo.tga", MOS_LOGO, false);
+  LoadTextureFromTGA("Textures/FTCLogo_Dim.tga", FTC_LOGO, false);
+  LoadTextureFromTGA("Textures/FTCLogo_Light.tga", FTC_LOGO2, false);
   m_nTextures = USER_BASE;
 }
 
 
 //*****************************************************************************
-int BTextures::LoadTexture(CString sTextureName, bool bMipmapped) {
+int BTextures::LoadTexture(string sTextureName, bool bMipmapped) {
   // Check if caller wants an internal texture.
   // If not, see if the requested texture is already loaded.
   // If not, load and add a new tecture.
   // In all cases, return an index to the texture. 
   // This index can be used in the Use() function to activate that texture.
 
-  if(sTextureName.CompareNoCase("INT_TXTR_NONE") == 0) {
+  if(sTextureName.compare("INT_TXTR_NONE") == 0) {
     return NONE;
-  } else if(sTextureName.CompareNoCase("INT_TXTR_CHROME") == 0) {
+  } else if(sTextureName.compare("INT_TXTR_CHROME") == 0) {
     return ENVMAP;
-  } else if(sTextureName.CompareNoCase("INT_TXTR_BRICKS") == 0) {
+  } else if(sTextureName.compare("INT_TXTR_BRICKS") == 0) {
     return BRICKS;
-  } else if(sTextureName.CompareNoCase("INT_TXTR_ROCKS") == 0) {
+  } else if(sTextureName.compare("INT_TXTR_ROCKS") == 0) {
     return ROCKS;
-  } else if(sTextureName.CompareNoCase("INT_TXTR_GROUND") == 0) {
+  } else if(sTextureName.compare("INT_TXTR_GROUND") == 0) {
     return GROUND_BASE;
-  } else if(sTextureName.CompareNoCase("INT_TXTR_SKY") == 0) {
+  } else if(sTextureName.compare("INT_TXTR_SKY") == 0) {
     return SKY;
   } else {
     // Try to see if texture is already loaded
     for(int i = 0; i < m_nTextures; ++i) {
-      if(m_textures[i].m_bValid && (sTextureName.CompareNoCase(m_textures[i].m_sFilename) == 0)) {
+      if(m_textures[i].m_bValid && (sTextureName.compare(m_textures[i].m_sFilename) == 0)) {
         return i;
       }
     }
@@ -114,7 +116,7 @@ int BTextures::LoadTexture(CString sTextureName, bool bMipmapped) {
 
 
 //*****************************************************************************
-int BTextures::ReloadTexture(int nTextureIndex, CString sTextureName) {
+int BTextures::ReloadTexture(int nTextureIndex, string sTextureName) {
   if(m_textures[nTextureIndex].m_bValid) {
     // Delete existing texture
     OpenGLHelpers::FreeTexName(nTextureIndex, &(m_textures[nTextureIndex].m_nGLTexName));
@@ -127,27 +129,19 @@ int BTextures::ReloadTexture(int nTextureIndex, CString sTextureName) {
 
 
 //*****************************************************************************
-bool BTextures::LoadTextureFromTGA(const CString sFilename, int nTextureIndex, bool bMipmapped) {
+bool BTextures::LoadTextureFromTGA(const string sFilename, int nTextureIndex, bool bMipmapped) {
 
   BTexture *pTexture = &(m_textures[nTextureIndex]);
-
-  HANDLE  hFile;
-  DWORD   pdwRead;
-
-  hFile = CreateFile(LPCTSTR(sFilename),
-                     GENERIC_READ,
-                     FILE_SHARE_READ,
-                     NULL,
-                     OPEN_EXISTING,
-                     FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
-                     NULL);
-  if(hFile != INVALID_HANDLE_VALUE) {
+  
+  ifstream hFile(sFilename.c_str(), ios_base::binary);
+                     
+  if(hFile.is_open()) {
     unsigned char ucHeader[18];
     unsigned char *pucLine = 0;
     int nXRes, nYRes, x, y, nBits, nComponents;
     // Just assume file is correct original Targa file, no checking is done.
     // Read in the resolution from the header
-    ReadFile(hFile, ucHeader, 18, &pdwRead, NULL);
+    hFile.read((char *)ucHeader, 18);
 
     nXRes = (int) ucHeader[12] + (int) ucHeader[13] * 256;
     nYRes = (int) ucHeader[14] + (int) ucHeader[15] * 256;
@@ -203,38 +197,41 @@ bool BTextures::LoadTextureFromTGA(const CString sFilename, int nTextureIndex, b
       nYStep = 1;
     }
     for(y = nYStart; y != nYEnd; y += nYStep) {
-      if(!ReadFile(hFile, pucLine, nXRes * nComponents, &pdwRead, NULL)) {
+      hFile.read((char *)pucLine, nXRes * nComponents);
+      if(!hFile.good()) {
         BGame::MyAfxMessageBox("Error encountered while reading file.");
-        CloseHandle(hFile);
-        delete pucLine;
+        hFile.close();
+        delete[] pucLine;
         return false;
       }
       if(nComponents == 3) {
         for(x = 0; x < nXRes; ++x) {
-          pTexture->m_pPixels[y * nXRes * 3 + x * 3 + 0] = (BYTE) pucLine[x * 3 + 2];
-          pTexture->m_pPixels[y * nXRes * 3 + x * 3 + 1] = (BYTE) pucLine[x * 3 + 1];
-          pTexture->m_pPixels[y * nXRes * 3 + x * 3 + 2] = (BYTE) pucLine[x * 3 + 0];
+          pTexture->m_pPixels[y * nXRes * 3 + x * 3 + 0] = (GLubyte) pucLine[x * 3 + 2];
+          pTexture->m_pPixels[y * nXRes * 3 + x * 3 + 1] = (GLubyte) pucLine[x * 3 + 1];
+          pTexture->m_pPixels[y * nXRes * 3 + x * 3 + 2] = (GLubyte) pucLine[x * 3 + 0];
         }
       } else if(nComponents == 4) {
         for(x = 0; x < nXRes; ++x) {
-          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 0] = (BYTE) pucLine[x * 4 + 2];
-          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 1] = (BYTE) pucLine[x * 4 + 1];
-          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 2] = (BYTE) pucLine[x * 4 + 0];
-          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 3] = (BYTE) pucLine[x * 4 + 3];
+          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 0] = (GLubyte) pucLine[x * 4 + 2];
+          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 1] = (GLubyte) pucLine[x * 4 + 1];
+          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 2] = (GLubyte) pucLine[x * 4 + 0];
+          pTexture->m_pPixels[y * nXRes * 4 + x * 4 + 3] = (GLubyte) pucLine[x * 4 + 3];
         }
       } else {
         for(x = 0; x < nXRes; ++x) {
-          pTexture->m_pPixels[y * nXRes + x] = (BYTE) pucLine[x];
+          pTexture->m_pPixels[y * nXRes + x] = (GLubyte) pucLine[x];
         }
       }
     }
-    delete pucLine;
-    CloseHandle(hFile);
+    delete[] pucLine;
+    hFile.close();
 
     return true;
   } else {
-    CString sTmp;
-    sTmp.Format("Cannot open %s!", LPCTSTR(sFilename));
+    string sTmp;
+    sTmp.assign("Cannot open ");
+    sTmp.append(sFilename);
+    sTmp.append("!");
     BGame::MyAfxMessageBox(sTmp);
     return false;
   }

@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "..\SourceCode\CoreClasses.h"
+#include "../SourceCode/CoreClasses.h"
 
 //*************************************************************************************************
 // Base class for vehicle body point
-class __declspec(dllexport) BBodyPoint {
+class BBodyPoint {
 public:
   BVector m_vLocation;  // In worlds's coordinate system
   BVector m_vector;
@@ -27,7 +27,7 @@ public:
 };
 
 //*************************************************************************************************
-class __declspec(dllexport) BAeroPoint {
+class BAeroPoint {
 public:
   BVector m_vMaxDragDir;
   double  m_dMaxDrag;
@@ -36,7 +36,7 @@ public:
 };
 
 //*************************************************************************************************
-class __declspec(dllexport) BAirplane {
+class BAirplane {
 public:
 
   int     m_nRudderBodyPoint;
@@ -80,7 +80,7 @@ public:
 
 //*************************************************************************************************
 // Base class for vehicle wheel
-class __declspec(dllexport) PPEC_Wheel {
+class PPEC_Wheel {
 public:
   double m_dRadius;
 
@@ -118,13 +118,13 @@ public:
   double       m_dFriction;
   int          m_nGroundHits;
 
-  virtual Init() {}
+  virtual void Init() {}
 };
 
 
 //*************************************************************************************************
 // Base class for vehicle
-class __declspec(dllexport) PPEC_Vehicle {
+class PPEC_Vehicle {
   const int m_nID; 
   // (reserved for internal use)
 

@@ -4,17 +4,21 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BObject.h"
 #include "BTextures.h"
 #include "OpenGLHelpers.h"
 #include "FileIOHelpers.h"
 #include "BGame.h"
 #include "HeightMap.h"
+#include "StringTools.h"
+
+#include <sstream>
+
+using namespace std;
 
 //*****************************************************************************
 void BFace::SetPoints(int nPoints, BVector *pvPoints) {
-  ASSERT(nPoints >= 3 && nPoints <= 5);
+  //ASSERT(nPoints >= 3 && nPoints <= 5);
   for(int i = 0; i < min(nPoints, 5); ++i) {
     m_vPoint[i] = pvPoints[i];
   }
@@ -46,7 +50,7 @@ BObject::BObject() {
   m_pPart = 0;
   m_nCollDetParts = 0;
   m_pCollDetPart = 0;
-  m_sName = _T("Object");
+  m_sName = "Object";
   m_type = USER_DEF;
   m_collisionDetection = ACCURATE;
   m_vLocation.Set(0, 0, 0);
@@ -97,7 +101,8 @@ double LengthAlongZ(BVector &rv) {
 
 void RotateAroundZ(BVector &rVector, double dAngle) {
   double dA1, dL1;
-  dA1 = AngleBetweenVectorsAlongZ(rVector, BVector(0, 1, 0), rVector.m_dX);
+  BVector new_vector(0, 1, 0);
+  dA1 = AngleBetweenVectorsAlongZ(rVector, new_vector, rVector.m_dX);
   dL1 = LengthAlongZ(rVector);
   rVector.m_dX = sin(dA1 + dAngle) * dL1;
   rVector.m_dY = cos(dA1 + dAngle) * dL1;
@@ -199,7 +204,7 @@ double BObject::PointIsInsideObject(BVector& rvPoint,
   if(vFromCenter.Length() > m_dRadius) {
     return -1.0;
   }
-  if(m_collisionDetection == TCollDet::BOUNDING_SPHERE) {
+  if(m_collisionDetection == BOUNDING_SPHERE) {
     rvNormal = vFromCenter;
     rvNormal.ToUnitLength();
     rdBaseDepth = m_dRadius - vFromCenter.Length();
@@ -422,7 +427,7 @@ void BObject::PreProcessVisualization(bool bOnlyShadow) {
     int i;
     for(i = 0; i < pScene->m_nObjects; ++i) {
       if((&(pScene->m_pObjects[i]) != this) && 
-         (pScene->m_pObjects[i].m_sObjectFilename.CompareNoCase(m_sObjectFilename) == 0) &&
+         (pScene->m_pObjects[i].m_sObjectFilename.compare(m_sObjectFilename) == 0) &&
          pScene->m_pObjects[i].m_bDLIsValid) {
         m_nDL = pScene->m_pObjects[i].m_nDL;
         bDLDone = true;
@@ -546,10 +551,10 @@ void BObject::DrawObject(bool bShadow) {
 
 
 //*****************************************************************************
-void BObject::LoadObjectFromFile(CString sFilename, CString sSection, bool bOnlyShape) {
+void BObject::LoadObjectFromFile(string sFilename, string sSection, bool bOnlyShape) {
 
   // General
-  CString sTmp;
+  string sTmp;
 
   if(!bOnlyShape) {
     FileHelpers::GetKeyStringFromINIFile(sSection, "Name", sSection, m_sName, sFilename);
@@ -561,14 +566,14 @@ void BObject::LoadObjectFromFile(CString sFilename, CString sSection, bool bOnly
     FileHelpers::GetKeyDoubleFromINIFile(sSection, "Scale", 1, m_dScale2, sFilename);
     FileHelpers::GetKeyDoubleFromINIFile(sSection, "ZRotation", 0, m_dZRotation, sFilename);
     FileHelpers::GetKeyStringFromINIFile(sSection, "Shadow", "True", sTmp, sFilename);
-    m_bHasShadow = (sTmp.CompareNoCase("True") == 0);
+    m_bHasShadow = StringTools::compareNoCase(sTmp, "True");
     FileHelpers::GetKeyDoubleFromINIFile(sSection, "ActiveRadius", 1.0, m_dActiveRadius, sFilename);
   }
 
   FileHelpers::GetKeyStringFromINIFile("Properties", "CollisionDetection", "Accurate", sTmp, m_sObjectFilename);
-  if(sTmp.CompareNoCase("Accurate") == 0) {
+  if(sTmp.compare("Accurate") == 0) {
     m_collisionDetection = ACCURATE;
-  } else if(sTmp.CompareNoCase("BoundingSphere") == 0) {
+  } else if(sTmp.compare("BoundingSphere") == 0) {
     m_collisionDetection = BOUNDING_SPHERE;
   } else {
     m_collisionDetection = BOUNDING_BOX;
@@ -584,11 +589,11 @@ void BObject::LoadObjectFromFile(CString sFilename, CString sSection, bool bOnly
   // First count how many there are
   m_nParts = 0;
   do {
-    CString sHasSection;
-    CString sSection;
-    sSection.Format("Part%d", m_nParts + 1);
-    FileHelpers::GetKeyStringFromINIFile(sSection, "", "default", sHasSection, m_sObjectFilename);
-    if(sHasSection.CompareNoCase("default") != 0) {
+    string sHasSection;
+    stringstream sSection;
+    sSection << "Part" << m_nParts + 1;
+    FileHelpers::GetKeyStringFromINIFile(sSection.str(), "", "default", sHasSection, m_sObjectFilename);
+    if(sHasSection.compare("default") != 0) {
       ++m_nParts;
     } else {
       break;
@@ -602,10 +607,10 @@ void BObject::LoadObjectFromFile(CString sFilename, CString sSection, bool bOnly
 
   // Read parts
   for(int nPart = 0; nPart < m_nParts; ++nPart) {
-    CString sSection;
-    sSection.Format("Part%d", nPart + 1);
+    stringstream sSection;
+    sSection << "Part" << nPart + 1;
     m_pPart[nPart].SetOBJData(m_pOBJData);
-    m_pPart[nPart].LoadPartFromFile(m_sObjectFilename, sSection, false, false);
+    m_pPart[nPart].LoadPartFromFile(m_sObjectFilename, sSection.str(), false, false);
   }
 
   if(m_collisionDetection == ACCURATE) {
@@ -619,9 +624,9 @@ void BObject::LoadObjectFromFile(CString sFilename, CString sSection, bool bOnly
     m_pCollDetPart = new BObjectPart[m_nCollDetParts];
 
     for(int nPart = 0; nPart < m_nParts; ++nPart) {
-      CString sSection;
-      sSection.Format("Part%d", nPart + 1);
-      LoadCollisionPartFromFile(m_sObjectFilename, sSection, m_pPart[nPart], m_pCollDetPart[nPart]);
+      stringstream sSection;
+      sSection << "Part" << nPart + 1;
+      LoadCollisionPartFromFile(m_sObjectFilename, sSection.str(), m_pPart[nPart], m_pCollDetPart[nPart]);
     }
   }
 }
@@ -630,7 +635,7 @@ void BObject::LoadObjectFromFile(CString sFilename, CString sSection, bool bOnly
 
 
 //*****************************************************************************
-void BObject::LoadCollisionPartFromFile(CString sFilename, CString sSection, BPart &rVisPart, BObjectPart &rPart) {
+void BObject::LoadCollisionPartFromFile(string sFilename, string sSection, BPart &rVisPart, BObjectPart &rPart) {
   // Read the collision parts from the object file. If they are not specified, 
   // use the visualization parts as the collision detection parts.
 
@@ -638,9 +643,9 @@ void BObject::LoadCollisionPartFromFile(CString sFilename, CString sSection, BPa
   FileHelpers::GetKeyDoubleFromINIFile(sSection, "Friction", 0.5, rPart.m_dFriction, sFilename);
 
   // Shape
-  CString sShapeFilename = _T("");
+  string sShapeFilename = "";
   FileHelpers::GetKeyStringFromINIFile(sSection, "CollisionShape", "", sShapeFilename, sFilename);
-  if(sShapeFilename.IsEmpty()) {
+  if(sShapeFilename.empty()) {
     // Use visualization part for collision detection
     // Convert read data to collision part data
     rPart.m_pFace = new BFace[rVisPart.m_nFaces];

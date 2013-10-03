@@ -4,11 +4,10 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BVehicle.h"
 
-#include "gl\gl.h"
-#include "gl\glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include "OpenGLHelpers.h"
 #include "OpenGLExtFunctions.h"
 #include "BTextures.h"
@@ -17,6 +16,10 @@
 #include "FileIOHelpers.h"
 #include "Pakoon1Doc.h"
 #include "Pakoon1View.h"
+
+#include <sstream>
+
+using namespace std;
 
 const double g_cdPI = 3.141592654;
 extern bool g_cbBlackAndWhite;
@@ -164,15 +167,15 @@ void BVehicle::LoadTextures() {
 
 //**********************************************************************
 
-void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
+void BVehicle::LoadVehicleFromFile(string sFilename, bool bLocalCar) {
 
   // Check whether fine quality or low quality version should be loaded
   if((BGame::m_nCarDetails == 2) ||  // Always Low
      (BGame::m_bMultiplayOn && (BGame::m_nCarDetails == 1))) { // Low if multiplay
     // Check if low resolution version file is available
-    CString sNew = sFilename + "Coarse";
+    string sNew = sFilename + "Coarse";
     FILE *fp;
-    fp = fopen(LPCTSTR(sNew), "r");
+    fp = fopen(sNew.c_str(), "r");
     if(fp) {
       // Use low resolution version
       sFilename = sNew;
@@ -184,7 +187,7 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
   InitAll();
 
   int i;
-  CString sKey, sValue;
+  string sKey, sValue;
 
   //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
   // First load in straight-forward properties
@@ -192,7 +195,7 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
   FileHelpers::GetKeyStringFromINIFile("Properties", "Name", "default", m_sName, sFilename);
   FileHelpers::GetKeyStringFromINIFile("Properties", "Image", "default", m_sImageFilename, sFilename);
   FileHelpers::GetKeyStringFromINIFile("Properties", "SteeringAid", "On", sValue, sFilename);
-  if(sValue.CompareNoCase("Off") == 0) {
+  if(sValue.compare("Off") == 0) {
     BGame::GetSimulation()->m_bSteeringAidOn = false;
   } else {
     BGame::GetSimulation()->m_bSteeringAidOn = true;
@@ -211,13 +214,13 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
 
   //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
   // Check existence of optional sections
-  CString sHasSection;
+  string sHasSection;
   FileHelpers::GetKeyStringFromINIFile("Rotor", "", "default", sHasSection, sFilename);
-  m_bHasRotor = sHasSection.CompareNoCase("default") != 0;
+  m_bHasRotor = sHasSection.compare("default") != 0;
   FileHelpers::GetKeyStringFromINIFile("Jet", "", "default", sHasSection, sFilename);
-  m_bHasJet = sHasSection.CompareNoCase("default") != 0;
+  m_bHasJet = sHasSection.compare("default") != 0;
   FileHelpers::GetKeyStringFromINIFile("Airplane", "", "default", sHasSection, sFilename);
-  m_bHasAirplaneControls = sHasSection.CompareNoCase("default") != 0;
+  m_bHasAirplaneControls = sHasSection.compare("default") != 0;
 
   //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
   if(m_bHasRotor) {
@@ -228,15 +231,15 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
     FileHelpers::GetKeyDoubleFromINIFile("Rotor", "BladeLength", 4.0, m_rotor.m_dBladeLength, sFilename);
     FileHelpers::GetKeyDoubleFromINIFile("Rotor", "BladeTipWidth", 4.0, m_rotor.m_dBladeTipWidth, sFilename);
 
-    CString sBodyPoint;
+    string sBodyPoint;
     FileHelpers::GetKeyStringFromINIFile("Rotor", "BodyPoint1", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_rotor.m_nBodyPoints[0]), &(m_rotor.m_dBodyEffects[0]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_rotor.m_nBodyPoints[0]), &(m_rotor.m_dBodyEffects[0]));
     FileHelpers::GetKeyStringFromINIFile("Rotor", "BodyPoint2", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_rotor.m_nBodyPoints[1]), &(m_rotor.m_dBodyEffects[1]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_rotor.m_nBodyPoints[1]), &(m_rotor.m_dBodyEffects[1]));
     FileHelpers::GetKeyStringFromINIFile("Rotor", "BodyPoint3", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_rotor.m_nBodyPoints[2]), &(m_rotor.m_dBodyEffects[2]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_rotor.m_nBodyPoints[2]), &(m_rotor.m_dBodyEffects[2]));
     FileHelpers::GetKeyStringFromINIFile("Rotor", "BodyPoint4", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_rotor.m_nBodyPoints[3]), &(m_rotor.m_dBodyEffects[3]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_rotor.m_nBodyPoints[3]), &(m_rotor.m_dBodyEffects[3]));
     --(m_rotor.m_nBodyPoints[0]);
     --(m_rotor.m_nBodyPoints[1]);
     --(m_rotor.m_nBodyPoints[2]);
@@ -253,15 +256,15 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
     m_jet.m_vExitDir.ToUnitLength();
     FileHelpers::GetKeyDoubleFromINIFile("Jet", "ExitDiameter", 0.5, m_jet.m_dExitDiameter, sFilename);
 
-    CString sBodyPoint;
+    string sBodyPoint;
     FileHelpers::GetKeyStringFromINIFile("Jet", "BodyPoint1", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_jet.m_nBodyPoints[0]), &(m_jet.m_dBodyEffects[0]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_jet.m_nBodyPoints[0]), &(m_jet.m_dBodyEffects[0]));
     FileHelpers::GetKeyStringFromINIFile("Jet", "BodyPoint2", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_jet.m_nBodyPoints[1]), &(m_jet.m_dBodyEffects[1]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_jet.m_nBodyPoints[1]), &(m_jet.m_dBodyEffects[1]));
     FileHelpers::GetKeyStringFromINIFile("Jet", "BodyPoint3", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_jet.m_nBodyPoints[2]), &(m_jet.m_dBodyEffects[2]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_jet.m_nBodyPoints[2]), &(m_jet.m_dBodyEffects[2]));
     FileHelpers::GetKeyStringFromINIFile("Jet", "BodyPoint4", "1, 0", sBodyPoint, sFilename);
-    sscanf(LPCTSTR(sBodyPoint), "%d, %lf", &(m_jet.m_nBodyPoints[3]), &(m_jet.m_dBodyEffects[3]));
+    sscanf(sBodyPoint.c_str(), "%d, %lf", &(m_jet.m_nBodyPoints[3]), &(m_jet.m_dBodyEffects[3]));
     --(m_jet.m_nBodyPoints[0]);
     --(m_jet.m_nBodyPoints[1]);
     --(m_jet.m_nBodyPoints[2]);
@@ -280,10 +283,10 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
     //  Ailerons = <pnt1>, <pnt2>, <maxEffectDir>, <effectDir>, <effect>                                              // See NOTE 7)
     //  Propeller = <basePoint>, <forwardDir>, <position>, <effect>                                                   // See NOTE 7)
 
-    CString sAirplane;
+    string sAirplane;
 
     FileHelpers::GetKeyStringFromINIFile("Airplane", "Rudder", "1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, -1, 40, 1.0", sAirplane, sFilename);
-    sscanf(LPCTSTR(sAirplane), "%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+    sscanf(sAirplane.c_str(), "%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
            &(m_airplane.m_nRudderBodyPoint),
            &(m_airplane.m_vRudderMaxEffect.m_dX),
            &(m_airplane.m_vRudderMaxEffect.m_dY),
@@ -305,7 +308,7 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
     --(m_airplane.m_nRudderBodyPoint);
 
     FileHelpers::GetKeyStringFromINIFile("Airplane", "Elevator", "1, 0, 1, 0, 0, 0, -1, 0, 0, 0, 0, 0, -1, 40, 1", sAirplane, sFilename);
-    sscanf(LPCTSTR(sAirplane), "%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+    sscanf(sAirplane.c_str(), "%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
            &(m_airplane.m_nElevBodyPoint),
            &(m_airplane.m_vElevMaxEffect.m_dX),
            &(m_airplane.m_vElevMaxEffect.m_dY),
@@ -328,7 +331,7 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
     --(m_airplane.m_nElevBodyPoint);
 
     FileHelpers::GetKeyStringFromINIFile("Airplane", "Ailerons", "1, 2, 0, 1, 0, 0, 0, -1, 1", sAirplane, sFilename);
-    sscanf(LPCTSTR(sAirplane), "%d, %d, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+    sscanf(sAirplane.c_str(), "%d, %d, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
            &(m_airplane.m_nAilrnsBodyPoint1),
            &(m_airplane.m_nAilrnsBodyPoint2),
            &(m_airplane.m_vAilrnsMaxEffect.m_dX),
@@ -344,7 +347,7 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
     --(m_airplane.m_nAilrnsBodyPoint2);
 
     FileHelpers::GetKeyStringFromINIFile("Airplane", "Propeller", "1, 0, 1, 0, 0, 0, 0, 1", sAirplane, sFilename);
-    sscanf(LPCTSTR(sAirplane), "%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+    sscanf(sAirplane.c_str(), "%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
            &(m_airplane.m_nPropBodyPoint),
            &(m_airplane.m_vPropDir.m_dX),
            &(m_airplane.m_vPropDir.m_dY),
@@ -356,13 +359,13 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
     m_airplane.m_vPropDir.ToUnitLength();
     --(m_airplane.m_nPropBodyPoint);
     FileHelpers::GetKeyStringFromINIFile("Airplane", "UseRudderOnTurns", "default", sAirplane, sFilename);
-    if(sAirplane.CompareNoCase("default") == 0) {
+    if(sAirplane.compare("default") == 0) {
       m_airplane.m_dUseRudderForTurn = 0.0;
     } else {
-      sscanf(LPCTSTR(sAirplane), "%lf", &(m_airplane.m_dUseRudderForTurn));
+      sscanf(sAirplane.c_str(), "%lf", &(m_airplane.m_dUseRudderForTurn));
     }
     FileHelpers::GetKeyStringFromINIFile("Airplane", "Trailpoints", "-1", sAirplane, sFilename);
-    sscanf(LPCTSTR(sAirplane), "%d, %d, %d, %d, %d", 
+    sscanf(sAirplane.c_str(), "%d, %d, %d, %d, %d", 
            &(m_nTrailpoint[0]),
            &(m_nTrailpoint[1]),
            &(m_nTrailpoint[2]),
@@ -391,13 +394,15 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
   m_nBodyPoints = 0;
   for(i = 0; i < 100; ++i) {
     // Try to read in the body point
-    sKey.Format("BodyPoint%d", i + 1);
+    stringstream val;
+    val << "BodyPoint" << i + 1;
+    sKey = val.str();
     FileHelpers::GetKeyStringFromINIFile("Body", sKey, "default", sValue, sFilename);
-    if(sValue.CompareNoCase("default") == 0) {
+    if(sValue.compare("default") == 0) {
       // Break out, there are no body points
       break;
     }
-    sscanf(LPCTSTR(sValue), 
+    sscanf(sValue.c_str(), 
            "%lf, %lf, %lf, %lf, %lf",
            &(m_pBodyPoint[i].m_vLocation.m_dX),
            &(m_pBodyPoint[i].m_vLocation.m_dY),
@@ -427,8 +432,8 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
   //* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
   // Load direction points
   FileHelpers::GetKeyStringFromINIFile("Body", "ForwardPoints", "default", sValue, sFilename);
-  if(sValue.CompareNoCase("default") != 0) {
-    if(sscanf(LPCTSTR(sValue), 
+  if(sValue.compare("default") != 0) {
+    if(sscanf(sValue.c_str(), 
               "%d, %d, %d, %d", 
               &(m_nForwardPoints[0]),
               &(m_nForwardPoints[1]),
@@ -444,8 +449,8 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
   }
 
   FileHelpers::GetKeyStringFromINIFile("Body", "RightPoints", "default", sValue, sFilename);
-  if(sValue.CompareNoCase("default") != 0) {
-    if(sscanf(LPCTSTR(sValue), 
+  if(sValue.compare("default") != 0) {
+    if(sscanf(sValue.c_str(), 
               "%d, %d, %d, %d", 
               &(m_nRightPoints[0]),
               &(m_nRightPoints[1]),
@@ -473,11 +478,11 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
   // First count how many there are
   m_nParts = 0;
   do {
-    CString sHasSection;
-    CString sSection;
-    sSection.Format("Part%d", m_nParts + 1);
-    FileHelpers::GetKeyStringFromINIFile(sSection, "", "default", sHasSection, sFilename);
-    if(sHasSection.CompareNoCase("default") != 0) {
+    string sHasSection;
+    stringstream sSection;
+    sSection << "Part" << m_nParts + 1;
+    FileHelpers::GetKeyStringFromINIFile(sSection.str(), "", "default", sHasSection, sFilename);
+    if(sHasSection.compare("default") != 0) {
       ++m_nParts;
     } else {
       break;
@@ -491,10 +496,10 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
 
   // Read parts
   for(int nPart = 0; nPart < m_nParts; ++nPart) {
-    CString sSection;
-    sSection.Format("Part%d", nPart + 1);
+    stringstream sSection;
+    sSection << "Part" << nPart + 1;
     m_pPart[nPart].SetOBJData(&m_OBJData);
-    m_pPart[nPart].LoadPartFromFile(sFilename, sSection, false, true);
+    m_pPart[nPart].LoadPartFromFile(sFilename, sSection.str(), false, true);
   }
 
   m_partShadow.SetOBJData(&m_OBJData);
@@ -521,9 +526,11 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
   m_bAerodynamics = false;
 
   for(i = 0; i < m_nBodyPoints; ++i) {
-    sKey.Format("BodyPoint%d", i + 1);
+	  stringstream val;
+	  val << "BodyPoint" << i + 1;
+	  sKey = val.str();
     FileHelpers::GetKeyStringFromINIFile("Aerodynamics", sKey, "default", sValue, sFilename);
-    if(sValue.CompareNoCase("default") == 0) {
+    if(sValue.compare("default") == 0) {
       // Not all aerodynamic points were defined, ignore aerodynamics
       m_bAerodynamics = false;
       delete [] m_pAeroPoint;
@@ -531,7 +538,7 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
       break;
     }
     m_bAerodynamics = true;
-    sscanf(LPCTSTR(sValue), 
+    sscanf(sValue.c_str(), 
            "%lf, %lf, %lf, %lf, %lf, %lf", 
            &(m_pAeroPoint[i].m_vMaxDragDir.m_dX),
            &(m_pAeroPoint[i].m_vMaxDragDir.m_dY),
@@ -555,43 +562,37 @@ void BVehicle::LoadVehicleFromFile(CString sFilename, bool bLocalCar) {
 
   PrepareVehicle();
 
-  CString sChecksum;
+  string sChecksum;
   FileHelpers::GetKeyStringFromINIFile("Properties", "Checksum", "<no checksum>", sChecksum, sFilename);
 
-  CString sVerifyData;
-  sVerifyData.Format("%.5lf%.5lf", m_dTotalMass, m_dHorsePowers);
+  stringstream sVerifyData;
+  sVerifyData << m_dTotalMass << m_dHorsePowers;
   for(i = 0; i < m_nBodyPoints; ++i) {
-    CString sTmp;
-    sTmp.Format("%.5lf%.5lf%.5lf%.5lf%.5lf",
-                m_pBodyPoint[i].m_dFriction,
-                m_pBodyPoint[i].m_dMass,
-                m_pBodyPoint[i].m_vLocation.m_dX,
-                m_pBodyPoint[i].m_vLocation.m_dY,
-                m_pBodyPoint[i].m_vLocation.m_dZ);
-    sVerifyData += sTmp;
+    sVerifyData << m_pBodyPoint[i].m_dFriction <<
+                m_pBodyPoint[i].m_dMass <<
+                m_pBodyPoint[i].m_vLocation.m_dX <<
+                m_pBodyPoint[i].m_vLocation.m_dY <<
+                m_pBodyPoint[i].m_vLocation.m_dZ;
   }
   for(i = 0; i < m_nWheels; ++i) {
-    CString sTmp;
-    sTmp.Format("%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%d%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf",
-                m_pWheel[i]->m_dSuspRelaxedDistance,
-                m_pWheel[i]->m_dSuspension,
-                m_pWheel[i]->m_dMaxSuspThrow,
-                m_pWheel[i]->m_dSuspStiffness,
-                m_pWheel[i]->m_dMaxSusp,
-                m_pWheel[i]->m_dMinSusp,
-                m_pWheel[i]->m_nBodyPoint,
-                m_pWheel[i]->m_vSuspDir.m_dX,
-                m_pWheel[i]->m_vSuspDir.m_dY,
-                m_pWheel[i]->m_vSuspDir.m_dZ,
-                m_pWheel[i]->m_vSuspBasePoint.m_dX,
-                m_pWheel[i]->m_vSuspBasePoint.m_dY,
-                m_pWheel[i]->m_vSuspBasePoint.m_dZ,
-                m_pWheel[i]->m_dDriveFactor,
-                m_pWheel[i]->m_dBrakeFactor);
-    sVerifyData += sTmp;
+    sVerifyData << m_pWheel[i]->m_dSuspRelaxedDistance <<
+                m_pWheel[i]->m_dSuspension <<
+                m_pWheel[i]->m_dMaxSuspThrow <<
+                m_pWheel[i]->m_dSuspStiffness <<
+                m_pWheel[i]->m_dMaxSusp <<
+                m_pWheel[i]->m_dMinSusp <<
+                m_pWheel[i]->m_nBodyPoint <<
+                m_pWheel[i]->m_vSuspDir.m_dX <<
+                m_pWheel[i]->m_vSuspDir.m_dY <<
+                m_pWheel[i]->m_vSuspDir.m_dZ <<
+                m_pWheel[i]->m_vSuspBasePoint.m_dX <<
+                m_pWheel[i]->m_vSuspBasePoint.m_dY <<
+                m_pWheel[i]->m_vSuspBasePoint.m_dZ <<
+                m_pWheel[i]->m_dDriveFactor <<
+                m_pWheel[i]->m_dBrakeFactor;
   }
 
-  m_bVerified = (BGame::GetVerifyChecksum(sVerifyData).Compare(sChecksum) == 0);
+  m_bVerified = (BGame::GetVerifyChecksum(sVerifyData.str()).compare(sChecksum) == 0);
 }
 
 
@@ -636,20 +637,24 @@ void BVehicle::PrepareVehicle() {
 
 //**********************************************************************
 
-bool BVehicle::LoadWheelFromFile(CString sFilename, 
+bool BVehicle::LoadWheelFromFile(string sFilename, 
                                  int nWheel, 
                                  BWheel *pWheel) {
   double dTmp;
-  CString sKey, sValue;
+  string sKey, sValue;
 
-  sKey.Format("Wheel%dTurn", nWheel);
+  stringstream val;
+  val << "Wheel" << nWheel << "Turn";
+  sKey = val.str();
   FileHelpers::GetKeyStringFromINIFile("Wheels", sKey, "default", sValue, sFilename);
-  if(sValue.CompareNoCase("default") == 0) {
+  if(sValue.compare("default") == 0) {
     return false;
   }
 
   // Turns
-  sKey.Format("Wheel%dTurn", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Turn";
+  sKey = val.str();
   FileHelpers::GetKeyStringFromINIFile("Wheels", sKey, "Fixed", sValue, sFilename);
   if(sValue[0] == 'F') {
     pWheel->m_bTurns = false;
@@ -661,7 +666,7 @@ bool BVehicle::LoadWheelFromFile(CString sFilename,
     }
     if(sValue[nAfterComma] == ',') {
       ++nAfterComma;
-      sscanf(LPCTSTR(sValue) + nAfterComma, 
+      sscanf(sValue.c_str() + nAfterComma, 
              "%lf, %lf", 
              &(pWheel->m_dThrow),
              &dTmp);
@@ -671,73 +676,105 @@ bool BVehicle::LoadWheelFromFile(CString sFilename,
     }
   }
 
-  sKey.Format("Wheel%dSide", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Side";
+  sKey = val.str();
   FileHelpers::GetKeyStringFromINIFile("Wheels", sKey, "Right", sValue, sFilename);
   pWheel->m_bLeft = (sValue[0] == 'l') || (sValue[0] == 'L');
 
-  sKey.Format("Wheel%dDrive", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Drive";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 1.0, pWheel->m_dDriveFactor, sFilename);
 
-  sKey.Format("Wheel%dBrake", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Brake";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 1.0, pWheel->m_dBrakeFactor, sFilename);
 
-  sKey.Format("Wheel%dFriction", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Friction";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.9, pWheel->m_dFriction, sFilename);
 
-  sKey.Format("Wheel%dRadius", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Radius";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.4, pWheel->m_dRadius, sFilename);
 
-  sKey.Format("Wheel%dProfileHeight", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "ProfileHeight";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.1, pWheel->m_dProfileHeight, sFilename);
 
-  sKey.Format("Wheel%dWidth", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Width";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.1, pWheel->m_dWidth, sFilename);
 
-  sKey.Format("Wheel%dStyle", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "Style";
+  sKey = val.str();
   FileHelpers::GetKeyStringFromINIFile("Wheels", sKey, "ChromeDome", sValue, sFilename);
-  if(sValue.CompareNoCase("ChromeDome") == 0) {
-    pWheel->m_style = BWheel::TWheelStyle::CHROMEDOME;
-  } else if(sValue.CompareNoCase("OffRoad") == 0) {
-    pWheel->m_style = BWheel::TWheelStyle::OFFROAD;
-  } else if(sValue.CompareNoCase("ClassicAirplane") == 0) {
-    pWheel->m_style = BWheel::TWheelStyle::CLASSICAIRPLANE;
-  } else if(sValue.CompareNoCase("MomsNewWheels") == 0) {
-    pWheel->m_style = BWheel::TWheelStyle::MOMSNEWWHEELS;
-  } else if(sValue.CompareNoCase("RacingFever") == 0) {
-    pWheel->m_style = BWheel::TWheelStyle::RACINGFEVER;
-  } else if(sValue.CompareNoCase("SemiSpoke") == 0) {
-    pWheel->m_style = BWheel::TWheelStyle::SEMISPOKE;
+  if(sValue.compare("ChromeDome") == 0) {
+    pWheel->m_style = BWheel::CHROMEDOME;
+  } else if(sValue.compare("OffRoad") == 0) {
+    pWheel->m_style = BWheel::OFFROAD;
+  } else if(sValue.compare("ClassicAirplane") == 0) {
+    pWheel->m_style = BWheel::CLASSICAIRPLANE;
+  } else if(sValue.compare("MomsNewWheels") == 0) {
+    pWheel->m_style = BWheel::MOMSNEWWHEELS;
+  } else if(sValue.compare("RacingFever") == 0) {
+    pWheel->m_style = BWheel::RACINGFEVER;
+  } else if(sValue.compare("SemiSpoke") == 0) {
+    pWheel->m_style = BWheel::SEMISPOKE;
   } else {
-    pWheel->m_style = BWheel::TWheelStyle::CHROMEDOME;
+    pWheel->m_style = BWheel::CHROMEDOME;
   }
 
-  sKey.Format("Wheel%dSuspBodyPoint", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "SuspBodyPoint";
+  sKey = val.str();
   FileHelpers::GetKeyIntFromINIFile("Wheels", sKey, 1, pWheel->m_nBodyPoint, sFilename);
   --(pWheel->m_nBodyPoint);
 
-  sKey.Format("Wheel%dSuspBasePoint", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "SuspBasePoint";
+  sKey = val.str();
   FileHelpers::GetKeyVectorFromINIFile("Wheels", sKey, BVector(0, 0, 0), pWheel->m_vSuspBasePoint, sFilename);
   pWheel->m_vSuspBasePoint -= m_OBJData.m_vMassCenter;
-  
-  sKey.Format("Wheel%dSuspDir", nWheel);
+
+  val.str("");
+  val << "Wheel" << nWheel << "SuspDir";
+  sKey = val.str();
   FileHelpers::GetKeyVectorFromINIFile("Wheels", sKey, BVector(0, 0, 0), pWheel->m_vSuspDir, sFilename);
   pWheel->m_vSuspDir.ToUnitLength();
 
-  sKey.Format("Wheel%dSuspRelaxedDistance", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "SuspRelaxedDistance";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.3, pWheel->m_dSuspRelaxedDistance, sFilename);
 
-  sKey.Format("Wheel%dSuspThrow", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "SuspThrow";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.3, pWheel->m_dMaxSuspThrow, sFilename);
 
   pWheel->m_dMaxSusp = pWheel->m_dMaxSuspThrow;
   pWheel->m_dMinSusp = 0.0;
-  sKey.Format("Wheel%dMinSusp", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "MinSusp";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.0, pWheel->m_dMinSusp, sFilename);
 
-  sKey.Format("Wheel%dMaxSusp", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "MaxSusp";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, pWheel->m_dMaxSuspThrow, pWheel->m_dMaxSusp, sFilename);
 
-  sKey.Format("Wheel%dSuspStiffness", nWheel);
+  val.str("");
+  val << "Wheel" << nWheel << "SuspStiffness";
+  sKey = val.str();
   FileHelpers::GetKeyDoubleFromINIFile("Wheels", sKey, 0.35, pWheel->m_dSuspStiffness, sFilename);
   if(pWheel->m_dSuspStiffness <= 0.0001) {
     pWheel->m_dSuspStiffness = 0.0001;
@@ -759,7 +796,7 @@ bool BVehicle::LoadWheelFromFile(CString sFilename,
 
 
 //**********************************************************************
-void BVehicle::Move(BVector& vRelMove) {
+void BVehicle::Move(BVector vRelMove) {
   for(int i = 0; i < m_nBodyPoints; ++i) {
     m_pBodyPoint[i].m_vLocation = m_pBodyPoint[i].m_vLocation + vRelMove;
   }
@@ -879,7 +916,7 @@ void BVehicle::PreProcessWheels() {
       continue;
     }
 
-    if(pWheel->m_style == BWheel::TWheelStyle::OFFROAD) {
+    if(pWheel->m_style == BWheel::OFFROAD) {
       // Wheel blade
       pWheel->m_nDLWheelBlade = glGenLists(1);
       glNewList(pWheel->m_nDLWheelBlade, GL_COMPILE);
@@ -901,7 +938,7 @@ void BVehicle::PreProcessWheels() {
     // sides
     OpenGLHelpers::SwitchToTexture(0);
     OpenGLHelpers::SetColorFull(1, 1, 1, 1);
-    if(pWheel->m_style == BWheel::TWheelStyle::OFFROAD) {
+    if(pWheel->m_style == BWheel::OFFROAD) {
       BTextures::Use(BTextures::LoadTexture(".\\Textures\\WheelDetailed2.tga"));
     } else {
       BTextures::Use(BTextures::WHEEL);
@@ -919,7 +956,7 @@ void BVehicle::PreProcessWheels() {
 
     double dSectors = bCoarse ? 10 : 20;
 
-    if (pWheel->m_style != BWheel::TWheelStyle::MOMSNEWWHEELS) {
+    if (pWheel->m_style != BWheel::MOMSNEWWHEELS) {
       glBegin(GL_TRIANGLE_STRIP);
       for(fan = 0; fan < (dSectors + 1.0); ++fan) {
         vTmp[fan] = BVector(dWidth05, 0, 0) +
@@ -1021,11 +1058,11 @@ void BVehicle::PreProcessWheels() {
     }
 
     // Blades (hub cap)
-    if(pWheel->m_style != BWheel::TWheelStyle::OFFROAD) {
-      if(pWheel->m_style == BWheel::TWheelStyle::CHROMEDOME ||
-         pWheel->m_style == BWheel::TWheelStyle::MOMSNEWWHEELS ||
-         pWheel->m_style == BWheel::TWheelStyle::RACINGFEVER ||
-         pWheel->m_style == BWheel::TWheelStyle::SEMISPOKE) {
+    if(pWheel->m_style != BWheel::OFFROAD) {
+      if(pWheel->m_style == BWheel::CHROMEDOME ||
+         pWheel->m_style == BWheel::MOMSNEWWHEELS ||
+         pWheel->m_style == BWheel::RACINGFEVER ||
+         pWheel->m_style == BWheel::SEMISPOKE) {
         OpenGLHelpers::SetColorFull(1, 1, 1, 1);
         OpenGLHelpers::SwitchToTexture(0);
         BTextures::Use(BTextures::ENVMAP);
@@ -1041,7 +1078,7 @@ void BVehicle::PreProcessWheels() {
       BVector vHubCenter(dWidth05Bevel, 0, 0);
       double  dHubRadius = dRadius * 0.65;
       BVector v, vNormal;
-      double dAngleStep = (pWheel->m_style == BWheel::TWheelStyle::CHROMEDOME) ? 15.0 : 30.0;
+      double dAngleStep = (pWheel->m_style == BWheel::CHROMEDOME) ? 15.0 : 30.0;
       int nSpokes = 8;
       double dSpokeWidth;
       double dSpokeThickness;
@@ -1062,7 +1099,7 @@ void BVehicle::PreProcessWheels() {
       double dDepthCenter9;
       double dMiddleRadius;
       double dRimDepth;
-      if (pWheel->m_style == BWheel::TWheelStyle::MOMSNEWWHEELS) {
+      if (pWheel->m_style == BWheel::MOMSNEWWHEELS) {
         nSpokes = 5;
         dHubRadius = 0.83 * dRadius;
         dSpokeWidth = 0.058 * 3.5 * dHubRadius;
@@ -1085,7 +1122,7 @@ void BVehicle::PreProcessWheels() {
         dDepthCenter9 = -0.0 * dDepthFactor + dRimDepth;
         dMiddleRadius = 0.78 * dHubRadius;
       }
-      else if (pWheel->m_style == BWheel::TWheelStyle::RACINGFEVER) {
+      else if (pWheel->m_style == BWheel::RACINGFEVER) {
         nSpokes = 10;
         dHubRadius = 0.69 * dRadius;
         dSpokeWidth = 0.0215 * 3.5 * dHubRadius;
@@ -1108,7 +1145,7 @@ void BVehicle::PreProcessWheels() {
         dDepthCenter9 = -0.0 * dDepthFactor + dRimDepth;
         dMiddleRadius = 0.7 * dHubRadius;
       }
-      else if (pWheel->m_style == BWheel::TWheelStyle::SEMISPOKE) {
+      else if (pWheel->m_style == BWheel::SEMISPOKE) {
         nSpokes = 8;
         dSpokeWidth = 0.075 * 3.5 * dHubRadius;
         dSpokeThickness = 0.02 * 3.5 * dHubRadius;
@@ -1130,9 +1167,9 @@ void BVehicle::PreProcessWheels() {
         dDepthCenter9 = 0.0 * dDepthFactor + dRimDepth;
         dMiddleRadius = 0.8 * dHubRadius;
       }
-      if(pWheel->m_style == BWheel::TWheelStyle::MOMSNEWWHEELS ||
-         pWheel->m_style == BWheel::TWheelStyle::RACINGFEVER ||
-         pWheel->m_style == BWheel::TWheelStyle::SEMISPOKE) {
+      if(pWheel->m_style == BWheel::MOMSNEWWHEELS ||
+         pWheel->m_style == BWheel::RACINGFEVER ||
+         pWheel->m_style == BWheel::SEMISPOKE) {
         double dCenterRadius = dSpokeWidth / tan(g_cdPI / double(nSpokes));
         if (dCenterRadius > dHubRadius / 2.0) {
           dCenterRadius = dHubRadius / 2.0;
@@ -1363,7 +1400,7 @@ void BVehicle::PreProcessWheels() {
         }}
         glEnd();
       }
-      else if (pWheel->m_style == BWheel::TWheelStyle::CHROMEDOME) {
+      else if (pWheel->m_style == BWheel::CHROMEDOME) {
         for(double dBigAngle = 0.0; dBigAngle < 76.0; dBigAngle += dAngleStep) {
           glBegin(GL_TRIANGLE_STRIP);
           for(double dSmallAngle = 0.0; dSmallAngle < 360.1; dSmallAngle += dAngleStep) {
@@ -1393,7 +1430,7 @@ void BVehicle::PreProcessWheels() {
           glEnd();
         }
       }
-      else if(pWheel->m_style == BWheel::TWheelStyle::CLASSICAIRPLANE) {
+      else if(pWheel->m_style == BWheel::CLASSICAIRPLANE) {
         vHubCenter.Set(-dWidth05Bevel, 0, 0);
         for(double dBigAngle = 0.0; dBigAngle < 76.0; dBigAngle += dAngleStep) {
           glBegin(GL_TRIANGLE_STRIP);
@@ -1425,10 +1462,10 @@ void BVehicle::PreProcessWheels() {
         }
       }
 
-      if(pWheel->m_style == BWheel::TWheelStyle::CHROMEDOME ||
-         pWheel->m_style == BWheel::TWheelStyle::MOMSNEWWHEELS ||
-         pWheel->m_style == BWheel::TWheelStyle::RACINGFEVER ||
-         pWheel->m_style == BWheel::TWheelStyle::SEMISPOKE) {
+      if(pWheel->m_style == BWheel::CHROMEDOME ||
+         pWheel->m_style == BWheel::MOMSNEWWHEELS ||
+         pWheel->m_style == BWheel::RACINGFEVER ||
+         pWheel->m_style == BWheel::SEMISPOKE) {
         glDisable(GL_TEXTURE_GEN_S);
 	      glDisable(GL_TEXTURE_GEN_T);
       }
@@ -1504,7 +1541,7 @@ void BVehicle::PreProcessWheels() {
     }
     OpenGLHelpers::TriangleStripWithNormals(vTmp, vNormals, int(dSectors + 1.0) * 2);
 
-    if (pWheel->m_style != BWheel::TWheelStyle::MOMSNEWWHEELS) {
+    if (pWheel->m_style != BWheel::MOMSNEWWHEELS) {
       // Traction surface INSIDE
       OpenGLHelpers::SetColorFull(0.2, 0.2, 0.2, 1);
       for(fan = 0; fan < (dSectors + 1.0); ++fan) {
@@ -1893,7 +1930,7 @@ void BVehicle::Paint(int m_nPhysicsSteps) {
     double dSum = 0.0;
     BVector vCenterOfGravity(0, 0, 0);
     BUI::TextRenderer()->StartRenderingText();
-    CString sLabel;
+    stringstream sLabel;
     for(i = 0; i < m_nBodyPoints; ++i) {
       glRasterPos3d(m_pBodyPoint[i].m_vLocation.m_dX,
                     m_pBodyPoint[i].m_vLocation.m_dY,
@@ -1905,15 +1942,16 @@ void BVehicle::Paint(int m_nPhysicsSteps) {
       glPushMatrix();
       BGame::GetView()->Setup2DRendering();
 
-      sLabel.Format("%d", i + 1);
+	  sLabel.str("");
+      sLabel << i + 1;
 
       GLdouble dPos[4];
       glGetDoublev(GL_CURRENT_RASTER_POSITION, dPos);
       BUI::TextRenderer()->DrawSmallTextAt(dPos[0], 
                                            dPos[1], 
-                                           sLabel, 
-                                           sLabel.GetLength(), 
-                                           BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                           sLabel.str(), 
+                                           sLabel.str().length(), 
+                                           BTextRenderer::ALIGN_CENTER,
                                            0, 0, 0, 1);
       BGame::GetView()->End2DRendering();
       glMatrixMode(GL_PROJECTION);
@@ -2050,9 +2088,9 @@ double BVehicle::PointInsideMatter(BVector vPoint,         // [IN]  Point which 
   static double  dFriction3;
   static double  dBaseDepth3;
 
-  EnterCriticalSection(&(BGame::m_csMutex));
+  SDL_LockMutex(BGame::m_csMutex);
   double depthCars = BGame::GetSimulation()->PointInsideRemoteCar(vPoint, vNormal3, dFriction3, dBaseDepth3);
-  LeaveCriticalSection(&(BGame::m_csMutex));
+  SDL_UnlockMutex(BGame::m_csMutex);
 
   // See which dominates
   if((depthObjects <= 0.0) || (depthGround > depthObjects)) {

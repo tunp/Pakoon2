@@ -4,36 +4,32 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "Settings.h"
 #include "SoundModule.h"
 #include "BGame.h"
 
-CString Settings::m_sFilename = _T(".\\settings.dat");
-CString Settings::m_sBrowserPath = _T("c:\\program files\\internet explorer\\iexplore.exe");
+#include <iostream>
+
+using namespace std;
+
+string Settings::m_sFilename = "settings.dat";
+string Settings::m_sBrowserPath = "c:\\program files\\internet explorer\\iexplore.exe";
 
 extern bool g_cbBlackAndWhite;
 extern bool g_cbMipMap;
 
 
 void Settings::ReadSettings(BSimulation *pSimulation) {
-  char  sComputerName[MAX_COMPUTERNAME_LENGTH + 1];
-  DWORD dwLen = MAX_COMPUTERNAME_LENGTH + 1;
-  if(GetComputerName(sComputerName, &dwLen)) {
-    m_sFilename = ".\\";
-    m_sFilename += sComputerName;
-    m_sFilename += "settings.dat";
-  }
   FILE *fp;
-  fp = fopen(m_sFilename, "r");
+  fp = fopen(m_sFilename.c_str(), "r");
   if(fp) {
     char sLine[1024];
     fgets(sLine, 1024, fp);
-    sscanf(sLine, "ScreenRes = %d, %d, %d, %d", 
+    /*sscanf(sLine, "ScreenRes = %d, %d, %d, %d", 
       &(BGame::m_nDispWidth),
       &(BGame::m_nDispHeight),
       &(BGame::m_nDispBits),
-      &(BGame::m_nDispHz));
+      &(BGame::m_nDispHz));*/ //we use only desktop resolution now
     fgets(sLine, 1024, fp);
     sscanf(sLine, "TerrainResolution = %d", &(BGame::m_nTerrainResolution));
     fgets(sLine, 1024, fp);
@@ -92,7 +88,8 @@ void Settings::ReadSettings(BSimulation *pSimulation) {
     fgets(sLine, 1024, fp);
     sscanf(sLine, "KEYMAP-Camera = %u", &ControllerModule::m_keymap.m_unCamera);
 
-    fgets(sLine, 1024, fp);
+	//FIXME
+    /*fgets(sLine, 1024, fp);
     ControllerModule::m_controllermap.m_cmiLeft.FromString(sLine + 27);
     fgets(sLine, 1024, fp);
     ControllerModule::m_controllermap.m_cmiRight.FromString(sLine + 27);
@@ -109,7 +106,7 @@ void Settings::ReadSettings(BSimulation *pSimulation) {
     fgets(sLine, 1024, fp);
     ControllerModule::m_controllermap.m_cmiLift.FromString(sLine + 27);
     fgets(sLine, 1024, fp);
-    ControllerModule::m_controllermap.m_cmiCamera.FromString(sLine + 27);
+    ControllerModule::m_controllermap.m_cmiCamera.FromString(sLine + 27);*/
 
     g_cbBlackAndWhite = (BGame::m_nColorMode == 0);
     fgets(sLine, 1024, fp);
@@ -119,7 +116,7 @@ void Settings::ReadSettings(BSimulation *pSimulation) {
     if(strlen(sLine) > strlen("PlayerName = ")) {
       sLine[strlen(sLine) - 1] = '\0'; // eat up the newline from end
     }
-    CString sTmp = sLine + strlen("PlayerName = ");
+    string sTmp = sLine + strlen("PlayerName = ");
     BGame::GetMultiplay()->m_params.m_sPlayerName = sTmp;
     fgets(sLine, 1024, fp);
     BGame::GetMultiplay()->m_params.m_bHost = (sLine[strlen("Role = ")] == 'S');
@@ -138,22 +135,14 @@ void Settings::ReadSettings(BSimulation *pSimulation) {
 
     fclose(fp);
   } else {
-    CString sTmp;
-    sTmp.Format("Cannot open %s. Using default settings.", m_sFilename);
-    BGame::MyAfxMessageBox(sTmp, MB_OK);
+    string sTmp = "Cannot open " + m_sFilename + ". Using default settings.";
+	cout << sTmp << endl;
   }
 }
 
 void Settings::WriteSettings(BSimulation *pSimulation) {
-  char  sComputerName[MAX_COMPUTERNAME_LENGTH + 1];
-  DWORD dwLen = MAX_COMPUTERNAME_LENGTH + 1;
-  if(GetComputerName(sComputerName, &dwLen)) {
-    m_sFilename = ".\\";
-    m_sFilename += sComputerName;
-    m_sFilename += "settings.dat";
-  }
   FILE *fp;
-  fp = fopen(m_sFilename, "w");
+  fp = fopen(m_sFilename.c_str(), "w");
   if(fp) {
     fprintf(fp, "ScreenRes = %d, %d, %d, %d\n", 
             BGame::m_nDispWidth,
@@ -188,8 +177,9 @@ void Settings::WriteSettings(BSimulation *pSimulation) {
     fprintf(fp, "KEYMAP-Lift = %u\n", ControllerModule::m_keymap.m_unLift);
     fprintf(fp, "KEYMAP-Camera = %u\n", ControllerModule::m_keymap.m_unCamera);
 
-    bool bTmp;
-    CString sTmp;
+	//FIXME
+    /*bool bTmp;
+    string sTmp;
     sTmp = ControllerModule::m_controllermap.m_cmiLeft.ToString(bTmp);
     if(bTmp) { sTmp += " Flipped";}
     fprintf(fp, "CONTROLLERMAP-Left       = %s\n", sTmp);
@@ -216,12 +206,12 @@ void Settings::WriteSettings(BSimulation *pSimulation) {
     fprintf(fp, "CONTROLLERMAP-Lift       = %s\n", sTmp);
     sTmp = ControllerModule::m_controllermap.m_cmiCamera.ToString(bTmp);
     if(bTmp) { sTmp += " Flipped";}
-    fprintf(fp, "CONTROLLERMAP-Camera     = %s\n", sTmp);
+    fprintf(fp, "CONTROLLERMAP-Camera     = %s\n", sTmp);*/
     fprintf(fp, "WaterSurface = %d\n", BGame::m_nWaterSurface);
 
-    fprintf(fp, "PlayerName = %s\n", LPCTSTR(BGame::GetMultiplay()->m_params.m_sPlayerName));
+    fprintf(fp, "PlayerName = %s\n", BGame::GetMultiplay()->m_params.m_sPlayerName.c_str());
     fprintf(fp, "Role = %s\n", BGame::GetMultiplay()->m_params.m_bHost ? "Server" : "Client");
-    fprintf(fp, "HostIP = %s\n", LPCTSTR(BGame::GetMultiplay()->m_params.m_sHostIPAddress));
+    fprintf(fp, "HostIP = %s\n", BGame::GetMultiplay()->m_params.m_sHostIPAddress.c_str());
 
     fprintf(fp, "CarDetails = %d\n", BGame::m_nCarDetails);
 
@@ -229,9 +219,8 @@ void Settings::WriteSettings(BSimulation *pSimulation) {
 
     fclose(fp);
   } else {
-    CString sTmp;
-    sTmp.Format("Cannot open %s. Settings were not saved.", m_sFilename);
-    BGame::MyAfxMessageBox(sTmp);
+    string sTmp = "Cannot open " + m_sFilename + ". Settings were not saved.";
+    cout << sTmp << endl;
   }
 }
 

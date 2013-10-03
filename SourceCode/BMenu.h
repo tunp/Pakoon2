@@ -10,6 +10,9 @@
 #include "BTextRenderer.h"
 #include "BUI.h"
 
+#include <string>
+
+using namespace std;
 
 //*************************************************************************************************
 class BMenuItem {
@@ -18,16 +21,16 @@ public:
   enum TType {BASIC, STRING_FROM_LIST, SLIDER, EDITBOX};
 
   TType    m_type;
-  CString  m_sText;
-  CString  m_sValue;
+  string  m_sText;
+  string  m_sValue;
   int      m_nValue;
   int      m_nValue2;
-  CString  m_sAssocFile;
+  string  m_sAssocFile;
   int      m_nAssocImage;
   BUIEdit  m_ebAssocEditBox;
   bool     m_bDisabled;
   int      m_nAssocListItems;
-  CString *m_sAssocListItems;
+  string *m_sAssocListItems;
   BUISelectionList m_listMenu;
   bool     m_bOpen;
   double   m_dRed;
@@ -60,11 +63,11 @@ public:
               HISCORES,
               GAME};
 
-  CString    m_sName;
+  string    m_sName;
   TType      m_type;
   int        m_nItems;
   BMenuItem *m_items;
-  CString   *m_sItems;
+  string   *m_sItems;
 
   int        m_nTitleWidth;
   int        m_nTitleHeight;

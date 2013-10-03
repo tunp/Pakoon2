@@ -4,12 +4,9 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BTextRenderer.h"
 #include "BTextures.h"
 #include "BSimulation.h"
-
-
 
 //*************************************************************************************************
 BTextRenderer::BTextRenderer() {
@@ -19,9 +16,9 @@ BTextRenderer::BTextRenderer() {
 
 
 //*************************************************************************************************
-double BTextRenderer::GetStringWidth(CString sTxt) {
+double BTextRenderer::GetStringWidth(string sTxt) {
   double dWidth = 0;
-  for(int i = 0; i < sTxt.GetLength(); ++i) {
+  for(int i = 0; i < sTxt.length(); ++i) {
     char c = sTxt[i];
     c = toupper(c);
     c -= ' ';
@@ -68,7 +65,7 @@ void BTextRenderer::Init() {
     int nYEnd   = 256 - m_nBaseline[nLine] - nOffsetFromBaseline + nLineHeight;
     while(!bAlphaFound) {
       for(int nYPos = nYStart; nYPos < nYEnd; ++nYPos) {
-        BTextures::GetRGBFromTexture(BTextures::Texture::LETTERS,
+        BTextures::GetRGBFromTexture(BTextures::LETTERS,
                                      nXPos,
                                      nYPos,
                                      nRed, nGreen, nBlue, nAlpha);
@@ -97,7 +94,7 @@ void BTextRenderer::Init() {
     while(bAlphaFound) {
       bAlphaFound = false;
       for(int nYPos = nYStart; nYPos < nYEnd; ++nYPos) {
-        BTextures::GetRGBFromTexture(BTextures::Texture::LETTERS,
+        BTextures::GetRGBFromTexture(BTextures::LETTERS,
                                      nXPos,
                                      nYPos,
                                      nRed, nGreen, nBlue, nAlpha);
@@ -123,7 +120,7 @@ void BTextRenderer::Init() {
 //*************************************************************************************************
 void BTextRenderer::StartRenderingText() {
   OpenGLHelpers::SwitchToTexture(0);
-  BTextures::Use(BTextures::Texture::LETTERS);
+  BTextures::Use(BTextures::LETTERS);
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
@@ -136,7 +133,7 @@ void BTextRenderer::StopRenderingText() {
 //*************************************************************************************************
 void BTextRenderer::DrawTextAt(double dX, 
                                double dY, 
-                               CString sText, 
+                               string sText, 
                                TTextAlign textalign,
                                double dRed, 
                                double dGreen, 
@@ -155,7 +152,7 @@ void BTextRenderer::DrawTextAt(double dX,
   }
 
   // Draw text char by char
-  for(int i = 0; i < sText.GetLength(); ++i) {
+  for(int i = 0; i < sText.length(); ++i) {
     char c = sText[i];
     c = toupper(c);
     c -= ' ';
@@ -183,7 +180,7 @@ void BTextRenderer::DrawTextAt(double dX,
 //*************************************************************************************************
 void BTextRenderer::DrawSmallTextAt(double dX, 
                                     double dY, 
-                                    CString sText, 
+                                    string sText, 
                                     int     nChars,
                                     TTextAlign textalign,
                                     double dRed, 

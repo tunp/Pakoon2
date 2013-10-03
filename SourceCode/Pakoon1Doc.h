@@ -13,43 +13,43 @@
 
 #include "BSimulation.h"
 
-class CPakoon1Doc : public CDocument {
-
-protected: // create from serialization only
+class CPakoon1Doc  {
+public:
+//protected: // create from serialization only
 	CPakoon1Doc();
-	DECLARE_DYNCREATE(CPakoon1Doc)
+	//DECLARE_DYNCREATE(CPakoon1Doc)
 
 // Attributes
-public:
+//public:
 
 // Operations
-public:
+//public:
 
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CPakoon1Doc)
-	public:
-	virtual BOOL OnNewDocument();
-	virtual void Serialize(CArchive& ar);
+	//public:
+	//virtual BOOL OnNewDocument();
+	//virtual void Serialize(CArchive& ar);
 	//}}AFX_VIRTUAL
 
 // Implementation
-public:
+//public:
 	virtual ~CPakoon1Doc();
-#ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
-#endif
+//#ifdef _DEBUG
+	//virtual void AssertValid() const;
+	//virtual void Dump(CDumpContext& dc) const;
+//#endif
 
-protected:
+//protected:
 
 // Generated message map functions
-protected:
+//protected:
 	//{{AFX_MSG(CPakoon1Doc)
 		// NOTE - the ClassWizard will add and remove member functions here.
 		//    DO NOT EDIT what you see in these blocks of generated code !
 	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+	//DECLARE_MESSAGE_MAP()
 };
 
 /////////////////////////////////////////////////////////////////////////////

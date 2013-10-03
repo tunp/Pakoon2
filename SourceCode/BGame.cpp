@@ -4,7 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BGame.h"
 #include "FileIOHelpers.h"
 #include "BTextures.h" 
@@ -13,7 +12,14 @@
 #include "HeightMap.h"
 #include "Pakoon1View.h"
 
-BGame::TGameMode BGame::m_gameMode = BGame::TGameMode::SLALOM;
+#include <sstream>
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+using namespace std;
+
+BGame::TGameMode BGame::m_gameMode = BGame::SLALOM;
 
 BSimulation   BGame::m_simulation;
 BPlayer       BGame::m_player;
@@ -63,8 +69,8 @@ bool    BGame::m_bSceneEditorMode = true;
 bool    BGame::m_bFadingIn = false;
 clock_t BGame::m_clockFadeStart = 0;
 
-CString BGame::m_sScene = "";
-CString BGame::m_sVehicle = "";
+string BGame::m_sScene = "";
+string BGame::m_sVehicle = "";
 
 bool    BGame::m_bMenuMode = true;
 BMenu  *BGame::m_pMenuCurrent = 0;
@@ -87,7 +93,7 @@ bool    BGame::m_bGameLoading = false;
 bool    BGame::m_bGameReadyToStart = false;
 bool    BGame::m_bQuitPending = false;
 
-CRITICAL_SECTION BGame::m_csMutex;
+SDL_mutex *BGame::m_csMutex;
 double  BGame::m_dProgressMax = 1.0;
 double  BGame::m_dProgressPos = 0.0;
 
@@ -110,7 +116,7 @@ double      BGame::m_dAirTime;
 
 bool        BGame::m_bRecordSlalom;
 bool        BGame::m_bPassFromRightSlalom;
-CString     BGame::m_sRacePosition;
+string     BGame::m_sRacePosition;
 
 bool        BGame::m_bSlalomPolesVisualOK;
 bool        BGame::m_bForceBreak;
@@ -121,23 +127,23 @@ BRemotePlayer BGame::m_remotePlayer[4];
 
 double      BGame::m_dRefTime[7];
 int         BGame::m_nRefK;
-CString     BGame::m_sRefTime;
+string     BGame::m_sRefTime;
 
 bool        BGame::m_bMultiplayOn;
 bool        BGame::m_bExitingMultiplay;
 bool        BGame::m_bOKToProceedInMultiplayMenu;
 bool        BGame::m_bMultiplayRaceStarter;
 clock_t     BGame::m_clockMultiRaceStarter;
-DWORD       BGame::m_clockOffsetFromZeroTime;
+int       BGame::m_clockOffsetFromZeroTime;
 int         BGame::m_nPlayersInGoal;
-DWORD       BGame::m_nMultiplayPort = 2345;
+int       BGame::m_nMultiplayPort = 2345;
 
 int         BGame::m_nMultiplayMessages;
-CString     BGame::m_sMultiplayMessages[5];
+string     BGame::m_sMultiplayMessages[5];
 bool        BGame::m_bChatMessage[5];
 clock_t     BGame::m_clockMultiplayMessages[5];
 bool        BGame::m_bTABChatting;
-CString     BGame::m_sChatMsg;
+string     BGame::m_sChatMsg;
 
 bool        BGame::m_bNight;
 
@@ -154,7 +160,7 @@ int              BGame::m_nController;
 BControllerState BGame::m_controllerstate; // Access to a controller, such as a joystick or a wheel
 
 BMultiPlay       BGame::m_multiplay;
-GUID             BGame::m_guidServiceProviders[10];
+//GUID             BGame::m_guidServiceProviders[10];
 
 
 
@@ -174,7 +180,7 @@ BGame::BGame() {
 
   m_cmdModule.SetSim(&m_simulation);
   m_nController = 0;          // 0 = keyboard, 1 = joystick
-  m_cOnScreenInfo = TOnScreenInfo::FPS;  // Show fps, speed, altitude etc.
+  m_cOnScreenInfo = FPS;  // Show fps, speed, altitude etc.
   m_nSkyDetail = 2;           // High
   m_nDistantDetail = 2;       // High
   m_nColorMode = 1;           // Color
@@ -195,19 +201,19 @@ BGame::BGame() {
   m_clockHintStart = clock();
   m_nCarDetails = 1;
 
-  static CString sYesNo[2] = {"Yes", "No"};
-  static CString sOK[1] = {"OK"};
+  static string sYesNo[2] = {"Yes", "No"};
+  static string sOK[1] = {"OK"};
   m_listYesNo.SetItems(sYesNo, 2);
   m_listYesNo.SelectItem("Yes");
   m_listOK.SetItems(sOK, 1);
   m_listOK.SelectItem("OK");
 
-  static CString sHighscoresInit[7] = {"0:00.00", "0:00.00", "0:00.00", "0:00.00", "0:00.00", "0:00.00", "0:00.00"};
+  static string sHighscoresInit[7] = {"0:00.00", "0:00.00", "0:00.00", "0:00.00", "0:00.00", "0:00.00", "0:00.00"};
   m_listHSSpeedrace.SetItems(sHighscoresInit, 7);
   m_listHSSlalom.SetItems(sHighscoresInit, 7);
   m_listHSAirtime.SetItems(sHighscoresInit, 7);
 
-  //static CString sGameMenu[5] = {"Back to Game", "Restart Race", "Settings", "Help", "Quit to Main Menu"};
+  //static string sGameMenu[5] = {"Back to Game", "Restart Race", "Settings", "Help", "Quit to Main Menu"};
   //m_sellistGameMenu.SetItems(sGameMenu, 5);
   //m_sellistGameMenu.SelectItem("Back to Game");
 
@@ -228,7 +234,7 @@ BGame::BGame() {
   // Setup common tracking targets
   m_simulation.AddTrackingTarget("FUEL", BVector(0, 0, 0), 1, 0, 0);         // Red Fuel
 
-  InitializeCriticalSection(&m_csMutex);
+  m_csMutex = SDL_CreateMutex();
 
   m_pMenuCurrent = &m_menuMain;
   m_sRacePosition = "1/1";
@@ -253,20 +259,20 @@ BGame::BGame() {
 
   m_nMultiplayMessages = 0;
   m_bTABChatting = false;
-  m_sChatMsg = _T("");
+  m_sChatMsg = "";
 
   m_bNight = false;
 }
 
 //*************************************************************************************************
 BGame::~BGame() {
-  DeleteCriticalSection(&m_csMutex);
+  SDL_DestroyMutex(m_csMutex);
 }
 
 
 
 //*************************************************************************************************
-int BGame::AddRemotePlayer(DPNID id, BYTE *pPlayerName) {
+int BGame::AddRemotePlayer(int id, char *pPlayerName, BClientConnection *client_connection) {
 
   if(m_nRemotePlayers >= 4) {
     // fully booked
@@ -274,18 +280,20 @@ int BGame::AddRemotePlayer(DPNID id, BYTE *pPlayerName) {
   }
 
   int nIndex = m_nRemotePlayers;
-  m_remotePlayer[nIndex].m_id = id;
+  m_remotePlayer[nIndex].m_id = nIndex; //FIXME laitettiin id ennen
   strcpy(m_remotePlayer[nIndex].m_sName, (char *) pPlayerName);
   m_remotePlayer[nIndex].m_sCurrentMenuSel = "";
   m_remotePlayer[nIndex].m_bSelectionMade = false;
-  m_remotePlayer[nIndex].m_state = BRemotePlayer::TRemoteState::WANTS_TO_SELECT_NEW_RACE;
+  m_remotePlayer[nIndex].m_state = BRemotePlayer::WANTS_TO_SELECT_NEW_RACE;
   if(nIndex != GetMyPlace()) {
     m_remotePlayer[nIndex].m_bSelf = false;
   }
+  
+  m_remotePlayer[nIndex].client_connection = client_connection;
 
-  CString sMsg;
-  sMsg.Format("New player %s has joined", m_remotePlayer[nIndex].m_sName);
-  ShowMultiplayMessage(sMsg);
+  stringstream sMsg;
+  sMsg << "New player " << m_remotePlayer[nIndex].m_sName << " has joined";
+  ShowMultiplayMessage(sMsg.str());
   SoundModule::PlayMultiplayerJoinSound();
 
   ++m_nRemotePlayers;
@@ -296,15 +304,15 @@ int BGame::AddRemotePlayer(DPNID id, BYTE *pPlayerName) {
 
 
 //*************************************************************************************************
-void BGame::HandlePlayerExit(BYTE *pPlayerInfo) {
+void BGame::HandlePlayerExit(char *pPlayerInfo) {
   // Find player
   int nIndex = int(pPlayerInfo[0]) - 1;
   
   if(nIndex < m_nRemotePlayers) {
 
-    CString sMsg;
-    sMsg.Format("%s has left", m_remotePlayer[nIndex].m_sName);
-    ShowMultiplayMessage(sMsg);
+    stringstream sMsg;
+    sMsg << m_remotePlayer[nIndex].m_sName << " has left";
+    ShowMultiplayMessage(sMsg.str());
     SoundModule::PlayMultiplayerLeftSound();
 
     // Remove remote player by replacing it with the last one and decreasing player counter.
@@ -322,7 +330,7 @@ void BGame::HandlePlayerExit(BYTE *pPlayerInfo) {
 
 
 //*************************************************************************************************
-void BGame::HandlePlayerAbnormalExit(DPNID id) {
+void BGame::HandlePlayerAbnormalExit(int id) {
   // Find player
   int i = 0;
   bool bFound = false;
@@ -336,9 +344,9 @@ void BGame::HandlePlayerAbnormalExit(DPNID id) {
   
   if(bFound) {
 
-    CString sMsg;
-    sMsg.Format("%s has left (abnormally)", m_remotePlayer[i].m_sName);
-    ShowMultiplayMessage(sMsg);
+    stringstream sMsg;
+    sMsg << m_remotePlayer[i].m_sName << " has left (abnormally)";
+    ShowMultiplayMessage(sMsg.str());
     SoundModule::PlayMultiplayerLeftSound();
 
     // Remove remote player by replacing it with the last one and decreasing player counter.
@@ -356,24 +364,23 @@ void BGame::HandlePlayerAbnormalExit(DPNID id) {
 
 
 //*************************************************************************************************
-void BGame::UpdatePlayerInfo(BYTE *pPlayerInfo) {
+void BGame::UpdatePlayerInfo(char *pPlayerInfo) { //FIXME kato et playerinfossa on oikeesti intin kokoeinen
   // Update the player name at the given location
   int nIndex = int(pPlayerInfo[0]) - 1;
-  memcpy(&(m_remotePlayer[nIndex].m_id), pPlayerInfo + 1, sizeof(DPNID));
+  memcpy(&(m_remotePlayer[nIndex].m_id), pPlayerInfo + 1, sizeof(int));
 
   if(nIndex != GetMyPlace()) {
     m_remotePlayer[nIndex].m_bSelf = false;
   }
 
-  strcpy(m_remotePlayer[nIndex].m_sName, (char *) pPlayerInfo + 1 + sizeof(DPNID));
+  strcpy(m_remotePlayer[nIndex].m_sName, (char *) pPlayerInfo + 1 + sizeof(int));
   if((nIndex + 1) > m_nRemotePlayers) {
     m_nRemotePlayers = nIndex + 1;
 
-    CString sMsg;
-    sMsg.Format("player %s has joined", m_remotePlayer[nIndex].m_sName);
-    ShowMultiplayMessage(sMsg);
+    stringstream sMsg;
+    sMsg << "player " << m_remotePlayer[nIndex].m_sName << " has joined";
+    ShowMultiplayMessage(sMsg.str());
   }
-  m_pView->Invalidate();
 }
 
 
@@ -401,26 +408,26 @@ void BGame::CheckForGameStart() {
   bool bAllReady = true;
   for(int i = 0; i < m_nRemotePlayers; ++i) {
     if(!m_remotePlayer[i].m_bReadyToStart && 
-       (m_remotePlayer[i].m_state != BRemotePlayer::TRemoteState::WANTS_TO_SELECT_NEW_RACE)) {
+       (m_remotePlayer[i].m_state != BRemotePlayer::WANTS_TO_SELECT_NEW_RACE)) {
       bAllReady = false;
       break;
     }
   }
   if(bAllReady) {    
-    GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::START_GAME, "");
+    GetMultiplay()->SendBroadcastMsg(BMultiPlay::START_GAME, "");
     m_bMultiplayRaceStarter = true;
     m_clockMultiRaceStarter = clock();
-    GetView()->Invalidate();
+    //GetView()->Invalidate();
   }
 }
 
 
 //*************************************************************************************************
 void BGame::BroadcastCarSize() {
-  BYTE bMsg[3 + 4 * sizeof(double)];
+  char bMsg[3 + 4 * sizeof(double)];
   bMsg[0] = '-';
-  bMsg[1] = BMultiPlay::TTinyMessages::MY_CAR_SIZE_IS;
-  bMsg[2] = (BYTE) GetMyPlace() + 1;
+  bMsg[1] = BMultiPlay::MY_CAR_SIZE_IS;
+  bMsg[2] = (char) GetMyPlace() + 1;
 
   memcpy(bMsg + 3,                      &(GetSimulation()->GetVehicle()->m_dVisualLength),  sizeof(double));
   memcpy(bMsg + 3 + 1 * sizeof(double), &(GetSimulation()->GetVehicle()->m_dVisualWidth),   sizeof(double));
@@ -434,11 +441,11 @@ void BGame::BroadcastCarSize() {
 //*************************************************************************************************
 void BGame::BroadcastStateChange() {
   if(m_bMultiplayOn) {
-    BYTE bMsg[4];
+    char bMsg[4];
     bMsg[0] = '-';
-    bMsg[1] = BMultiPlay::TTinyMessages::MY_STATE_IS_NOW;
-    bMsg[2] = (BYTE) GetMyPlace() + 1;
-    bMsg[3] = (BYTE) m_remotePlayer[GetMyPlace()].m_state + 1;
+    bMsg[1] = BMultiPlay::MY_STATE_IS_NOW;
+    bMsg[2] = (char) GetMyPlace() + 1;
+    bMsg[3] = (char) m_remotePlayer[GetMyPlace()].m_state + 1;
 
     (void) GetMultiplay()->SendBinaryBroadcastMsg(bMsg, 4);
   }
@@ -451,15 +458,15 @@ void BGame::BroadcastFinalPosition(int nIndex) {
 
     ++BGame::m_nPlayersInGoal;
 
-    BYTE bMsg[4];
+    char bMsg[4];
     bMsg[0] = '-';
-    bMsg[1] = BMultiPlay::TTinyMessages::HIS_FINAL_POSITION_IS;
-    bMsg[2] = (BYTE) nIndex + 1;
-    bMsg[3] = (BYTE) m_nPlayersInGoal + 1;
+    bMsg[1] = BMultiPlay::HIS_FINAL_POSITION_IS;
+    bMsg[2] = (char) nIndex + 1;
+    bMsg[3] = (char) m_nPlayersInGoal + 1;
 
-    CString sMsg;
-    sMsg.Format("%s's final position is %d", m_remotePlayer[nIndex].m_sName, m_nPlayersInGoal);
-    ShowMultiplayMessage(sMsg);
+    stringstream sMsg;
+    sMsg << m_remotePlayer[nIndex].m_sName << "'s final position is " << m_nPlayersInGoal;
+    ShowMultiplayMessage(sMsg.str());
 
     (void) GetMultiplay()->SendBinaryBroadcastMsg(bMsg, 4);
   }
@@ -473,12 +480,12 @@ void BGame::BroadcastInGoal() {
       // Record our own position, if we are the host
       BroadcastFinalPosition(GetMyPlace());
       m_remotePlayer[GetMyPlace()].m_nRacePosition = m_nPlayersInGoal;
-      m_remotePlayer[GetMyPlace()].m_state = BRemotePlayer::TRemoteState::FINISHED;
+      m_remotePlayer[GetMyPlace()].m_state = BRemotePlayer::FINISHED;
     } else {
-      BYTE bMsg[3];
+      char bMsg[3];
       bMsg[0] = '-';
-      bMsg[1] = BMultiPlay::TTinyMessages::I_AM_IN_GOAL;
-      bMsg[2] = (BYTE) GetMyPlace() + 1;
+      bMsg[1] = BMultiPlay::I_AM_IN_GOAL;
+      bMsg[2] = (char) GetMyPlace() + 1;
 
       (void) GetMultiplay()->SendBinaryBroadcastMsg(bMsg, 3);
     }
@@ -496,9 +503,9 @@ void BGame::BroadcastCarPosition() {
 
     GetMultiplay()->GetParams()->m_clockPosLastSent = clockNow;
 
-    static BYTE bMsg[2 + 3 * 3 * sizeof(float) + 1 + sizeof(DWORD) + sizeof(long)];
-    bMsg[0] = BMultiPlay::TTinyMessages::MY_POSITION_IS_THIS;
-    bMsg[1] = (BYTE) GetMyPlace() + 1;
+    static char bMsg[2 + 3 * 3 * sizeof(float) + 1 + sizeof(int) + sizeof(long)];
+    bMsg[0] = BMultiPlay::MY_POSITION_IS_THIS;
+    bMsg[1] = (char) GetMyPlace() + 1;
 
     BVehicle *pVehicle = GetSimulation()->GetVehicle();
 
@@ -529,15 +536,15 @@ void BGame::BroadcastCarPosition() {
     memcpy(bMsg + 2 + 7 * sizeof(float), (void *) &fRightDirY, sizeof(float));
     memcpy(bMsg + 2 + 8 * sizeof(float), (void *) &fRightDirZ, sizeof(float));
 
-    BYTE bTurn = BYTE(pVehicle->m_dTurn * 50.0 + 50.0);
+    char bTurn = char(pVehicle->m_dTurn * 50.0 + 50.0);
     memcpy(bMsg + 2 + 9 * sizeof(float), (void *) &bTurn, 1);
 
-    DWORD clockUniversal = BGame::GetMultiplayClock();
-    memcpy(bMsg + 2 + 9 * sizeof(float) + 1, (void *) &clockUniversal, sizeof(DWORD));
+    int clockUniversal = BGame::GetMultiplayClock();
+    memcpy(bMsg + 2 + 9 * sizeof(float) + 1, (void *) &clockUniversal, sizeof(int));
 
-    memcpy(bMsg + 2 + 9 * sizeof(float) + 1 + sizeof(DWORD), (void *) &(BGame::GetSimulation()->m_nSimulationTimeStep), sizeof(long));
+    memcpy(bMsg + 2 + 9 * sizeof(float) + 1 + sizeof(int), (void *) &(BGame::GetSimulation()->m_nSimulationTimeStep), sizeof(long));
 
-    (void) GetMultiplay()->SendBinaryBroadcastMsg(bMsg, 2 + 3 * 3 * sizeof(float) + 1 + sizeof(DWORD) + sizeof(long));
+    (void) GetMultiplay()->SendBinaryBroadcastMsg(bMsg, 2 + 3 * 3 * sizeof(float) + 1 + sizeof(int) + sizeof(long));
   }
 }
 
@@ -569,7 +576,7 @@ void BGame::RemoveOldestMultiplayMessage(bool bForce) {
 
 
 //*************************************************************************************************
-void BGame::ShowMultiplayMessage(CString sMsg, bool bChat) {
+void BGame::ShowMultiplayMessage(string sMsg, bool bChat) {
   // Add message to multiplay notification messages to display it for 2 seconds
   while(m_nMultiplayMessages >= 5) {
     // Kill oldest messages
@@ -587,19 +594,19 @@ void BGame::ShowMultiplayMessage(CString sMsg, bool bChat) {
 
 //*************************************************************************************************
 void BGame::SetProgressRange(double dMax) {
-  EnterCriticalSection(&m_csMutex);
+  SDL_LockMutex(BGame::m_csMutex);
   m_dProgressMax = dMax;
-  LeaveCriticalSection(&m_csMutex);
+  SDL_UnlockMutex(BGame::m_csMutex);
 }
 
 
 //*************************************************************************************************
 void BGame::SetProgressPos(double dPos) {
-  EnterCriticalSection(&m_csMutex);
+  SDL_LockMutex(BGame::m_csMutex);
   m_dProgressPos = dPos;
-  LeaveCriticalSection(&m_csMutex);
+  SDL_UnlockMutex(BGame::m_csMutex);
   if(!m_bMultiProcessor) {
-    Sleep(1);
+    SDL_Delay(1);
   }
 }
 
@@ -607,9 +614,9 @@ void BGame::SetProgressPos(double dPos) {
 //*************************************************************************************************
 double BGame::GetRelativeProgress() {
   double dRet;
-  EnterCriticalSection(&m_csMutex);
+  SDL_LockMutex(BGame::m_csMutex);
   dRet = m_dProgressPos / m_dProgressMax;
-  LeaveCriticalSection(&m_csMutex);
+  SDL_UnlockMutex(BGame::m_csMutex);
   return dRet;
 }
 
@@ -617,11 +624,11 @@ double BGame::GetRelativeProgress() {
 //*************************************************************************************************
 void BGame::SetupMultiplayMenu() {
   /*
-  CString sServiceProviders[10];
+  string sServiceProviders[10];
   int nSPs = m_multiplay.GetServiceProviders(sServiceProviders, m_guidServiceProviders, 10);
 
   m_menuMultiplay.m_items[3].m_nAssocListItems = nSPs;
-  m_menuMultiplay.m_items[3].m_sAssocListItems = new CString[m_menuMultiplay.m_items[3].m_nAssocListItems];
+  m_menuMultiplay.m_items[3].m_sAssocListItems = new string[m_menuMultiplay.m_items[3].m_nAssocListItems];
   for(int i = 0; i < nSPs; ++i) {
     m_menuMultiplay.m_items[3].m_sAssocListItems[i] = sServiceProviders[i];
   }
@@ -633,13 +640,12 @@ void BGame::SetupMultiplayMenu() {
 
 //*************************************************************************************************
 void BGame::SetupMenus() {
-
   //******************************************
   // Choose Vehicle
   //******************************************
 
   m_menuChooseVehicle.m_sName = "Select Car";
-  m_menuChooseVehicle.m_type = BMenu::TType::CHOOSE_VEHICLE;
+  m_menuChooseVehicle.m_type = BMenu::CHOOSE_VEHICLE;
   m_menuChooseVehicle.m_nTitleWidth = 284;
   m_menuChooseVehicle.m_nTitleHeight = 60;
   m_menuChooseVehicle.m_dTitleX = 0;
@@ -647,130 +653,120 @@ void BGame::SetupMenus() {
 
   // Fetch vehicles
 
-  CFileFind finder;
-  CString strWildcard = _T(".\\*.vehicle");
-
   // count .vehicle files
   int nVehicles = 0;
-  BOOL bWorking = finder.FindFile(strWildcard);
-  while(bWorking) {
-    bWorking = finder.FindNextFile();
-    ++nVehicles;
-  }
-  finder.Close();
+  
+	ifstream vehicles_file("vehicles");
+	string vehicle;
+	vector<string> vehicles;
+	while (!vehicles_file.eof()) {
+		getline(vehicles_file, vehicle);
+		if (!vehicle.empty() && vehicle[0] != '\r' && vehicle[0] != '\n') {
+			vehicles.push_back(vehicle);
+			nVehicles++;
+		}
+	}
+	vehicles_file.close();
 
   m_menuChooseVehicle.m_nItems = nVehicles;
-  m_menuChooseVehicle.m_sItems = new CString[nVehicles];
+  m_menuChooseVehicle.m_sItems = new string[nVehicles];
   m_menuChooseVehicle.m_items = new BMenuItem[nVehicles];
 
   // Load .vehicle files
   int i = 0;
-  bWorking = finder.FindFile(strWildcard);
-  while(bWorking) {
-    bWorking = finder.FindNextFile();
-    // Add filename to object list
-    m_menuChooseVehicle.m_items[i].m_sAssocFile = finder.GetFilePath();
+  for (int x = 0; x < nVehicles; x++) {
+    m_menuChooseVehicle.m_items[i].m_sAssocFile = vehicles[x];
     FileHelpers::GetKeyStringFromINIFile("Properties",
                                          "Name",
-                                         finder.GetFileTitle(),
+                                         "",
                                          m_menuChooseVehicle.m_items[i].m_sText,
-                                         finder.GetFilePath());
-    CString sImageFile;
+                                         vehicles[x]);
+    string sImageFile;
     FileHelpers::GetKeyStringFromINIFile("Properties",
                                          "Image",
-                                         finder.GetFileTitle(),
+                                         "",
                                          sImageFile,
-                                         finder.GetFilePath());
+                                         vehicles[x]);
     m_menuChooseVehicle.m_items[i].m_nAssocImage = BTextures::LoadTexture(sImageFile, false);
     ++i;
   }
-  finder.Close();
   for(i = 0; i < m_menuChooseVehicle.m_nItems; ++i) {
     m_menuChooseVehicle.m_sItems[i] = m_menuChooseVehicle.m_items[i].m_sText;
   }
 
   m_menuChooseVehicle.m_listMenu.SetItems(m_menuChooseVehicle.m_sItems, m_menuChooseVehicle.m_nItems);
   m_menuChooseVehicle.m_listMenu.SelectItem(m_menuChooseVehicle.m_sItems[0]);
-  m_menuChooseVehicle.m_align = BTextRenderer::TTextAlign::ALIGN_RIGHT;
+  m_menuChooseVehicle.m_align = BTextRenderer::ALIGN_RIGHT;
 
   //******************************************
   // Choose Scene
   //******************************************
 
   m_menuChooseScene.m_sName = "Select Location";
-  m_menuChooseScene.m_type = BMenu::TType::CHOOSE_SCENE;
+  m_menuChooseScene.m_type = BMenu::CHOOSE_SCENE;
   m_menuChooseScene.m_nTitleWidth = 284;
   m_menuChooseScene.m_nTitleHeight = 60;
   m_menuChooseScene.m_dTitleX = 0;
   m_menuChooseScene.m_dTitleY = (512.0 - 238.0) / 512.0;
-
-  strWildcard = _T(".\\*.scene");
-
+  
   // count .scene files
   int nScenes = 0;
-  bWorking = finder.FindFile(strWildcard);
-  while(bWorking) {
-    bWorking = finder.FindNextFile();
-    ++nScenes;
-  }
-  finder.Close();
+  
+	ifstream scenes_file("scenes");
+	string scene;
+	vector<string> scenes;
+	while (!scenes_file.eof()) {
+		getline(scenes_file, scene);
+		if (!scene.empty() && scene[0] != '\r' && scene[0] != '\n') {
+			scenes.push_back(scene);
+			nScenes++;
+		}
+	}
+	scenes_file.close();
 
   m_menuChooseScene.m_nItems = nScenes;
-  m_menuChooseScene.m_sItems = new CString[nScenes];
+  m_menuChooseScene.m_sItems = new string[nScenes];
   m_menuChooseScene.m_items = new BMenuItem[nScenes];
-  m_menuChooseScene.m_listMenu.m_dOffsetToLeft = 0.05;
 
   // Load .Scene files
-  i = 0;
-  bWorking = finder.FindFile(strWildcard);
-  while(bWorking) {
-    bWorking = finder.FindNextFile();
-    // Add filename to object list
-    m_menuChooseScene.m_items[i].m_sAssocFile = finder.GetFilePath();
+    i = 0;
+  for (int x = 0; x < nScenes; x++) {
+    m_menuChooseScene.m_items[i].m_sAssocFile = scenes[x];
     FileHelpers::GetKeyStringFromINIFile("Properties",
                                          "Name",
-                                         finder.GetFileTitle(),
+                                         "",
                                          m_menuChooseScene.m_items[i].m_sText,
-                                         finder.GetFilePath());
-    CString sImageFile;
+                                         scenes[x]);
+    string sImageFile;
     FileHelpers::GetKeyStringFromINIFile("Properties",
                                          "Image",
-                                         finder.GetFileTitle(),
+                                         "",
                                          sImageFile,
-                                         finder.GetFilePath());
+                                         scenes[x]);
     m_menuChooseScene.m_items[i].m_nAssocImage = BTextures::LoadTexture(sImageFile, false);
-    BVector vTmp;
-    FileHelpers::GetKeyVectorFromINIFile("Properties",
-                                         "MapPosition",
-                                         BVector(580, 85, 0),
-                                         vTmp,
-                                         finder.GetFilePath());
-    m_menuChooseScene.m_items[i].m_nValue = int(vTmp.m_dX);
-    m_menuChooseScene.m_items[i].m_nValue2 = int(vTmp.m_dY);
     ++i;
   }
-  finder.Close();
   for(i = 0; i < m_menuChooseScene.m_nItems; ++i) {
     m_menuChooseScene.m_sItems[i] = m_menuChooseScene.m_items[i].m_sText;
   }
 
   m_menuChooseScene.m_listMenu.SetItems(m_menuChooseScene.m_sItems, m_menuChooseScene.m_nItems);
   m_menuChooseScene.m_listMenu.SelectItem(m_menuChooseScene.m_sItems[0]);
-  m_menuChooseScene.m_align = BTextRenderer::TTextAlign::ALIGN_RIGHT;
+  m_menuChooseScene.m_align = BTextRenderer::ALIGN_RIGHT;
 
   //******************************************
   // Hiscores
   //******************************************
 
   m_menuHiscores.m_sName = "Highscores";
-  m_menuHiscores.m_type = BMenu::TType::HISCORES;
+  m_menuHiscores.m_type = BMenu::HISCORES;
   m_menuHiscores.m_nTitleWidth = 284;
   m_menuHiscores.m_nTitleHeight = 60;
   m_menuHiscores.m_dTitleX = 0;
   m_menuHiscores.m_dTitleY = (512.0 - 238.0) / 512.0;
 
   m_menuHiscores.m_nItems = nScenes;
-  m_menuHiscores.m_sItems = new CString[nScenes];
+  m_menuHiscores.m_sItems = new string[nScenes];
   m_menuHiscores.m_items = new BMenuItem[nScenes];
   m_menuHiscores.m_listMenu.m_dOffsetToLeft = 0.05;
 
@@ -779,7 +775,7 @@ void BGame::SetupMenus() {
   }
 
   m_menuHiscores.m_listMenu.SetItems(m_menuHiscores.m_sItems, m_menuHiscores.m_nItems);
-  m_menuHiscores.m_align = BTextRenderer::TTextAlign::ALIGN_RIGHT;
+  m_menuHiscores.m_align = BTextRenderer::ALIGN_RIGHT;
 
   UpdateHighScoreMenu();
 
@@ -788,7 +784,7 @@ void BGame::SetupMenus() {
   //******************************************
 
   m_menuPrecachingTerrain.m_sName = "LOADING";
-  m_menuPrecachingTerrain.m_type = BMenu::TType::PRECACHING_TERRAIN;
+  m_menuPrecachingTerrain.m_type = BMenu::PRECACHING_TERRAIN;
   m_menuPrecachingTerrain.m_nTitleWidth = 284;
   m_menuPrecachingTerrain.m_nTitleHeight = 60;
   m_menuPrecachingTerrain.m_dTitleX = 0;
@@ -801,14 +797,14 @@ void BGame::SetupMenus() {
   //******************************************
 
   m_menuMain.m_sName = "Main Menu";
-  m_menuMain.m_type = BMenu::TType::MAIN;
+  m_menuMain.m_type = BMenu::MAIN;
   m_menuMain.m_nTitleWidth = 284;
   m_menuMain.m_nTitleHeight = 80;
   m_menuMain.m_dTitleX = 0;
   m_menuMain.m_dTitleY = (512.0 - 314.0) / 512.0;
 
   m_menuMain.m_nItems = 6;
-  m_menuMain.m_sItems = new CString[m_menuMain.m_nItems];
+  m_menuMain.m_sItems = new string[m_menuMain.m_nItems];
   m_menuMain.m_items = new BMenuItem[m_menuMain.m_nItems];
 
   m_menuMain.m_items[0].m_sText = "SINGLEPLAYER";
@@ -824,21 +820,21 @@ void BGame::SetupMenus() {
 
   m_menuMain.m_listMenu.SetItems(m_menuMain.m_sItems, m_menuMain.m_nItems);
   m_menuMain.m_listMenu.SelectItem(m_menuMain.m_sItems[0]);
-  m_menuMain.m_align = BTextRenderer::TTextAlign::ALIGN_CENTER;
+  m_menuMain.m_align = BTextRenderer::ALIGN_CENTER;
 
   //******************************************
   // GAME MODE
   //******************************************
 
   m_menuChooseGameMode.m_sName = "SELECT RACE TYPE";
-  m_menuChooseGameMode.m_type = BMenu::TType::GAMEMODE;
+  m_menuChooseGameMode.m_type = BMenu::GAMEMODE;
   m_menuChooseGameMode.m_nTitleWidth = 284;
   m_menuChooseGameMode.m_nTitleHeight = 80;
   m_menuChooseGameMode.m_dTitleX = 0;
   m_menuChooseGameMode.m_dTitleY = (512.0 - 314.0) / 512.0;
 
   m_menuChooseGameMode.m_nItems = 3;
-  m_menuChooseGameMode.m_sItems = new CString[m_menuChooseGameMode.m_nItems];
+  m_menuChooseGameMode.m_sItems = new string[m_menuChooseGameMode.m_nItems];
   m_menuChooseGameMode.m_items = new BMenuItem[m_menuChooseGameMode.m_nItems];
 
   m_menuChooseGameMode.m_items[0].m_sText = "SPEEDRACE";
@@ -851,31 +847,31 @@ void BGame::SetupMenus() {
 
   m_menuChooseGameMode.m_listMenu.SetItems(m_menuChooseGameMode.m_sItems, m_menuChooseGameMode.m_nItems);
   m_menuChooseGameMode.m_listMenu.SelectItem(m_menuChooseGameMode.m_sItems[0]);
-  m_menuChooseGameMode.m_align = BTextRenderer::TTextAlign::ALIGN_CENTER;
+  m_menuChooseGameMode.m_align = BTextRenderer::ALIGN_CENTER;
 
   //******************************************
   // MultiPlay
   //******************************************
 
   m_menuMultiplay.m_sName = "Multiplayer settings";
-  m_menuMultiplay.m_type = BMenu::TType::MULTIPLAYER;
+  m_menuMultiplay.m_type = BMenu::MULTIPLAYER;
   m_menuMultiplay.m_nTitleWidth = 284;
   m_menuMultiplay.m_nTitleHeight = 60;
   m_menuMultiplay.m_dTitleX = 0;
   m_menuMultiplay.m_dTitleY = (512.0 - 60.0) / 512.0;
 
   m_menuMultiplay.m_nItems = 4;
-  m_menuMultiplay.m_sItems = new CString[m_menuMultiplay.m_nItems];
+  m_menuMultiplay.m_sItems = new string[m_menuMultiplay.m_nItems];
   m_menuMultiplay.m_items = new BMenuItem[m_menuMultiplay.m_nItems];
 
   m_menuMultiplay.m_items[0].m_sText = "Player name:";
-  m_menuMultiplay.m_items[0].m_type = BMenuItem::TType::EDITBOX;
+  m_menuMultiplay.m_items[0].m_type = BMenuItem::EDITBOX;
   m_menuMultiplay.m_items[0].m_sValue = GetMultiplay()->m_params.m_sPlayerName;
   m_menuMultiplay.m_items[0].m_ebAssocEditBox.Setup("", GetMultiplay()->m_params.m_sPlayerName, 16);
   m_menuMultiplay.m_items[1].m_sText = "Role:";
-  m_menuMultiplay.m_items[1].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuMultiplay.m_items[1].m_type = BMenuItem::STRING_FROM_LIST;
     m_menuMultiplay.m_items[1].m_nAssocListItems = 2;
-    m_menuMultiplay.m_items[1].m_sAssocListItems = new CString[m_menuMultiplay.m_items[1].m_nAssocListItems];
+    m_menuMultiplay.m_items[1].m_sAssocListItems = new string[m_menuMultiplay.m_items[1].m_nAssocListItems];
     m_menuMultiplay.m_items[1].m_sAssocListItems[0] = "SERVER";
     m_menuMultiplay.m_items[1].m_sAssocListItems[1] = "CLIENT";
   m_menuMultiplay.m_items[1].m_listMenu.SetItems(m_menuMultiplay.m_items[1].m_sAssocListItems, m_menuMultiplay.m_items[1].m_nAssocListItems);
@@ -887,7 +883,7 @@ void BGame::SetupMenus() {
   m_menuMultiplay.m_items[1].m_listMenu.SelectItem(m_menuMultiplay.m_items[1].m_sAssocListItems[m_menuMultiplay.m_items[1].m_nValue]);
 
   m_menuMultiplay.m_items[2].m_sText = "SERVER IP/NAME:";
-  m_menuMultiplay.m_items[2].m_type = BMenuItem::TType::EDITBOX;
+  m_menuMultiplay.m_items[2].m_type = BMenuItem::EDITBOX;
   m_menuMultiplay.m_items[2].m_sValue = GetMultiplay()->m_params.m_sHostIPAddress;
   m_menuMultiplay.m_items[2].m_bDisabled = m_menuMultiplay.m_items[1].m_nValue == 0;
   m_menuMultiplay.m_items[2].m_ebAssocEditBox.Setup("", GetMultiplay()->m_params.m_sHostIPAddress, 64);
@@ -898,7 +894,7 @@ void BGame::SetupMenus() {
   //  m_menuMultiplay.m_items[3].m_sAssocListItems = 0;
 
   m_menuMultiplay.m_items[3].m_sText = "START MULTIPLAY";
-  m_menuMultiplay.m_items[3].m_type = BMenuItem::TType::BASIC;
+  m_menuMultiplay.m_items[3].m_type = BMenuItem::BASIC;
   m_menuMultiplay.m_items[3].m_dRed = 1.0;
   m_menuMultiplay.m_items[3].m_dGreen = 0.75;
   m_menuMultiplay.m_items[3].m_dBlue = 0.25;
@@ -909,36 +905,36 @@ void BGame::SetupMenus() {
 
   m_menuMultiplay.m_listMenu.SetItems(m_menuMultiplay.m_sItems, m_menuMultiplay.m_nItems);
   m_menuMultiplay.m_listMenu.SelectItem(m_menuMultiplay.m_sItems[0]);
-  m_menuMultiplay.m_align = BTextRenderer::TTextAlign::ALIGN_RIGHT;  
+  m_menuMultiplay.m_align = BTextRenderer::ALIGN_RIGHT;  
 
   //******************************************
   // Settings
   //******************************************
 
   m_menuSettings.m_sName = "Settings";
-  m_menuSettings.m_type = BMenu::TType::SETTINGS;
+  m_menuSettings.m_type = BMenu::SETTINGS;
   m_menuSettings.m_nTitleWidth = 284;
   m_menuSettings.m_nTitleHeight = 60;
   m_menuSettings.m_dTitleX = 0;
   m_menuSettings.m_dTitleY = (512.0 - 60.0) / 512.0;
 
   m_menuSettings.m_nItems = 9;
-  m_menuSettings.m_sItems = new CString[m_menuSettings.m_nItems];
+  m_menuSettings.m_sItems = new string[m_menuSettings.m_nItems];
   m_menuSettings.m_items = new BMenuItem[m_menuSettings.m_nItems];
 
   m_menuSettings.m_items[0].m_sText = "Resolution:";
-  m_menuSettings.m_items[0].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuSettings.m_items[0].m_type = BMenuItem::STRING_FROM_LIST;
   m_menuSettings.m_items[1].m_sText = "Colors:";
-  m_menuSettings.m_items[1].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuSettings.m_items[1].m_type = BMenuItem::STRING_FROM_LIST;
   m_menuSettings.m_items[2].m_sText = "Refresh:";
-  m_menuSettings.m_items[2].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuSettings.m_items[2].m_type = BMenuItem::STRING_FROM_LIST;
 
   EnumerateScreenResolutions();
 
   m_menuSettings.m_items[3].m_sText = "Terrain Details:";
-  m_menuSettings.m_items[3].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuSettings.m_items[3].m_type = BMenuItem::STRING_FROM_LIST;
     m_menuSettings.m_items[3].m_nAssocListItems = 6;
-    m_menuSettings.m_items[3].m_sAssocListItems = new CString[m_menuSettings.m_items[3].m_nAssocListItems];
+    m_menuSettings.m_items[3].m_sAssocListItems = new string[m_menuSettings.m_items[3].m_nAssocListItems];
     m_menuSettings.m_items[3].m_sAssocListItems[0] = "Minimum";
     m_menuSettings.m_items[3].m_sAssocListItems[1] = "Low";
     m_menuSettings.m_items[3].m_sAssocListItems[2] = "Medium";
@@ -947,31 +943,31 @@ void BGame::SetupMenus() {
     m_menuSettings.m_items[3].m_sAssocListItems[5] = "(slow machine)";
     m_menuSettings.m_items[3].m_nValue = m_nTerrainResolution;
   m_menuSettings.m_items[4].m_sText = "Car Details:";
-  m_menuSettings.m_items[4].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuSettings.m_items[4].m_type = BMenuItem::STRING_FROM_LIST;
     m_menuSettings.m_items[4].m_nAssocListItems = 3;
-    m_menuSettings.m_items[4].m_sAssocListItems = new CString[m_menuSettings.m_items[4].m_nAssocListItems];
+    m_menuSettings.m_items[4].m_sAssocListItems = new string[m_menuSettings.m_items[4].m_nAssocListItems];
     m_menuSettings.m_items[4].m_sAssocListItems[0] = "Always High";
     m_menuSettings.m_items[4].m_sAssocListItems[1] = "High for Singleplayer";
     m_menuSettings.m_items[4].m_sAssocListItems[2] = "Always Low";
     // m_menuSettings.m_items[4].m_nValue = m_nDustAndClouds;
     m_menuSettings.m_items[4].m_nValue = m_nCarDetails;
   m_menuSettings.m_items[5].m_sText = "TIME OF DAY:";
-  m_menuSettings.m_items[5].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuSettings.m_items[5].m_type = BMenuItem::STRING_FROM_LIST;
     m_menuSettings.m_items[5].m_nAssocListItems = 2;
-    m_menuSettings.m_items[5].m_sAssocListItems = new CString[m_menuSettings.m_items[5].m_nAssocListItems];
+    m_menuSettings.m_items[5].m_sAssocListItems = new string[m_menuSettings.m_items[5].m_nAssocListItems];
     m_menuSettings.m_items[5].m_sAssocListItems[0] = "NOON";
     m_menuSettings.m_items[5].m_sAssocListItems[1] = "MIDNIGHT";
     m_menuSettings.m_items[5].m_nValue = m_nWaterSurface;
   m_menuSettings.m_items[6].m_sText = "Music Volume:";
-  m_menuSettings.m_items[6].m_type = BMenuItem::TType::SLIDER;
+  m_menuSettings.m_items[6].m_type = BMenuItem::SLIDER;
     m_menuSettings.m_items[6].m_nValue = m_nMusicVolume;
   m_menuSettings.m_items[7].m_sText = "Sound Effects Volume:";
-  m_menuSettings.m_items[7].m_type = BMenuItem::TType::SLIDER;
+  m_menuSettings.m_items[7].m_type = BMenuItem::SLIDER;
     m_menuSettings.m_items[7].m_nValue = m_nVehicleVolume;
   m_menuSettings.m_items[8].m_sText = "Soundscape:";
-  m_menuSettings.m_items[8].m_type = BMenuItem::TType::STRING_FROM_LIST;
+  m_menuSettings.m_items[8].m_type = BMenuItem::STRING_FROM_LIST;
     m_menuSettings.m_items[8].m_nAssocListItems = 2;
-    m_menuSettings.m_items[8].m_sAssocListItems = new CString[m_menuSettings.m_items[8].m_nAssocListItems];
+    m_menuSettings.m_items[8].m_sAssocListItems = new string[m_menuSettings.m_items[8].m_nAssocListItems];
     m_menuSettings.m_items[8].m_sAssocListItems[0] = "3D";
     m_menuSettings.m_items[8].m_sAssocListItems[1] = "Lame";
     m_menuSettings.m_items[8].m_nValue = m_nSoundscape;
@@ -982,14 +978,14 @@ void BGame::SetupMenus() {
 
   m_menuSettings.m_listMenu.SetItems(m_menuSettings.m_sItems, m_menuSettings.m_nItems);
   m_menuSettings.m_listMenu.SelectItem(m_menuSettings.m_sItems[0]);
-  m_menuSettings.m_align = BTextRenderer::TTextAlign::ALIGN_RIGHT;
+  m_menuSettings.m_align = BTextRenderer::ALIGN_RIGHT;
 
   //******************************************
   // Credits
   //******************************************
 
   m_menuCredits.m_sName = "Credits";
-  m_menuCredits.m_type = BMenu::TType::CREDITS;
+  m_menuCredits.m_type = BMenu::CREDITS;
   m_menuCredits.m_nTitleWidth = 0;
   m_menuCredits.m_nTitleHeight = 0;
   m_menuCredits.m_dTitleX = 0;
@@ -997,7 +993,7 @@ void BGame::SetupMenus() {
   m_menuCredits.m_bDrawLine = false;
 
   m_menuCredits.m_nItems = 7;
-  m_menuCredits.m_sItems = new CString[m_menuCredits.m_nItems];
+  m_menuCredits.m_sItems = new string[m_menuCredits.m_nItems];
   m_menuCredits.m_items = new BMenuItem[m_menuCredits.m_nItems];
 
   m_menuCredits.m_items[0].m_nValue = 0; // Second at which to start showing this item
@@ -1029,21 +1025,21 @@ void BGame::SetupMenus() {
   m_menuCredits.m_items[6].m_nAssocImage = -1;
 
   m_menuCredits.m_listMenu.SetItems(m_menuCredits.m_sItems, 0);
-  m_menuCredits.m_align = BTextRenderer::TTextAlign::ALIGN_RIGHT;
+  m_menuCredits.m_align = BTextRenderer::ALIGN_RIGHT;
 
   //******************************************
   // GAME MENU
   //******************************************
 
   m_menuGame.m_sName = "Game Menu";
-  m_menuGame.m_type = BMenu::TType::GAME;
+  m_menuGame.m_type = BMenu::GAME;
   m_menuGame.m_nTitleWidth = 1;
   m_menuGame.m_nTitleHeight = 1;
   m_menuGame.m_dTitleX = 0;
   m_menuGame.m_dTitleY = 0;
 
   m_menuGame.m_nItems = 5;
-  m_menuGame.m_sItems = new CString[m_menuGame.m_nItems];
+  m_menuGame.m_sItems = new string[m_menuGame.m_nItems];
   m_menuGame.m_items = new BMenuItem[m_menuGame.m_nItems];
 
   m_menuGame.m_items[0].m_sText = "BACK TO GAME";
@@ -1058,7 +1054,7 @@ void BGame::SetupMenus() {
 
   m_menuGame.m_listMenu.SetItems(m_menuGame.m_sItems, m_menuGame.m_nItems);
   m_menuGame.m_listMenu.SelectItem(m_menuGame.m_sItems[0]);
-  m_menuGame.m_align = BTextRenderer::TTextAlign::ALIGN_CENTER;
+  m_menuGame.m_align = BTextRenderer::ALIGN_CENTER;
 
   m_bMenusCreated = true;
 }
@@ -1079,71 +1075,105 @@ void BGame::EnumerateScreenResolutions() {
   // First enumerate all to see how many there are
 
   int i;
-  int nModes = 0;
-  BOOL bRet;
-  DEVMODE devmode;
+  int nModes = SDL_GetNumDisplayModes(0); //FIXME always 0 display
+  //BOOL bRet;
+  int bRet;
+  //DEVMODE devmode;
   int nSetting = 0;
-  do {
+  /*do {
     bRet = EnumDisplaySettings(NULL, nSetting, &devmode);
     ++nModes;
     ++nSetting;
-  } while(bRet);
+  } while(bRet);*/
 
   int      nTmp;
   int      nAllRes = 0;
-  CString *psAllRes = new CString[nModes];
+  string *psAllRes = new string[nModes];
   int      nAllColors = 0;
-  CString *psAllColors = new CString[nModes];
+  string *psAllColors = new string[nModes];
   int      nAllRefresh = 0;
-  CString *psAllRefresh = new CString[nModes];
+  string *psAllRefresh = new string[nModes];
 
-  CString sTmp;
+  string sTmp;
   nSetting = 0;
-  do {
-    bRet = EnumDisplaySettings(NULL, nSetting, &devmode);
-    sTmp.Format("%ld*%ld PIXELS", devmode.dmPelsWidth, devmode.dmPelsHeight);
-    if(!FindStringFromArray(sTmp, psAllRes, nAllRes, nTmp)) {
-      psAllRes[nAllRes] = sTmp;
-      ++nAllRes;
-    }
-    sTmp.Format("%ld BITS", devmode.dmBitsPerPel);
-    if(!FindStringFromArray(sTmp, psAllColors, nAllColors, nTmp)) {
-      psAllColors[nAllColors] = sTmp;
-      ++nAllColors;
-    }
-    sTmp.Format("%ld HERTZ", devmode.dmDisplayFrequency);
-    if(!FindStringFromArray(sTmp, psAllRefresh, nAllRefresh, nTmp)) {
-      psAllRefresh[nAllRefresh] = sTmp;
-      ++nAllRefresh;
-    }
-    ++nSetting;
-  } while(bRet);
+  //do {
+  for (int x = 0; x < nModes; x++) {
+    //bRet = EnumDisplaySettings(NULL, nSetting, &devmode);
+    SDL_DisplayMode mode;
+    if (SDL_GetDisplayMode(0, x, &mode) >= 0) {
+		//sTmp.Format("%ld*%ld PIXELS", devmode.dmPelsWidth, devmode.dmPelsHeight);
+		stringstream format;
+		format << mode.w << "*" << mode.h << " PIXELS";
+		sTmp = format.str();
+		if(!FindStringFromArray(sTmp, psAllRes, nAllRes, nTmp)) {
+		  psAllRes[nAllRes] = sTmp;
+		  ++nAllRes;
+		}
+		//sTmp.Format("%ld BITS", devmode.dmBitsPerPel);
+		format.str("");
+		format << SDL_BITSPERPIXEL(mode.format) << " BITS";
+		sTmp = format.str();
+		if(!FindStringFromArray(sTmp, psAllColors, nAllColors, nTmp)) {
+		  psAllColors[nAllColors] = sTmp;
+		  ++nAllColors;
+		}
+		//sTmp.Format("%ld HERTZ", devmode.dmDisplayFrequency);
+		format.str("");
+		format << mode.refresh_rate << " HERTZ";
+		sTmp = format.str();
+		if(!FindStringFromArray(sTmp, psAllRefresh, nAllRefresh, nTmp)) {
+		  psAllRefresh[nAllRefresh] = sTmp;
+		  ++nAllRefresh;
+		}
+		++nSetting;
+	}
+  //} while(bRet);
+	}
 
   m_menuSettings.m_items[0].m_nAssocListItems = nAllRes;
-  m_menuSettings.m_items[0].m_sAssocListItems = new CString[nAllRes];
+  m_menuSettings.m_items[0].m_sAssocListItems = new string[nAllRes];
   for(i = 0; i < nAllRes; ++i) {
     m_menuSettings.m_items[0].m_sAssocListItems[i] = psAllRes[i];
   }
 
   m_menuSettings.m_items[1].m_nAssocListItems = nAllColors;
-  m_menuSettings.m_items[1].m_sAssocListItems = new CString[nAllColors];
+  m_menuSettings.m_items[1].m_sAssocListItems = new string[nAllColors];
   for(i = 0; i < nAllColors; ++i) {
     m_menuSettings.m_items[1].m_sAssocListItems[i] = psAllColors[i];
   }
 
   m_menuSettings.m_items[2].m_nAssocListItems = nAllRefresh;
-  m_menuSettings.m_items[2].m_sAssocListItems = new CString[nAllRefresh];
+  m_menuSettings.m_items[2].m_sAssocListItems = new string[nAllRefresh];
   for(i = 0; i < nAllRefresh; ++i) {
     m_menuSettings.m_items[2].m_sAssocListItems[i] = psAllRefresh[i];
   }
 
   // Preselect current mode
-  sTmp.Format("%d*%d PIXELS", m_nDispWidth, m_nDispHeight);
-  (void) FindStringFromArray(sTmp, psAllRes, nAllRes, m_menuSettings.m_items[0].m_nValue);
-  sTmp.Format("%d BITS", m_nDispBits);
-  (void) FindStringFromArray(sTmp, psAllColors, nAllColors, m_menuSettings.m_items[1].m_nValue);
-  sTmp.Format("%d HERTZ", m_nDispHz);
-  (void) FindStringFromArray(sTmp, psAllRefresh, nAllRefresh, m_menuSettings.m_items[2].m_nValue);
+  //sTmp.Format("%d*%d PIXELS", m_nDispWidth, m_nDispHeight);
+	stringstream format;
+	format << m_nDispWidth << "*" << m_nDispHeight << " PIXELS";
+	sTmp = format.str();
+  //(void) FindStringFromArray(sTmp, psAllRes, nAllRes, m_menuSettings.m_items[0].m_nValue)
+  if (!FindStringFromArray(sTmp, psAllRes, nAllRes, m_menuSettings.m_items[0].m_nValue)) {
+	  m_menuSettings.m_items[0].m_nValue = 0;
+  }
+  //sTmp.Format("%d BITS", m_nDispBits);
+	format.str("");
+	format << m_nDispBits << " BITS";
+	sTmp = format.str();
+  //(void) FindStringFromArray(sTmp, psAllColors, nAllColors, m_menuSettings.m_items[1].m_nValue);
+  if (!FindStringFromArray(sTmp, psAllColors, nAllColors, m_menuSettings.m_items[1].m_nValue)) {
+	  m_menuSettings.m_items[1].m_nValue = 0;
+  }
+  m_menuSettings.m_items[1].m_nValue = 0;
+  //sTmp.Format("%d HERTZ", m_nDispHz);
+	format.str("");
+	format << m_nDispHz << " HERTZ";
+	sTmp = format.str();
+  //(void) FindStringFromArray(sTmp, psAllRefresh, nAllRefresh, m_menuSettings.m_items[2].m_nValue);
+  if (!FindStringFromArray(sTmp, psAllRefresh, nAllRefresh, m_menuSettings.m_items[2].m_nValue)) {
+	  m_menuSettings.m_items[2].m_nValue = 0;
+  }
 
   delete [] psAllRes;
   delete [] psAllColors;
@@ -1152,10 +1182,10 @@ void BGame::EnumerateScreenResolutions() {
 
 
 //*************************************************************************************************
-bool BGame::FindStringFromArray(CString s, CString *psArray, int nItems, int &rnIndex) {
+bool BGame::FindStringFromArray(string s, string *psArray, int nItems, int &rnIndex) {
   rnIndex = -1;
   for(int i = 0; i < nItems; ++i) {
-    if(s.CompareNoCase(psArray[i]) == 0) {
+    if(s.compare(psArray[i]) == 0) {
       rnIndex = i;
       return true;
     }
@@ -1227,16 +1257,16 @@ void BGame::UpdateAnalyzer() {
   }
 
   // See in which phase we are in
-  static nPhase = -1;
+  static int nPhase = -1;
   clock_t clockNow = clock();
 
   int nNewPhase = (clockNow - m_clockAnalyzerStarted) / CLOCKS_PER_SEC / 3;
   if(nPhase != nNewPhase) {
     // Exit old phase
     if(nPhase != -1) {
-      CString sInfo;
+      string sInfo;
       MyAfxMessageBox("---------------------------------------------------------");
-      CString sVis;
+      string sVis;
       switch(nPhase) {
         case 0: sVis = "SKY"; break;
         case 1: sVis = "WATER"; break;
@@ -1263,7 +1293,8 @@ void BGame::UpdateAnalyzer() {
       if(nPhase == 7) {
         sVis = "GRAPHICS2D";
       }
-      sInfo.Format("ANALYZER: Phase %d Info (Visualize = %s)", nPhase, sVis);
+      //FIXME
+      /*sInfo.Format("ANALYZER: Phase %d Info (Visualize = %s)", nPhase, sVis);
       MyAfxMessageBox(sInfo);
       sInfo.Format("FPS: AVE=%.2lf, Last10=%.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf ", 
                     g_dRate,
@@ -1277,7 +1308,7 @@ void BGame::UpdateAnalyzer() {
                     g_d10LastFPS[7],
                     g_d10LastFPS[8],
                     g_d10LastFPS[9]);
-      BGame::MyAfxMessageBox(sInfo);
+      BGame::MyAfxMessageBox(sInfo);*/
       MyAfxMessageBox("---------------------------------------------------------");
     }
     // Enter new phase
@@ -1370,55 +1401,50 @@ void BGame::UpdateAnalyzer() {
 
 
 //*************************************************************************************************
-CString BGame::GetScrambleChecksum() {
-  static CString sSeed = "Settings, Main, Medium, TerrainResolution";
-  CString sRet = sSeed;
-  CString sState;
-  sState.Format("%.1lf:%.1lf:%.1lf:%s:%s", 
-                m_player.m_dCash, 
-                m_player.m_dFuel, 
-                m_player.m_dKerosine,
-                m_player.m_sValidVehicles,
-                m_player.m_sSceneInfo);
+string BGame::GetScrambleChecksum() {
+  static string sSeed = "Settings, Main, Medium, TerrainResolution";
+  string sRet = sSeed;
+  stringstream sState;
+  sState << m_player.m_dCash << ":" << m_player.m_dFuel << ":" << m_player.m_dKerosine << ":" << m_player.m_sValidVehicles << ":" << m_player.m_sSceneInfo;
 
   // calculate checksum string
   int i;
 
   int nStart = 0;
-  int nEnd = sRet.GetLength() - 1;
+  int nEnd = sRet.length() - 1;
   int nStep = 1;
   int nCounter = 0;
 
-  for(i = 0; i < sState.GetLength(); ++i) {
+  for(i = 0; i < sState.str().length(); ++i) {
     nCounter = 0;
 
     if(nStep > 0) {
       nStart = 0;
-      nEnd = sRet.GetLength() - 1;
+      nEnd = sRet.length() - 1;
     } else {
-      nStart = sRet.GetLength() - 1;
+      nStart = sRet.length() - 1;
       nEnd = 0;
     }
 
-    unsigned char c = (unsigned char) sState[i];
+    unsigned char c = (unsigned char) sState.str()[i];
     for(int j = nStart; j != nEnd; j += nStep) {
       unsigned char cOld = (unsigned char) sRet[j];
       unsigned char cNew = ((cOld ^ ~c) + c * nCounter) % 256;
-      sRet.SetAt(j, cNew);
+      sRet[j] = cNew;
       ++nCounter;
     }
     nStep *= -1;
   }
 
   // map to readable characters
-  for(i = 0; i < sRet.GetLength(); ++i) {
+  for(i = 0; i < sRet.length(); ++i) {
     unsigned char c = (unsigned char) sRet[i];
     if(c < 10) {
-      sRet.SetAt(i, TCHAR(((unsigned char) (sRet[i]) % ('9' - '0')) + '0'));
+      sRet[i] = ((unsigned char) (sRet[i]) % ('9' - '0')) + '0';
     } else if(c < 128) {
-      sRet.SetAt(i, TCHAR(((unsigned char) (sRet[i]) % ('z' - 'a')) + 'a'));
+      sRet[i] = ((unsigned char) (sRet[i]) % ('z' - 'a')) + 'a';
     } else {
-      sRet.SetAt(i, TCHAR(((unsigned char) (sRet[i]) % ('Z' - 'A')) + 'A'));
+      sRet[i] = ((unsigned char) (sRet[i]) % ('Z' - 'A')) + 'A';
     }
   }
 
@@ -1427,26 +1453,26 @@ CString BGame::GetScrambleChecksum() {
 
 
 //*************************************************************************************************
-CString BGame::GetVerifyChecksum(CString sSource) {
-  static CString sSeed = "PAKOON2.Many! Copyright 2003 Mikko Oksalahti";
-  CString sRet = sSeed;
+string BGame::GetVerifyChecksum(string sSource) {
+  static string sSeed = "PAKOON2.Many! Copyright 2003 Mikko Oksalahti";
+  string sRet = sSeed;
 
   // calculate checksum string
   int i;
 
   int nStart = 0;
-  int nEnd = sRet.GetLength() - 1;
+  int nEnd = sRet.length() - 1;
   int nStep = 1;
   int nCounter = 0;
 
-  for(i = 0; i < sSource.GetLength(); ++i) {
+  for(i = 0; i < sSource.length(); ++i) {
     nCounter = 0;
 
     if(nStep > 0) {
       nStart = 0;
-      nEnd = sRet.GetLength() - 1;
+      nEnd = sRet.length() - 1;
     } else {
-      nStart = sRet.GetLength() - 1;
+      nStart = sRet.length() - 1;
       nEnd = 0;
     }
 
@@ -1454,21 +1480,21 @@ CString BGame::GetVerifyChecksum(CString sSource) {
     for(int j = nStart; j != nEnd; j += nStep) {
       unsigned char cOld = (unsigned char) sRet[j];
       unsigned char cNew = ((cOld ^ ~c) + c * nCounter) % 251;
-      sRet.SetAt(j, cNew);
+      sRet[j] = cNew;
       ++nCounter;
     }
     nStep *= -1;
   }
 
   // map to readable characters
-  for(i = 0; i < sRet.GetLength(); ++i) {
+  for(i = 0; i < sRet.length(); ++i) {
     unsigned char c = (unsigned char) sRet[i];
     if(c < 13) {
-      sRet.SetAt(i, TCHAR(((unsigned char) (sRet[i]) % ('9' - '0')) + '0'));
+      sRet[i] = ((unsigned char) (sRet[i]) % ('9' - '0')) + '0';
     } else if(c < 133) {
-      sRet.SetAt(i, TCHAR(((unsigned char) (sRet[i]) % ('z' - 'a')) + 'a'));
+      sRet[i] =  ((unsigned char) (sRet[i]) % ('z' - 'a')) + 'a';
     } else {
-      sRet.SetAt(i, TCHAR(((unsigned char) (sRet[i]) % ('Z' - 'A')) + 'A'));
+      sRet[i] = ((unsigned char) (sRet[i]) % ('Z' - 'A')) + 'A';
     }
   }
 
@@ -1480,7 +1506,7 @@ CString BGame::GetVerifyChecksum(CString sSource) {
 
 
 //*************************************************************************************************
-void BGame::MyAfxMessageBox(CString sText, int nTmp) {
+void BGame::MyAfxMessageBox(string sText, int nTmp) {
 
   time_t ltime;
   time(&ltime);
@@ -1488,9 +1514,11 @@ void BGame::MyAfxMessageBox(CString sText, int nTmp) {
   newtime = localtime(&ltime);
 
   FILE *fp = fopen("Pakoon1.log", "a");
-  fprintf(fp, "%.24s: %s", asctime(newtime), LPCTSTR(sText));
+  fprintf(fp, "%.24s: %s", asctime(newtime), sText.c_str());
   fprintf(fp, "\n");
   fclose(fp);
+  
+  cout << sText << endl;
 }
 
 static double g_cdPI = 3.141592654;
@@ -1503,9 +1531,9 @@ double BGame::GetSmoothAlpha() {
 }
 
 //*************************************************************************************************
-void BGame::UpdateHighScores(CString sSceneName, TGameMode gameMode, double dTime) {
+void BGame::UpdateHighScores(string sSceneName, TGameMode gameMode, double dTime) {
   // See if new high score was made
-  CString sTmp;
+  string sTmp;
   double dOldTime = dTime;
   FileHelpers::GetKeyStringFromINIFile("AllTimeHigh",
                                        sSceneName,
@@ -1516,7 +1544,7 @@ void BGame::UpdateHighScores(CString sSceneName, TGameMode gameMode, double dTim
   bool bUpdate = false;
   double dRace = 0, dSlalom = 0, dAir = 0;
 
-  sscanf(LPCTSTR(sTmp), "%lf %lf %lf", &dRace, &dSlalom, &dAir);
+  sscanf(sTmp.c_str(), "%lf %lf %lf", &dRace, &dSlalom, &dAir);
 
   switch(gameMode) {
     case SPEEDRACE:
@@ -1543,7 +1571,9 @@ void BGame::UpdateHighScores(CString sSceneName, TGameMode gameMode, double dTim
 
     // Check whether the previous highscores.dat was verified. If it was, only then update
     if(CheckHighscoresValidity()) {
-      sTmp.Format("%lf %lf %lf", dRace, dSlalom, dAir);
+		stringstream val;
+      val << dRace << " " << dSlalom << " " << dAir;
+      sTmp = val.str();
       FileHelpers::WriteKeyStringToINIFile("AllTimeHigh", sSceneName, sTmp, "./Player/Highscores.dat");
       ValidateHighscores();
 
@@ -1559,14 +1589,14 @@ extern double g_dPhysicsStepsInSecond;
 //*************************************************************************************************
 void BGame::UpdateHighScoreMenu() {
 
-  static CString sHighscoresSpeed[100];
-  static CString sHighscoresSlalom[100];
-  static CString sHighscoresAir[100];
+  static string sHighscoresSpeed[100];
+  static string sHighscoresSlalom[100];
+  static string sHighscoresAir[100];
 
   for(int i = 0; i < m_menuChooseScene.m_nItems; ++i) {
-    CString sScene;
+    string sScene;
     sScene = m_menuChooseScene.m_items[i].m_sText;
-    CString sItem;
+    string sItem;
     FileHelpers::GetKeyStringFromINIFile("AllTimeHigh",
                                          sScene,
                                          "0 0 0",
@@ -1575,42 +1605,44 @@ void BGame::UpdateHighScoreMenu() {
 
     // Update Highscore menu's selection lists
 
-    CString sTmp;
+    stringstream sTmp;
     int nMinutesTotal = 0;
     int nSecondsTotal = 0;
     int n100SecondsTotal = 0;
 
     double dRace = 0.0, dSlalom = 0.0, dAir = 0.0;
-    sscanf(LPCTSTR(sItem), "%lf %lf %lf", &dRace, &dSlalom, &dAir);
+    sscanf(sItem.c_str(), "%lf %lf %lf", &dRace, &dSlalom, &dAir);
 
     if(dRace != 0.0) {
       nMinutesTotal = dRace / g_dPhysicsStepsInSecond / 60;
       nSecondsTotal = (dRace - (nMinutesTotal * g_dPhysicsStepsInSecond * 60)) / g_dPhysicsStepsInSecond;
       n100SecondsTotal = (100 * (dRace - (nMinutesTotal * g_dPhysicsStepsInSecond * 60 + nSecondsTotal * g_dPhysicsStepsInSecond))) / g_dPhysicsStepsInSecond;
-      sTmp.Format("%02d:%02d.%02d", nMinutesTotal, nSecondsTotal, n100SecondsTotal);
-      sHighscoresSpeed[i] = sTmp;
+      sTmp << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
+      sHighscoresSpeed[i] = sTmp.str();
     } else {
-      sHighscoresSpeed[i] = _T(" ");
+      sHighscoresSpeed[i] = " ";
     }
 
     if(dSlalom != 0.0) {
       nMinutesTotal = dSlalom / g_dPhysicsStepsInSecond / 60;
       nSecondsTotal = (dSlalom - (nMinutesTotal * g_dPhysicsStepsInSecond * 60)) / g_dPhysicsStepsInSecond;
       n100SecondsTotal = (100 * (dSlalom - (nMinutesTotal * g_dPhysicsStepsInSecond * 60 + nSecondsTotal * g_dPhysicsStepsInSecond))) / g_dPhysicsStepsInSecond;
-      sTmp.Format("%02d:%02d.%02d", nMinutesTotal, nSecondsTotal, n100SecondsTotal);
-      sHighscoresSlalom[i] = sTmp;
+      sTmp.str("");
+      sTmp << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
+      sHighscoresSlalom[i] = sTmp.str();
     } else {
-      sHighscoresSlalom[i] = _T(" ");
+      sHighscoresSlalom[i] = " ";
     }
 
     if(dAir != 0.0) {
       nMinutesTotal = dAir / g_dPhysicsStepsInSecond / 60;
       nSecondsTotal = (dAir - (nMinutesTotal * g_dPhysicsStepsInSecond * 60)) / g_dPhysicsStepsInSecond;
       n100SecondsTotal = (100 * (dAir - (nMinutesTotal * g_dPhysicsStepsInSecond * 60 + nSecondsTotal * g_dPhysicsStepsInSecond))) / g_dPhysicsStepsInSecond;
-      sTmp.Format("%02d:%02d.%02d", nMinutesTotal, nSecondsTotal, n100SecondsTotal);
-      sHighscoresAir[i] = sTmp;
+      sTmp.str("");
+      sTmp << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
+      sHighscoresAir[i] = sTmp.str();
     } else {
-      sHighscoresAir[i] = _T(" ");
+      sHighscoresAir[i] = " ";
     }
   }
   m_listHSSpeedrace.SetItems(sHighscoresSpeed, m_menuChooseScene.m_nItems);
@@ -1621,8 +1653,8 @@ void BGame::UpdateHighScoreMenu() {
 
 //*************************************************************************************************
 bool BGame::CheckHighscoresValidity() {
-  CString sCorrect;
-  CString sCurrent;
+  string sCorrect;
+  string sCurrent;
   sCorrect = GetHighscoresChecksum();
   FileHelpers::GetKeyStringFromINIFile("AllTimeHigh",
                                        "Checksum",
@@ -1630,24 +1662,24 @@ bool BGame::CheckHighscoresValidity() {
                                        sCurrent,
                                        "./Player/Highscores.dat");
 
-  return sCorrect.Compare(sCurrent) == 0;
+  return sCorrect.compare(sCurrent) == 0;
 }
 
 //*************************************************************************************************
 void BGame::ValidateHighscores() {
-  CString sCorrect = GetHighscoresChecksum();
+  string sCorrect = GetHighscoresChecksum();
   FileHelpers::WriteKeyStringToINIFile("AllTimeHigh", "Checksum", sCorrect, "./Player/Highscores.dat");
 }
 
 //*************************************************************************************************
-CString BGame::GetHighscoresChecksum() {
+string BGame::GetHighscoresChecksum() {
   // Loop through scenes to find correct checksum
-  CString sData;
-  sData = _T("");
+  string sData;
+  sData = "";
   for(int i = 0; i < m_menuChooseScene.m_nItems; ++i) {
-    CString sScene;
+    string sScene;
     sScene = m_menuChooseScene.m_items[i].m_sText;
-    CString sItem;
+    string sItem;
     FileHelpers::GetKeyStringFromINIFile("AllTimeHigh",
                                          sScene,
                                          "0 0 0",
@@ -1662,8 +1694,9 @@ CString BGame::GetHighscoresChecksum() {
 
 
 //*************************************************************************************************
-HRESULT WINAPI DirectPlayMessageHandler(PVOID pvUserContext, 
-                                        DWORD dwMessageId, 
+//FIXME
+/*HRESULT WINAPI DirectPlayMessageHandler(PVOID pvUserContext, 
+                                        int dwMessageId, 
                                         PVOID pMsgBuffer) {
   // Try not to stay in this message handler for too long, otherwise
   // there will be a backlog of data.  
@@ -1707,13 +1740,11 @@ HRESULT WINAPI DirectPlayMessageHandler(PVOID pvUserContext,
       }
     case DPN_MSGID_TERMINATE_SESSION:
       {
-        /*
-        PDPNMSG_TERMINATE_SESSION pTerminateSessionMsg;
-        pTerminateSessionMsg = (PDPNMSG_TERMINATE_SESSION)pMsgBuffer;
+        //PDPNMSG_TERMINATE_SESSION pTerminateSessionMsg;
+        //pTerminateSessionMsg = (PDPNMSG_TERMINATE_SESSION)pMsgBuffer;
 
-        g_hrDialog = DPNERR_CONNECTIONLOST;
-        EndDialog( g_hDlg, 0 );
-        */
+        //g_hrDialog = DPNERR_CONNECTIONLOST;
+        //EndDialog( g_hDlg, 0 );
         break;
       }
 
@@ -1743,8 +1774,7 @@ HRESULT WINAPI DirectPlayMessageHandler(PVOID pvUserContext,
   }
 
   return S_OK;
-}
-
+}*/
 
 
 //*************************************************************************************************
@@ -1759,27 +1789,28 @@ BRemotePlayer::~BRemotePlayer() {
 
 //*************************************************************************************************
 BMultiPlay::BMultiPlay() {
-  m_pDP = 0;
+  //m_pDP = 0; //FIXME
   m_bDPInitialized = false;
   // Initialize COM
-  HRESULT hr = CoInitialize(0);
+  //HRESULT hr = CoInitialize(0); //FIXME
 }
 
 //*************************************************************************************************
 BMultiPlay::~BMultiPlay() {
-
-  if(m_pDP && m_bDPInitialized) {
+	//FIXME
+  /*if(m_pDP && m_bDPInitialized) {
     m_pDP->Close(0);
     m_bDPInitialized = false;
-  }
+  }*/
 
   // Release COM
-  CoUninitialize();
+  //CoUninitialize(); //FIXME
 }
 
 //*************************************************************************************************
 bool BMultiPlay::InitMultiplaySession() {
-  HRESULT hr;
+	//FIXME
+  /*HRESULT hr;
 
   // First create needed DirectPlay objects
 
@@ -1809,18 +1840,23 @@ bool BMultiPlay::InitMultiplaySession() {
       return false;
     }
     m_bDPInitialized = true;
-  }
+  }*/
+  
+	if(SDLNet_Init() == -1) {
+		cout << "SDLNet_Init: " << SDLNet_GetError() << endl;
+		return false;
+	}
+  
   return true;
 }
 
-GUID g_guidApp = { 0x2ae835d, 0x9179, 0x485f, { 0x83, 0x43, 0x90, 0x1d, 0x32, 0x7c, 0xe7, 0x94 } };
+//GUID g_guidApp = { 0x2ae835d, 0x9179, 0x485f, { 0x83, 0x43, 0x90, 0x1d, 0x32, 0x7c, 0xe7, 0x94 } }; //FIXME
 
 //*************************************************************************************************
 bool BMultiPlay::StartMultiplaySession(BMultiplayParams *pParams) {
-
   Settings::WriteSettings(BGame::GetSimulation());
 
-  HRESULT hr;
+  //HRESULT hr;
 
   m_params = *pParams;
 
@@ -1828,8 +1864,8 @@ bool BMultiPlay::StartMultiplaySession(BMultiplayParams *pParams) {
 
   // First set peer info
 
-  WCHAR wszPeerName[255];
-  MultiByteToWideChar(CP_ACP, 0, LPCTSTR(pParams->m_sPlayerName), -1, wszPeerName, 255);
+  /*WCHAR wszPeerName[255];
+  MulticharToWideChar(CP_ACP, 0, LPCTSTR(pParams->m_sPlayerName), -1, wszPeerName, 255);
 
   DPN_PLAYER_INFO dpnPlayerInfo;
   dpnPlayerInfo.dwSize = sizeof(DPN_PLAYER_INFO);
@@ -1869,12 +1905,12 @@ bool BMultiPlay::StartMultiplaySession(BMultiplayParams *pParams) {
     return false;
   }
   pDeviceAddress->SetSP(&CLSID_DP8SP_TCPIP);
-  // DWORD dwPort = 2502;
-  DWORD dwPort = BGame::m_nMultiplayPort;
+  // int dwPort = 2502;
+  int dwPort = BGame::m_nMultiplayPort;
   if((hr = pDeviceAddress->AddComponent(DPNA_KEY_PORT,
                                         &dwPort, 
                                         sizeof(dwPort),
-                                        DPNA_DATATYPE_DWORD)) != 0) {
+                                        DPNA_DATATYPE_int)) != 0) {
     return false;
   }
 
@@ -1909,11 +1945,11 @@ bool BMultiPlay::StartMultiplaySession(BMultiplayParams *pParams) {
     // Connect to a game
 
     WCHAR wszHostAddress[255];
-    MultiByteToWideChar(CP_ACP, 0, LPCTSTR(pParams->m_sHostIPAddress), -1, wszHostAddress, 255);
+    MulticharToWideChar(CP_ACP, 0, LPCTSTR(pParams->m_sHostIPAddress), -1, wszHostAddress, 255);
 
     if((hr = pDeviceAddress->AddComponent(DPNA_KEY_HOSTNAME,
                                           wszHostAddress, 
-                                          (DWORD) (wcslen(wszHostAddress) + 1) * sizeof(WCHAR),
+                                          (int) (wcslen(wszHostAddress) + 1) * sizeof(WCHAR),
                                           DPNA_DATATYPE_STRING)) != 0) {
       return false;
     }
@@ -1941,20 +1977,78 @@ bool BMultiPlay::StartMultiplaySession(BMultiplayParams *pParams) {
   }
 
   BGame::m_bMultiplayOn = true;
+  BGame::m_bExitingMultiplay = false;*/
+  
+  int dwPort = BGame::m_nMultiplayPort;
+  
+  	IPaddress ip;
+  
+  if(pParams->m_bHost) {
+	if(SDLNet_ResolveHost(&ip, NULL, dwPort)==-1) {
+		cout << "SDLNet_ResolveHost: " << SDLNet_GetError() << endl;
+		return false;
+	}
+	
+    // Store self as first remote player
+
+    BGame::m_nRemotePlayers = 1;
+    strcpy(BGame::m_remotePlayer[0].m_sName, pParams->m_sPlayerName.c_str());
+    BGame::m_remotePlayer[0].m_sCurrentMenuSel = "";
+    BGame::m_remotePlayer[0].m_bSelectionMade = false;
+    BGame::m_remotePlayer[0].m_id = 0;
+    BGame::m_remotePlayer[0].m_bSelf = true;
+    BGame::m_remotePlayer[1].m_bSelf = false;
+    BGame::m_remotePlayer[2].m_bSelf = false;
+    BGame::m_remotePlayer[3].m_bSelf = false;
+    BGame::GetMultiplay()->GetParams()->m_nMyPlace = 0;
+  } else {
+	if(SDLNet_ResolveHost(&ip, pParams->m_sHostIPAddress.c_str(), dwPort)==-1) {
+		cout << "SDLNet_ResolveHost: " << SDLNet_GetError() << " address was: " << pParams->m_sHostIPAddress.c_str() << endl;
+		return false;
+	}
+	
+    // Clear list of remote players. 
+    // Host will inform us about all remote players with the PLAYER_INFO message.
+    BGame::m_nRemotePlayers = 0; 
+  }
+  
+	own_tcpsock = SDLNet_TCP_Open(&ip);
+	if(!own_tcpsock) {
+		cout << "SDLNet_TCP_Open: " << SDLNet_GetError() << endl;
+		return false;
+	}
+
+  BGame::m_bMultiplayOn = true;
   BGame::m_bExitingMultiplay = false;
+  
+	if (pParams->m_bHost) {
+		// create incoming connection listening thread
+		incoming_connection_thread = SDL_CreateThread(listenIncomingConnections, "incoming_connection", (void *)this);
+	} else {
+		// Identify yourself in the game
+		SendBroadcastMsg(WHO_AM_I, pParams->m_sPlayerName);
+		
+		listen_thread = SDL_CreateThread(receiveThread, "listen", (void *)this);
+	}
+  
   return true;
 }
 
 //*************************************************************************************************
-bool BMultiPlay::SendPeerMsg(BYTE bMsg, DPNID id, CString sMsgText) {
-  DPN_BUFFER_DESC bufferDesc;
-  BYTE buffer[255];
+bool BMultiPlay::SendPeerMsg(char bMsg, int id, string sMsgText) {
+  //DPN_BUFFER_DESC bufferDesc;
+  //FIXME ID pitää myös laittaa mukaan, jos tarvitaan jossain
+  char buffer[255];
   buffer[0] = '-'; // Indicates a non-during-game message
   buffer[1] = bMsg;
-  sprintf((char*) buffer + 2, "%s", LPCTSTR(sMsgText));
-  buffer[sMsgText.GetLength() + 2] = 0;
+  sprintf((char*) buffer + 2, "%s", sMsgText.c_str());
+  buffer[sMsgText.length() + 2] = 0;
+  if (buffer[1] == 9) {
+	  cout << "len: " << sMsgText.length() << endl;
+	  cout << "teksti: " << (int)buffer[2] << endl;
+  }
 
-  bufferDesc.dwBufferSize = sMsgText.GetLength() + 3;
+  /*bufferDesc.dwBufferSize = sMsgText.GetLength() + 3;
   bufferDesc.pBufferData = buffer;
 
   HRESULT hr;
@@ -1967,17 +2061,21 @@ bool BMultiPlay::SendPeerMsg(BYTE bMsg, DPNID id, CString sMsgText) {
                      0, // phAsyncHandle,
                      DPNSEND_SYNC | DPNSEND_NOCOMPLETE | DPNSEND_NOLOOPBACK);
 
-  return (hr == S_OK);
+  return (hr == S_OK);*/
+  
+  int len = sMsgText.length() + 3;
+  
+  return send(id, buffer, len);
 }
 
 //*************************************************************************************************
-bool BMultiPlay::SendBroadcastMsg(BYTE bMsg, CString sMsgText) {
-  return SendPeerMsg(bMsg, DPNID_ALL_PLAYERS_GROUP, sMsgText);
+bool BMultiPlay::SendBroadcastMsg(char bMsg, string sMsgText) {
+  return SendPeerMsg(bMsg, -1, sMsgText); //-1 oli DPNID_ALL_PLAYERS_GROUP
 }
 
 //*************************************************************************************************
-bool BMultiPlay::SendBinaryBroadcastMsg(BYTE *pbMsg, int nSize) {
-  DPN_BUFFER_DESC bufferDesc;
+bool BMultiPlay::SendBinaryBroadcastMsg(char *pbMsg, int nSize) {
+  /*DPN_BUFFER_DESC bufferDesc;
   bufferDesc.dwBufferSize = nSize;
   bufferDesc.pBufferData = pbMsg;
 
@@ -1991,7 +2089,9 @@ bool BMultiPlay::SendBinaryBroadcastMsg(BYTE *pbMsg, int nSize) {
                      0, // phAsyncHandle,
                      DPNSEND_PRIORITY_HIGH | DPNSEND_SYNC | DPNSEND_NOCOMPLETE | DPNSEND_NOLOOPBACK);
 
-  return (hr == S_OK);
+  return (hr == S_OK);*/
+  
+  return send(-1, pbMsg, nSize);
 }
 
 
@@ -1999,22 +2099,22 @@ extern double g_dPhysicsStepsInSecond;
 
 
 //*************************************************************************************************
-void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
+void BMultiPlay::ProcessMultiplayMessage(char *data, int data_size, BClientConnection *client_connection) {
   // Check whether this is a during-game message or a general message
 
-  if(pReceiveMsg->dwReceiveDataSize < 1) {
+  if(data_size < 1) {
     // empty message
     return;
   }
 
-  if(pReceiveMsg->pReceiveData[0] == MY_POSITION_IS_THIS) {
+  if(data[0] == MY_POSITION_IS_THIS) {
 
     // Process on-game position message
 
-    EnterCriticalSection(&(BGame::m_csMutex)); 
+    SDL_LockMutex(BGame::m_csMutex);
     {
-      DWORD clockNow = BGame::GetMultiplayClock();
-      int nIndex = int(pReceiveMsg->pReceiveData[1]) - 1;
+      int clockNow = BGame::GetMultiplayClock();
+      int nIndex = int(data[1]) - 1;
 
       // Save old location info
       BGame::m_remotePlayer[nIndex].m_clockPrevLocationSent = BGame::m_remotePlayer[nIndex].m_clockLocationSent;
@@ -2026,24 +2126,24 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
       float fForwardDirX, fForwardDirY, fForwardDirZ;
       float fRightDirX, fRightDirY, fRightDirZ;
 
-      memcpy(&fPosX,        pReceiveMsg->pReceiveData + 2,                     sizeof(float));
-      memcpy(&fPosY,        pReceiveMsg->pReceiveData + 2 + 1 * sizeof(float), sizeof(float));
-      memcpy(&fPosZ,        pReceiveMsg->pReceiveData + 2 + 2 * sizeof(float), sizeof(float));
+      memcpy(&fPosX,        data + 2,                     sizeof(float));
+      memcpy(&fPosY,        data + 2 + 1 * sizeof(float), sizeof(float));
+      memcpy(&fPosZ,        data + 2 + 2 * sizeof(float), sizeof(float));
 
-      memcpy(&fForwardDirX, pReceiveMsg->pReceiveData + 2 + 3 * sizeof(float), sizeof(float));
-      memcpy(&fForwardDirY, pReceiveMsg->pReceiveData + 2 + 4 * sizeof(float), sizeof(float));
-      memcpy(&fForwardDirZ, pReceiveMsg->pReceiveData + 2 + 5 * sizeof(float), sizeof(float));
+      memcpy(&fForwardDirX, data + 2 + 3 * sizeof(float), sizeof(float));
+      memcpy(&fForwardDirY, data + 2 + 4 * sizeof(float), sizeof(float));
+      memcpy(&fForwardDirZ, data + 2 + 5 * sizeof(float), sizeof(float));
 
-      memcpy(&fRightDirX,   pReceiveMsg->pReceiveData + 2 + 6 * sizeof(float), sizeof(float));
-      memcpy(&fRightDirY,   pReceiveMsg->pReceiveData + 2 + 7 * sizeof(float), sizeof(float));
-      memcpy(&fRightDirZ,   pReceiveMsg->pReceiveData + 2 + 8 * sizeof(float), sizeof(float));
+      memcpy(&fRightDirX,   data + 2 + 6 * sizeof(float), sizeof(float));
+      memcpy(&fRightDirY,   data + 2 + 7 * sizeof(float), sizeof(float));
+      memcpy(&fRightDirZ,   data + 2 + 8 * sizeof(float), sizeof(float));
 
-      BYTE bTurn;
-      memcpy(&bTurn, pReceiveMsg->pReceiveData + 2 + 9 * sizeof(float), 1);
+      char bTurn;
+      memcpy(&bTurn, data + 2 + 9 * sizeof(float), 1);
       BGame::m_remotePlayer[nIndex].m_dTurn = double(bTurn - 50) / 50.0;
 
-      memcpy(&(BGame::m_remotePlayer[nIndex].m_clockLocationSent), pReceiveMsg->pReceiveData + 2 + 9 * sizeof(float) + 1, sizeof(DWORD));
-      memcpy(&(BGame::m_remotePlayer[nIndex].m_nLocationSent), pReceiveMsg->pReceiveData + 2 + 9 * sizeof(float) + 1 + sizeof(DWORD), sizeof(long));
+      memcpy(&(BGame::m_remotePlayer[nIndex].m_clockLocationSent), data + 2 + 9 * sizeof(float) + 1, sizeof(int));
+      memcpy(&(BGame::m_remotePlayer[nIndex].m_nLocationSent), data + 2 + 9 * sizeof(float) + 1 + sizeof(int), sizeof(long));
       
       BGame::m_remotePlayer[nIndex].m_clockLocationReceived = clockNow;
 
@@ -2074,7 +2174,7 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
       /*
       if(BGame::GetMultiplay()->GetParams()->m_bHost) {
-        CString sMsg;
+        string sMsg;
         sMsg.Format("Receive-Loc: MyTime = %7lu oldSent = %7lu newSent = %7lu, OldLocY:%10.3lf NewLocY:%10.3lf vVelocityY: %10.7lf", 
                     (unsigned long) clockNow,
                     (unsigned long) BGame::m_remotePlayer[nIndex].m_clockPrevLocationSent, 
@@ -2086,13 +2186,13 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
       }
       */
     } 
-    LeaveCriticalSection(&(BGame::m_csMutex));
+    SDL_UnlockMutex(BGame::m_csMutex);
 
-  } else if((pReceiveMsg->pReceiveData[0] == '-') && (pReceiveMsg->dwReceiveDataSize >= 2)) {
+  } else if((data[0] == '-') && (data_size >= 2)) {
 
     // Process general multiplay message
 
-    switch(pReceiveMsg->pReceiveData[1]) {
+    switch(data[1]) {
 
       case WHO_AM_I:
 
@@ -2100,7 +2200,7 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
         if(m_params.m_bHost) {
           // Add a new client and inform him about his place
-          int nIndex = BGame::AddRemotePlayer(pReceiveMsg->dpnidSender, pReceiveMsg->pReceiveData + 2);
+          int nIndex = BGame::AddRemotePlayer(0, data + 2, client_connection); //FIXME id oli pReceiveMsg->dpnidSender
 
           if(nIndex != -1) {
             // Send YOU_ARE message
@@ -2114,24 +2214,24 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
           // Send PLAYER_INFO messages to all players to update their lists
           for(int i = 0; i < BGame::m_nRemotePlayers; ++i) {
 
-            //CString sMsg;
+            //string sMsg;
             //sMsg.Format("%c%s", char(i + 1), BGame::m_remotePlayer[i].m_sName);
             //SendBroadcastMsg(PLAYER_INFO, sMsg);
 
-            BYTE *bMsg = new BYTE[3 + sizeof(DPNID) + strlen(BGame::m_remotePlayer[i].m_sName) + 1];
+            char *bMsg = new char[3 + sizeof(int) + strlen(BGame::m_remotePlayer[i].m_sName) + 1];
             bMsg[0] = '-';
-            bMsg[1] = BMultiPlay::TTinyMessages::PLAYER_INFO;
-            bMsg[2] = BYTE(i + 1);
-            memcpy(bMsg + 3, &(BGame::m_remotePlayer[i].m_id), sizeof(DPNID));
-            strcpy((char *) bMsg + 3 + sizeof(DPNID), BGame::m_remotePlayer[i].m_sName);
+            bMsg[1] = BMultiPlay::PLAYER_INFO;
+            bMsg[2] = char(i + 1);
+            memcpy(bMsg + 3, &(BGame::m_remotePlayer[i].m_id), sizeof(int));
+            strcpy((char *) bMsg + 3 + sizeof(int), BGame::m_remotePlayer[i].m_sName);
 
-            (void) SendBinaryBroadcastMsg(bMsg, 3 + sizeof(DPNID) + strlen(BGame::m_remotePlayer[i].m_sName) + 1);
+            (void) SendBinaryBroadcastMsg(bMsg, 3 + sizeof(int) + strlen(BGame::m_remotePlayer[i].m_sName) + 1);
 
             delete [] bMsg;
           }
 
           // Ask everyone to tell their state so the new guy knows the game
-          SendBroadcastMsg(BMultiPlay::TTinyMessages::REPORT_YOUR_STATE, "");
+          SendBroadcastMsg(BMultiPlay::REPORT_YOUR_STATE, "");
         }
 
         break;
@@ -2144,24 +2244,25 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
           // Add your own name to the remote player list (right position)
     
-          m_params.m_nMyPlace = int(pReceiveMsg->pReceiveData[2]);
+          m_params.m_nMyPlace = int(data[2]);
 
           BGame::m_remotePlayer[0].m_bSelf = false;
           BGame::m_remotePlayer[1].m_bSelf = false;
           BGame::m_remotePlayer[2].m_bSelf = false;
           BGame::m_remotePlayer[3].m_bSelf = false;
           BGame::m_remotePlayer[m_params.m_nMyPlace].m_bSelf = true;
-          BGame::m_remotePlayer[m_params.m_nMyPlace].m_state = BRemotePlayer::TRemoteState::WANTS_TO_SELECT_NEW_RACE;
+          BGame::m_remotePlayer[m_params.m_nMyPlace].m_state = BRemotePlayer::WANTS_TO_SELECT_NEW_RACE;
           BGame::m_remotePlayer[m_params.m_nMyPlace].m_id = 0;
           BGame::BroadcastStateChange();
 
           // Do the host a favor and tell him his id
 
-          BYTE *bMsg = new BYTE[2 + sizeof(DPNID)];
+			//FIXME no need?
+          /*char *bMsg = new char[2 + sizeof(int)];
           bMsg[0] = '-';
-          bMsg[1] = BMultiPlay::TTinyMessages::HOST_YOUR_ID_IS;
-          memcpy(bMsg + 2, &(pReceiveMsg->dpnidSender), sizeof(DPNID));
-          (void) SendBinaryBroadcastMsg(bMsg, 2 + sizeof(DPNID));
+          bMsg[1] = BMultiPlay::HOST_YOUR_ID_IS;
+          memcpy(bMsg + 2, &(pReceiveMsg->dpnidSender), sizeof(int));
+          (void) SendBinaryBroadcastMsg(bMsg, 2 + sizeof(int));*/
         }
 
         break;
@@ -2172,18 +2273,18 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
           // Store my id
 
-          memcpy(&(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_id), pReceiveMsg->pReceiveData + 2, sizeof(DPNID));
+          memcpy(&(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_id), data + 2, sizeof(int));
 
           // Broadcast updated player info (i.e. m_id) for other
 
-          BYTE *bMsg = new BYTE[3 + sizeof(DPNID) + strlen(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_sName)];
+          char *bMsg = new char[3 + sizeof(int) + strlen(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_sName)];
           bMsg[0] = '-';
-          bMsg[1] = BMultiPlay::TTinyMessages::PLAYER_INFO;
-          bMsg[2] = BYTE(GetParams()->m_nMyPlace + 1);
-          memcpy(bMsg + 3, &(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_id), sizeof(DPNID));
-          strcpy((char *) bMsg + 3 + sizeof(DPNID), BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_sName);
+          bMsg[1] = BMultiPlay::PLAYER_INFO;
+          bMsg[2] = char(GetParams()->m_nMyPlace + 1);
+          memcpy(bMsg + 3, &(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_id), sizeof(int));
+          strcpy((char *) bMsg + 3 + sizeof(int), BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_sName);
 
-          (void) SendBinaryBroadcastMsg(bMsg, 3 + sizeof(DPNID) + strlen(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_sName) + 1);
+          (void) SendBinaryBroadcastMsg(bMsg, 3 + sizeof(int) + strlen(BGame::m_remotePlayer[GetParams()->m_nMyPlace].m_sName) + 1);
         }
         break;
 
@@ -2200,7 +2301,7 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Save Player Info (this also adds new remote players to the list)
 
         if(!m_params.m_bHost) {
-          BGame::UpdatePlayerInfo(pReceiveMsg->pReceiveData + 2);
+          BGame::UpdatePlayerInfo(data + 2);
         }
 
         break;
@@ -2209,7 +2310,7 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
         // Handle player exit
 
-        BGame::HandlePlayerExit(pReceiveMsg->pReceiveData + 2);
+        BGame::HandlePlayerExit(data + 2);
 
         break;
 
@@ -2218,9 +2319,9 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Save menu browse info
 
         {
-          int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
+          int nIndex = int(data[2]) - 1;
           char sSelection[255];
-          strcpy(sSelection, (char *) pReceiveMsg->pReceiveData + 3);
+          strcpy(sSelection, (char *) data + 3);
           if(!BGame::m_remotePlayer[nIndex].m_bSelectionMade) {
             BGame::m_remotePlayer[nIndex].m_sCurrentMenuSel = sSelection;
           }
@@ -2232,9 +2333,9 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Save menu selection
 
         {
-          int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
+          int nIndex = int(data[2]) - 1;
           char sSelection[255];
-          strcpy(sSelection, (char *) pReceiveMsg->pReceiveData + 3);
+          strcpy(sSelection, (char *) data + 3);
           BGame::m_remotePlayer[nIndex].m_sCurrentMenuSel = sSelection;
           BGame::m_remotePlayer[nIndex].m_bSelectionMade = true;
 
@@ -2250,7 +2351,7 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
         {
           char sSelection[255];
-          strcpy(sSelection, (char *) pReceiveMsg->pReceiveData + 2);
+          strcpy(sSelection, (char *) data + 2);
           BGame::GetView()->HighlightMenuSelection(sSelection);
         }
         break;
@@ -2260,9 +2361,9 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Save remote vehicle filename
 
         {
-          int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
+          int nIndex = int(data[2]) - 1;
           char sFilename[255];
-          strcpy(sFilename, (char *) pReceiveMsg->pReceiveData + 3);
+          strcpy(sFilename, (char *) data + 3);
 
           if(BGame::m_remotePlayer[nIndex].m_pVehicle && 
              !BGame::m_remotePlayer[nIndex].m_bVehicleReused) {
@@ -2280,15 +2381,15 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Record remote vehicle size
 
         {
-          int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
+          int nIndex = int(data[2]) - 1;
           double dLen;
           double dWidth;
           double dHeight;
           double dMass;
-          memcpy(&dLen,    pReceiveMsg->pReceiveData + 3,                      sizeof(double));
-          memcpy(&dWidth,  pReceiveMsg->pReceiveData + 3 + 1 * sizeof(double), sizeof(double));
-          memcpy(&dHeight, pReceiveMsg->pReceiveData + 3 + 2 * sizeof(double), sizeof(double));
-          memcpy(&dMass,   pReceiveMsg->pReceiveData + 3 + 3 * sizeof(double), sizeof(double));
+          memcpy(&dLen,    data + 3,                      sizeof(double));
+          memcpy(&dWidth,  data + 3 + 1 * sizeof(double), sizeof(double));
+          memcpy(&dHeight, data + 3 + 2 * sizeof(double), sizeof(double));
+          memcpy(&dMass,   data + 3 + 3 * sizeof(double), sizeof(double));
           BGame::m_remotePlayer[nIndex].m_dTotalMass = dMass;
           BGame::m_remotePlayer[nIndex].m_dLen    = dLen / 2.0;
           BGame::m_remotePlayer[nIndex].m_dHeight = dHeight; // To make collisions better
@@ -2305,11 +2406,12 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Record remote state
 
         {
-          int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
-          BGame::m_remotePlayer[nIndex].m_state = static_cast<BRemotePlayer::TRemoteState>((*(pReceiveMsg->pReceiveData + 3)) - 1);
-          if(BGame::m_remotePlayer[nIndex].m_state == BRemotePlayer::TRemoteState::MISSED_POLE) {
-            CString sMsg;
-            sMsg.Format("%s was disqualified", BGame::m_remotePlayer[nIndex].m_sName);
+          int nIndex = int(data[2]) - 1;
+          BGame::m_remotePlayer[nIndex].m_state = static_cast<BRemotePlayer::TRemoteState>((*(data + 3)) - 1);
+          if(BGame::m_remotePlayer[nIndex].m_state == BRemotePlayer::MISSED_POLE) {
+            string sMsg;
+            sMsg.assign(BGame::m_remotePlayer[nIndex].m_sName);
+            sMsg.append("was disqualified");
             BGame::ShowMultiplayMessage(sMsg);
           }
         }
@@ -2323,7 +2425,7 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
             // Report player final position
 
-            int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
+            int nIndex = int(data[2]) - 1;
             BGame::BroadcastFinalPosition(nIndex);
           }
         }
@@ -2334,13 +2436,13 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Record remote final position
 
         {
-          int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
-          BGame::m_remotePlayer[nIndex].m_nRacePosition = static_cast<BRemotePlayer::TRemoteState>((*(pReceiveMsg->pReceiveData + 3)) - 1);
-          BGame::m_remotePlayer[nIndex].m_state = BRemotePlayer::TRemoteState::FINISHED;
+          int nIndex = int(data[2]) - 1;
+          BGame::m_remotePlayer[nIndex].m_nRacePosition = static_cast<BRemotePlayer::TRemoteState>((*(data + 3)) - 1);
+          BGame::m_remotePlayer[nIndex].m_state = BRemotePlayer::FINISHED;
 
-          CString sMsg;
-          sMsg.Format("%s's final position is %d", BGame::m_remotePlayer[nIndex].m_sName, BGame::m_remotePlayer[nIndex].m_nRacePosition);
-          BGame::ShowMultiplayMessage(sMsg);
+          stringstream sMsg;
+          sMsg << BGame::m_remotePlayer[nIndex].m_sName << "'s final position is " << BGame::m_remotePlayer[nIndex].m_nRacePosition;
+          BGame::ShowMultiplayMessage(sMsg.str());
         }
 
         break;
@@ -2350,10 +2452,10 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
         // Check if all are ready to start
 
         if(m_params.m_bHost) {
-
-          int nIndex = int(pReceiveMsg->pReceiveData[2]) - 1;
+			cout << data[0] << " " << int(data[1]) << " " << int(data[2]) << " " << data_size << endl;
+          int nIndex = int(data[2]) - 1;
           BGame::m_remotePlayer[nIndex].m_bReadyToStart = true;
-
+		cout << nIndex << " is ready." << endl;
           // Check whether all are ready
 
           BGame::CheckForGameStart();
@@ -2366,16 +2468,15 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
         BGame::m_bMultiplayRaceStarter = true;
         BGame::m_clockMultiRaceStarter = clock();
-        BGame::GetView()->Invalidate();
         break;
 
       case CLOCK_IS_NOW_0:
 
         // Syncronize your watches!
 
-        EnterCriticalSection(&(BGame::m_csMutex)); 
-        BGame::m_clockOffsetFromZeroTime = ::GetTickCount();
-        LeaveCriticalSection(&(BGame::m_csMutex)); 
+        SDL_LockMutex(BGame::m_csMutex);
+        BGame::m_clockOffsetFromZeroTime = SDL_GetTicks();
+        SDL_UnlockMutex(BGame::m_csMutex);
 
         break;
 
@@ -2383,8 +2484,8 @@ void BMultiPlay::ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg) {
 
         // Show multiplayer chat message
         {
-          CString sMsg;
-          sMsg = pReceiveMsg->pReceiveData + 2;
+          string sMsg;
+          sMsg = data + 2;
           BGame::ShowMultiplayMessage(sMsg, true);
         }
 
@@ -2404,19 +2505,20 @@ bool BMultiPlay::EndMultiplaySession() {
 
   // Inform others that I have exited
 
-  BYTE bMsg[3];
+  char bMsg[3];
   bMsg[0] = '-';
-  bMsg[1] = BMultiPlay::TTinyMessages::I_EXITED;
-  bMsg[2] = BYTE(BGame::GetMyPlace() + 1);
+  bMsg[1] = BMultiPlay::I_EXITED;
+  bMsg[2] = char(BGame::GetMyPlace() + 1);
 
   (void) SendBinaryBroadcastMsg(bMsg, 3);
 
-  Sleep(500); 
+  SDL_Delay(500); 
 
-  if(m_pDP) {
+	//FIXME
+  /*if(m_pDP) {
     m_pDP->Close(0);
     m_bDPInitialized = false;
-  }
+  }*/
 
   BGame::m_bMultiplayOn = false;
   BGame::m_bExitingMultiplay = false;
@@ -2424,15 +2526,16 @@ bool BMultiPlay::EndMultiplaySession() {
 }
 
 //*************************************************************************************************
-int BMultiPlay::GetServiceProviders(CString *psServiceProviders, GUID *pGuids, int nMax) {
+//FIXME
+/*int BMultiPlay::GetServiceProviders(string *psServiceProviders, GUID *pGuids, int nMax) {
 
   int nRet = 0;
 
   if(m_pDP) {
     HRESULT hr;
     DPN_SERVICE_PROVIDER_INFO *spInfoArray = 0;
-    DWORD dwEnumData = 0;
-    DWORD dwServiceProviders = 0;
+    int dwEnumData = 0;
+    int dwServiceProviders = 0;
 
     // First get the buffer size
     hr = m_pDP->EnumServiceProviders(NULL, // enumerate all service providers
@@ -2466,7 +2569,7 @@ int BMultiPlay::GetServiceProviders(CString *psServiceProviders, GUID *pGuids, i
       int nOccurrence;
       if((nOccurrence = psServiceProviders[i].Find(" Service Provider", 0)) != -1) {
         // Make up the string from the two parts, removing "service provider" text
-        CString sTmp;
+        string sTmp;
         sTmp.Format("%.*s%s", 
                     nOccurrence,
                     LPCTSTR(psServiceProviders[i]), 
@@ -2479,12 +2582,133 @@ int BMultiPlay::GetServiceProviders(CString *psServiceProviders, GUID *pGuids, i
     delete [] spInfoArray;
   }
   return nRet;
+}*/
+
+bool BMultiPlay::send(char to_id, char *buffer, char len, int ignore_place) {
+	//to_id -1 = send everyone
+	char new_buffer[len + 2];
+	new_buffer[0] = len;
+	new_buffer[1] = to_id;
+	memcpy(new_buffer + 2, buffer, len);
+	
+	len += 2;
+	
+	if(GetParams()->m_bHost) {
+		for (int x = 0; x < BGame::m_nRemotePlayers; x++) {
+			if (x != BGame::GetMyPlace() && x != ignore_place && (to_id == -1 || to_id == x)) {
+				int result = SDLNet_TCP_Send(*BGame::m_remotePlayer[x].client_connection->getSocket(), new_buffer, len);
+
+				if (result < len) {
+					cout << "SDLNet_TCP_Send: " << SDLNet_GetError() << endl;
+					return false;
+				}
+			}
+		}
+	} else {
+		int result = SDLNet_TCP_Send(own_tcpsock, new_buffer, len);
+		if (result < len) {
+			cout << "SDLNet_TCP_Send: " << SDLNet_GetError() << endl;
+			return false;
+		}
+	}
+
+	return true;
 }
 
+bool BMultiPlay::receive(TCPsocket socket, char *to_id, char **buffer, char *len) {
+	int result = SDLNet_TCP_Recv(socket, len, 1);
+	if (result <= 0) {
+		return false;
+	}
+	result = SDLNet_TCP_Recv(socket, to_id, 1);
+	if (result <= 0) {
+		return false;
+	}
+	*buffer = new char[*len];
+	result = SDLNet_TCP_Recv(socket, *buffer, *len);
+	if (result <= 0) {
+		delete[] buffer;
+		return false;
+	}
+	return true;
+}
 
+int BMultiPlay::receiveThread(void *ptr) {
+	BMultiPlay *bmp = (BMultiPlay *)ptr;
+	while (BGame::m_bMultiplayOn) {
+		char to_id;
+		char *buffer;
+		char len;
+		if (bmp->receive(bmp->own_tcpsock, &to_id, &buffer, &len)) {
+			bmp->ProcessMultiplayMessage(buffer, len);
+			delete[] buffer;
+		}
+	}
+	
+	return 0;
+}
 
+int BMultiPlay::listenIncomingConnections(void *ptr) {
+	BMultiPlay *bmp = (BMultiPlay *)ptr;
 
+	while (BGame::m_bMultiplayOn) {
+		TCPsocket socket = SDLNet_TCP_Accept(bmp->own_tcpsock);
+		
+		if (socket) {
+			cout << "We have a new connection!" << endl;
+			bmp->client_connections.push_back(new BClientConnection(socket, bmp));
+		}
+		
+		SDL_Delay(200);
+	}
 
+	return 0;
+}
+
+BClientConnection::BClientConnection(TCPsocket socket, BMultiPlay *bmp) {
+	thread_exit = false;
+	this->socket = socket;
+	this->bmp = bmp;
+	listen_thread = SDL_CreateThread(receiveThread, "listen", (void *)this);
+}
+
+BClientConnection::~BClientConnection() {
+	thread_exit = true;
+	SDL_WaitThread(listen_thread, NULL);
+}
+
+int BClientConnection::receiveThread(void *ptr) {
+	BClientConnection *bcc = (BClientConnection *)ptr;
+
+	while (!bcc->thread_exit) {
+		char to_id;
+		char *buffer;
+		char len;
+		if (bcc->bmp->receive(bcc->socket, &to_id, &buffer, &len)) {
+			//find sender place if there is one
+			int sender_place = 0;
+			while (BGame::m_remotePlayer[sender_place].client_connection != bcc && sender_place != BGame::m_nRemotePlayers) {
+				sender_place++;
+			}
+			//if (to_id == -1) {
+				//resend to all
+				bcc->bmp->send(to_id, buffer, len, sender_place);
+			//} else if (to_id != BGame::GetMyPlace()) {
+				//resend to to_id
+				//*BGame::m_remotePlayer[x].socket sendaa tonne
+			//}
+			
+			if (to_id == BGame::GetMyPlace() || to_id == -1) {
+				//we need to know about the content
+				bcc->bmp->ProcessMultiplayMessage(buffer, len, bcc);
+			}
+		
+			delete[] buffer;
+		}
+	}
+	
+	return 0;
+}
 
 // PAKOON! Game, Source Code and Developer Package Copyright
 // =========================================================

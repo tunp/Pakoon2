@@ -1,7 +1,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "HeightMap.h"
 #include "PerlinNoise.h"
 

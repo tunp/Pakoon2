@@ -3,18 +3,14 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#define OEMRESOURCE
-#include "stdafx.h"
-#include "Pakoon1.h"
-
 #include "Pakoon1Doc.h"
 #include "Pakoon1View.h"
 
 #include "OpenGLHelpers.h"
 #include "OpenGLExtFunctions.h"
 #include "BTextures.h"
-#include "gl\gl.h"
-#include "gl\glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
 
 #include "SoundModule.h"
 #include "Settings.h"
@@ -25,11 +21,9 @@
 #include "BTextRenderer.h"
 #include "BUI.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
+#include <sstream>
+
+using namespace std;
 
 extern bool g_cbBlackAndWhite;
 extern double Random(double dRange);
@@ -47,26 +41,6 @@ BVector g_vText;
 static double g_cdPI = 3.141592654;
 
 /////////////////////////////////////////////////////////////////////////////
-// CPakoon1View
-
-//*************************************************************************************************
-IMPLEMENT_DYNCREATE(CPakoon1View, CView)
-
-BEGIN_MESSAGE_MAP(CPakoon1View, CView)
-//{{AFX_MSG_MAP(CPakoon1View)
-ON_WM_CREATE()
-ON_WM_ERASEBKGND()
-ON_WM_DESTROY()
-ON_WM_CHAR()
-ON_WM_KEYDOWN()
-ON_WM_KEYUP()
-ON_WM_MOUSEMOVE()
-ON_WM_LBUTTONDOWN()
-ON_WM_LBUTTONUP()
-//}}AFX_MSG_MAP
-END_MESSAGE_MAP()
-
-/////////////////////////////////////////////////////////////////////////////
 // CPakoon1View construction/destruction
 
 //*************************************************************************************************
@@ -76,7 +50,7 @@ CPakoon1View::CPakoon1View() {
   m_pKeyDownFunction = &CPakoon1View::OnKeyDownIntro;
   m_bDrawOnlyMenu = false;
   m_bFullRedraw = true;
-  m_hCursor = 0;
+  //m_hCursor = 0; //FIXME
   SoundModule::Initialize();
   m_bInitClock = true;
   m_bCreateDLs = false;
@@ -84,8 +58,10 @@ CPakoon1View::CPakoon1View() {
   m_bNormals = false;
   m_bIgnoreNextChar = false;
   m_clockMenuScroll = 0;
-  m_pThreadLoading = 0;
+  //m_pThreadLoading = 0;
   m_clockHighlightMenu = 0;
+  
+  exit = false;
 }
 
 CPakoon1View::~CPakoon1View() {
@@ -93,20 +69,11 @@ CPakoon1View::~CPakoon1View() {
 
 
 //*************************************************************************************************
-BOOL CPakoon1View::PreCreateWindow(CREATESTRUCT& cs) {
-  // TODO: Modify the Window class or styles here by modifying
-  //  the CREATESTRUCT cs
-  return CView::PreCreateWindow(cs);
-}
-
-DEVMODE g_devmodeOrig;
-
-
-//*************************************************************************************************
-int CPakoon1View::OnCreate(LPCREATESTRUCT lpCreateStruct) {
+int CPakoon1View::OnCreate() {
 
   // Save current screen resolution
-  EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &g_devmodeOrig);
+  //FIXME
+  /*EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &g_devmodeOrig);
 
   BOOL retval = CView::OnCreate(lpCreateStruct);
 
@@ -140,7 +107,7 @@ int CPakoon1View::OnCreate(LPCREATESTRUCT lpCreateStruct) {
     BGame::MyAfxMessageBox("SetPixelFormat failed");
   }  
   m_hGLRC = wglCreateContext(hDC);
-  wglMakeCurrent(hDC, m_hGLRC);
+  wglMakeCurrent(hDC, m_hGLRC);*/
 
   // Check Player.State file integrity
   BGame::GetPlayer()->LoadStateFile();
@@ -187,12 +154,14 @@ int CPakoon1View::OnCreate(LPCREATESTRUCT lpCreateStruct) {
   m_game.GetSimulation()->PreProcessVisualization();
 
   // Check for multiprosessor support
-  SYSTEM_INFO si;
+  //FIXME
+  /*SYSTEM_INFO si;
   GetSystemInfo(&si);
-  BGame::m_bMultiProcessor = si.dwNumberOfProcessors > 1;
+  BGame::m_bMultiProcessor = si.dwNumberOfProcessors > 1;*/
 
   // Change cursor to Pakoon! cursor
-  m_hCursor = AfxGetApp()->LoadCursor(IDC_POINTER);
+  //FIXME
+ /*m_hCursor = AfxGetApp()->LoadCursor(IDC_POINTER);
   if(m_hCursor) {
     ::SetClassLong(GetSafeHwnd(), GCL_HCURSOR, 0L);
     ::SetCursor(m_hCursor);
@@ -200,26 +169,23 @@ int CPakoon1View::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 
   if(m_hCursor) {
     ::SetCursor(m_hCursor);
-  }
-  ShowCursor(FALSE);
-
-
-  ::ReleaseDC(GetSafeHwnd(), hDC);
+  }*/
+  SDL_ShowCursor(0);
 
   BGame::MyAfxMessageBox("----------------------");
   BGame::MyAfxMessageBox("- OpenGL Info        -");
   BGame::MyAfxMessageBox("----------------------");
-  CString sInfo, sInfo2;
-  sInfo2 = glGetString(GL_VENDOR);
+  string sInfo, sInfo2;
+  sInfo2 = (char *) glGetString(GL_VENDOR);
   sInfo = "Vendor: " + sInfo2;
   BGame::MyAfxMessageBox(sInfo);
-  sInfo2 = glGetString(GL_RENDERER);
+  sInfo2 = (char *) glGetString(GL_RENDERER);
   sInfo = "Renderer: " + sInfo2;
   BGame::MyAfxMessageBox(sInfo);
-  sInfo2 = glGetString(GL_VERSION);
+  sInfo2 = (char *) glGetString(GL_VERSION);
   sInfo = "Version: " + sInfo2;
   BGame::MyAfxMessageBox(sInfo);
-  sInfo2 = glGetString(GL_EXTENSIONS);
+  sInfo2 = (char *) glGetString(GL_EXTENSIONS);
   sInfo = "Extensions: " + sInfo2;
   BGame::MyAfxMessageBox(sInfo);
   BGame::MyAfxMessageBox("----------------------");
@@ -238,21 +204,20 @@ int CPakoon1View::OnCreate(LPCREATESTRUCT lpCreateStruct) {
   SoundModule::PlayMultiplayerLeftSound();
   SoundModule::PlayGoalFanfarSound();
   SoundModule::SetVehicleSoundsVolume(n);
+	
+  //omat
+  BGame::m_nDispWidth = m_rectWnd.w;
+  BGame::m_nDispHeight = m_rectWnd.h;
 
-  return retval;
-}
-
-
-//*************************************************************************************************
-BOOL CPakoon1View::OnEraseBkgnd(CDC* pDC) {
-  return TRUE;
+  return 0;
 }
 
 //*************************************************************************************************
 void CPakoon1View::OnDestroy() {
   // Return to original display settings
 
-  DEVMODE devmode;
+	//FIXME ja alapuolikin
+  /*DEVMODE devmode;
   EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode);
   if((devmode.dmPelsWidth  != g_devmodeOrig.dmPelsWidth) || 
      (devmode.dmPelsHeight != g_devmodeOrig.dmPelsHeight) || 
@@ -267,15 +232,15 @@ void CPakoon1View::OnDestroy() {
 
   HWND hWnd = GetSafeHwnd();
   HDC hDCWnd = ::GetDC(hWnd);
-  wglMakeCurrent(hDCWnd, m_hGLRC);
+  wglMakeCurrent(hDCWnd, m_hGLRC);*/
   BTextures::Exit();
-  HDC   hDC = wglGetCurrentDC();
+  /*HDC   hDC = wglGetCurrentDC();
   wglMakeCurrent(NULL, NULL);
   if (m_hGLRC)
     wglDeleteContext(m_hGLRC);
   if (hDC)
     ::ReleaseDC(GetSafeHwnd(), hDC);
-  CView::OnDestroy();
+  CView::OnDestroy();*/
 }
 
 
@@ -323,8 +288,6 @@ void CPakoon1View::InitializeOpenGL() {
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-  CPakoon1Doc* pDoc = GetDocument();
-  ASSERT_VALID(pDoc);
   switch(m_game.m_nTextureSmoothness) {
     case 0: // Boxy
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -374,20 +337,21 @@ void CPakoon1View::InitializeOpenGL() {
 
 
 
-static g_bResolutionChanged = false;
+static bool g_bResolutionChanged = false;
 
 
 
 //*************************************************************************************************
-void CPakoon1View::OnDrawIntro(CDC* pDC) {
-
-  if(m_hCursor) {
+void CPakoon1View::OnDrawIntro() {
+	//FIXME
+  /*if(m_hCursor) {
     ::SetCursor(m_hCursor);
-  }
-  ShowCursor(FALSE);
+  }*/
+  SDL_ShowCursor(0);
 
   // Check if we need to change display settings
-  if(!g_bResolutionChanged) {
+  //FIXME
+  /*if(!g_bResolutionChanged) {
     g_bResolutionChanged = true;
     DEVMODE devmode;
     EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode);
@@ -405,12 +369,9 @@ void CPakoon1View::OnDrawIntro(CDC* pDC) {
   }
 
   HDC hDC = pDC->GetSafeHdc();
-  wglMakeCurrent(hDC, m_hGLRC); 
+  wglMakeCurrent(hDC, m_hGLRC); */
 
   glClearColor(0, 0, 0, 0);
-
-  CRect rectWnd;
-  GetClientRect(&rectWnd);
 
   // Init OpenGL
   glDrawBuffer(GL_BACK);
@@ -418,7 +379,7 @@ void CPakoon1View::OnDrawIntro(CDC* pDC) {
   // Reset OpenGL
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glViewport(0, 0, (GLint) rectWnd.Width(), (GLint) rectWnd.Height());
+  glViewport(0, 0, (GLint) m_rectWnd.w, (GLint) m_rectWnd.h);
   gluLookAt(0, -5, 0, 0, 0, 0, 0, 0, -1);
 
   GLfloat fLight1PositionG[ 4];
@@ -457,23 +418,23 @@ void CPakoon1View::OnDrawIntro(CDC* pDC) {
   }
 
   OpenGLHelpers::SwitchToTexture(0);
-  BTextures::Use(BTextures::Texture::MOS_LOGO);
+  BTextures::Use(BTextures::MOS_LOGO);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
-  double dWidth = rectWnd.Width() / 2.0 * dScale;
-  double dHeight = rectWnd.Width() / 2.0 / 8.0 * dScale;
+  double dWidth = m_rectWnd.w / 2.0 * dScale;
+  double dHeight = m_rectWnd.w / 2.0 / 8.0 * dScale;
 
   OpenGLHelpers::SetColorFull(1, 1, 1, dMOSAlpha);
   glBegin(GL_QUADS);
   glNormal3f(0, 0, -1);
   OpenGLHelpers::SetTexCoord(0, 0);
-  glVertex3f(rectWnd.Width() / 2.0 - dWidth, rectWnd.Height() / 2.0 - dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 - dWidth, m_rectWnd.h / 2.0 - dHeight, 0);
   OpenGLHelpers::SetTexCoord(0, 1);
-  glVertex3f(rectWnd.Width() / 2.0 - dWidth, rectWnd.Height() / 2.0 + dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 - dWidth, m_rectWnd.h / 2.0 + dHeight, 0);
   OpenGLHelpers::SetTexCoord(1, 1);
-  glVertex3f(rectWnd.Width() / 2.0 + dWidth, rectWnd.Height() / 2.0 + dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 + dWidth, m_rectWnd.h / 2.0 + dHeight, 0);
   OpenGLHelpers::SetTexCoord(1, 0);
-  glVertex3f(rectWnd.Width() / 2.0 + dWidth, rectWnd.Height() / 2.0 - dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 + dWidth, m_rectWnd.h / 2.0 - dHeight, 0);
   glEnd();
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -487,10 +448,10 @@ void CPakoon1View::OnDrawIntro(CDC* pDC) {
 
   dScale = 0.88;
 
-  dWidth = rectWnd.Width() / 2.0 * dScale;
-  dHeight = rectWnd.Width() / 2.0 / 8.0 * dScale;
+  dWidth = m_rectWnd.w / 2.0 * dScale;
+  dHeight = m_rectWnd.w / 2.0 / 8.0 * dScale;
 
-  BTextures::Use(BTextures::Texture::FTC_LOGO);
+  BTextures::Use(BTextures::FTC_LOGO);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
   glPushMatrix();
@@ -500,28 +461,28 @@ void CPakoon1View::OnDrawIntro(CDC* pDC) {
   glBegin(GL_QUADS);
   glNormal3f(0, 0, -1);
   OpenGLHelpers::SetTexCoord(0, 0);
-  glVertex3f(rectWnd.Width() / 2.0 - dWidth, rectWnd.Height() / 2.0 - dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 - dWidth, m_rectWnd.h / 2.0 - dHeight, 0);
   OpenGLHelpers::SetTexCoord(0, 1);
-  glVertex3f(rectWnd.Width() / 2.0 - dWidth, rectWnd.Height() / 2.0 + dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 - dWidth, m_rectWnd.h / 2.0 + dHeight, 0);
   OpenGLHelpers::SetTexCoord(1, 1);
-  glVertex3f(rectWnd.Width() / 2.0 + dWidth, rectWnd.Height() / 2.0 + dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 + dWidth, m_rectWnd.h / 2.0 + dHeight, 0);
   OpenGLHelpers::SetTexCoord(1, 0);
-  glVertex3f(rectWnd.Width() / 2.0 + dWidth, rectWnd.Height() / 2.0 - dHeight, 0);
+  glVertex3f(m_rectWnd.w / 2.0 + dWidth, m_rectWnd.h / 2.0 - dHeight, 0);
   glEnd();
 
   // Draw light wave over FEEL THE CODE logo
 
   double dFTCAlpha = bFTCVisible ? pow(sin((dPhase - 6.0) / 10.0 * 3.141592654), 2.0) : 0.0;
 
-  BTextures::Use(BTextures::Texture::FTC_LOGO2);
+  BTextures::Use(BTextures::FTC_LOGO2);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
   OpenGLHelpers::SetColorFull(1, 1, 1, dFTCAlpha);
 
-  double dMinX = rectWnd.Width() / 2.0 - dWidth;
-  double dMaxX = rectWnd.Width() / 2.0 + dWidth;
-  double dMinY = rectWnd.Height() / 2.0 - dHeight;
-  double dMaxY = rectWnd.Height() / 2.0 + dHeight;
+  double dMinX = m_rectWnd.w / 2.0 - dWidth;
+  double dMaxX = m_rectWnd.w / 2.0 + dWidth;
+  double dMinY = m_rectWnd.h / 2.0 - dHeight;
+  double dMaxY = m_rectWnd.h / 2.0 + dHeight;
   double dStepX = (dMaxX - dMinX) / 20.0;
   double dStepY = (dMaxY - dMinY) / 4.0;
   double dLoopStepX = 1.0 / 20.0;
@@ -578,17 +539,13 @@ void CPakoon1View::OnDrawIntro(CDC* pDC) {
 
   //glFinish();
 
-  SwapBuffers(hDC);
-
-  ::ReleaseDC(GetSafeHwnd(), hDC);
+  SDL_GL_SwapWindow(window);
 
   if(dPhase > 16.0) {
     // SoundModule::StopIntroSound();
     m_pDrawFunction = &CPakoon1View::OnDrawCurrentMenu;
     m_pKeyDownFunction = &CPakoon1View::OnKeyDownCurrentMenu;
   }
-
-  Invalidate();
 }
 
 
@@ -630,10 +587,11 @@ void CPakoon1View::PrepareReferenceTimes(BRaceRecord &raceRecord) {
 
 
 //*************************************************************************************************
-void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
+void CPakoon1View::OnDrawCurrentMenu() {
 
   if(BGame::m_bQuitPending) {
-    AfxGetMainWnd()->PostMessage(WM_COMMAND, ID_FILE_CLOSE, 0);
+    //AfxGetMainWnd()->PostMessage(WM_COMMAND, ID_FILE_CLOSE, 0);
+    setExit();
   }
 
   if(!BGame::m_bMenusCreated) {
@@ -642,7 +600,6 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
     // Setup for first menu
     BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                  &CPakoon1View::OnKeyDownCurrentMenu);
-    Invalidate();
 
     // Start menu music
     SoundModule::StartMenuMusic();
@@ -661,10 +618,11 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
     return;
   }
 
-  EnterCriticalSection(&(BGame::m_csMutex));
+  SDL_LockMutex(BGame::m_csMutex);
 
   // Check if we need to change display settings
-  if(!g_bResolutionChanged) {
+  //FIXME
+  /*if(!g_bResolutionChanged) {
     g_bResolutionChanged = true;
     DEVMODE devmode;
     EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode);
@@ -679,7 +637,7 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
       ChangeDisplaySettings(&devmode, CDS_FULLSCREEN);
       AfxGetMainWnd()->SetWindowPos(NULL, -2, -2, BGame::m_nDispWidth + 4, BGame::m_nDispHeight + 4, 0);
     }
-  }
+  }*/
 
   CheckForGameStart();
 
@@ -689,16 +647,11 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
 
   glClearColor(0.85, 0.85, 1, 0); /* For RGB-mode */
 
-  if(m_hCursor) {
+	//FIXME
+  /*if(m_hCursor) {
     ::SetCursor(m_hCursor);
-  }
-  ShowCursor(FALSE);
-
-  HDC hDC = pDC->GetSafeHdc();  
-  wglMakeCurrent(hDC, m_hGLRC); // Setup as opengl dc to get the black and white stuff work
-
-  CRect rectWnd;
-  GetClientRect(&rectWnd);
+  }*/
+  SDL_ShowCursor(0);
 
   // Init OpenGL
   glDrawBuffer(GL_BACK);
@@ -706,7 +659,7 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
   // Reset OpenGL
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glViewport(0, 0, (GLint) rectWnd.Width(), (GLint) rectWnd.Height());
+  glViewport(0, 0, (GLint) m_rectWnd.w, (GLint) m_rectWnd.h);
   gluLookAt(0, -5, 0, 0, 0, 0, 0, 0, -1);
 
   GLfloat fLight1PositionG[ 4];
@@ -738,20 +691,20 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
   glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   glDisable(GL_TEXTURE_2D);
 
-  double dPhase1 = sin(2.0 * 3.141592654 * double(clock() % 11031) / 11030.0);
-  double dPhase2 = sin(2.0 * 3.141592654 * double(clock() % 17131) / 17130.0);
-  double dPhase3 = sin(2.0 * 3.141592654 * double(clock() % 15131) / 15130.0);
-  double dPhase4 = sin(2.0 * 3.141592654 * double(clock() % 12131) / 12130.0);
+  double dPhase1 = sin(2.0 * 3.141592654 * double(SDL_GetTicks() % 11031) / 11030.0);
+  double dPhase2 = sin(2.0 * 3.141592654 * double(SDL_GetTicks() % 17131) / 17130.0);
+  double dPhase3 = sin(2.0 * 3.141592654 * double(SDL_GetTicks() % 15131) / 15130.0);
+  double dPhase4 = sin(2.0 * 3.141592654 * double(SDL_GetTicks() % 12131) / 12130.0);
 
   glBegin(GL_TRIANGLE_STRIP);
   glColor4d(0.1, 0.15, 0.65, 1);
   glVertex3f(0, 0, 0);
   glColor4d(0, 0, 0, 1);
-  glVertex3f(0, rectWnd.Height(), 0);
+  glVertex3f(0, m_rectWnd.h, 0);
   glColor4d(0.1, 0.15, 0.65, 1);
-  glVertex3f(rectWnd.Width(), 0, 0);
+  glVertex3f(m_rectWnd.w, 0, 0);
   glColor4d(0, 0, 0, 1);
-  glVertex3f(rectWnd.Width(), rectWnd.Height(), 0);
+  glVertex3f(m_rectWnd.w, m_rectWnd.h, 0);
   glEnd();
 
   glColor4d(1, 1, 1, 1);
@@ -760,55 +713,57 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
   if(BGame::m_pMenuCurrent != &(BGame::m_menuCredits)) {
     // Draw copyright info
     BUI::TextRenderer()->StartRenderingText();
-    CString sText = "(C) Copyright 2003 Mikko Oksalahti. Visit www.pakoon.com for updates.";
-    BUI::TextRenderer()->DrawSmallTextAt(rectWnd.Width() / 2, 20, sText, sText.GetLength(), BTextRenderer::TTextAlign::ALIGN_CENTER, 0.75, 0.75, 0.75, 1);
+    string sText = "(C) Copyright 2003 Mikko Oksalahti. Visit www.pakoon.com for updates.";
+    BUI::TextRenderer()->DrawSmallTextAt(m_rectWnd.w / 2, 20, sText, sText.length(), BTextRenderer::ALIGN_CENTER, 0.75, 0.75, 0.75, 1);
     BUI::TextRenderer()->StopRenderingText();
   }
 
   if(BGame::m_bMultiplayOn) {
     // Draw Multiplay indicator
     BUI::TextRenderer()->StartRenderingText();
-    BUI::TextRenderer()->DrawSmallTextAt(10, rectWnd.Height() - 128 - 20, "multiplay mode", 14, BTextRenderer::TTextAlign::ALIGN_LEFT, 1, 0.75, 0.25, 1);
+    BUI::TextRenderer()->DrawSmallTextAt(10, m_rectWnd.h - 128 - 20, "multiplay mode", 14, BTextRenderer::ALIGN_LEFT, 1, 0.75, 0.25, 1);
     for(int i = 0; i < BGame::m_nRemotePlayers; ++i) {
 
-      CString sExtra = _T("");
+      string sExtra = "";
 
       switch(BGame::m_remotePlayer[i].m_state) {
-        case BRemotePlayer::TRemoteState::WANTS_TO_SELECT_NEW_RACE:
-        case BRemotePlayer::TRemoteState::PREPARING_TO_RACE:
-          sExtra = _T("");
+        case BRemotePlayer::WANTS_TO_SELECT_NEW_RACE:
+        case BRemotePlayer::PREPARING_TO_RACE:
+          sExtra = "";
           break;
-        case BRemotePlayer::TRemoteState::WAITING_FOR_RACE:
-          sExtra = _T("(Waiting to start another race)");
+        case BRemotePlayer::WAITING_FOR_RACE:
+          sExtra = "(Waiting to start another race)";
           break;
-        case BRemotePlayer::TRemoteState::RACING:
-          sExtra = _T("(Racing)");
+        case BRemotePlayer::RACING:
+          sExtra = "(Racing)";
           break;
-        case BRemotePlayer::TRemoteState::FINISHED:
+        case BRemotePlayer::FINISHED:
           if(BGame::m_remotePlayer[i].m_nRacePosition >= 4) {
-            sExtra.Format("(Finished %dth)", BGame::m_remotePlayer[i].m_nRacePosition);
+			  stringstream val;
+			  val << "(Finished " << BGame::m_remotePlayer[i].m_nRacePosition << "th)";
+			  sExtra = val.str();
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 3) {
-            sExtra = _T("(Finished 3rd)");
+            sExtra = "(Finished 3rd)";
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 2) {
-            sExtra = _T("(Finished 2nd)");
+            sExtra = "(Finished 2nd)";
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 1) {
-            sExtra = _T("(Finished 1st!)");
+            sExtra = "(Finished 1st!)";
           }
           break;
-        case BRemotePlayer::TRemoteState::MISSED_GOAL:
-          sExtra = _T("(Missed goal)");
+        case BRemotePlayer::MISSED_GOAL:
+          sExtra = "(Missed goal)";
           break;
-        case BRemotePlayer::TRemoteState::MISSED_POLE:
-          sExtra = _T("(Missed a pole)");
+        case BRemotePlayer::MISSED_POLE:
+          sExtra = "(Missed a pole)";
           break;
       }
 
       double dR, dG, dB;
       BGame::GetMultiplayerColor(i, dR, dG, dB);
-      CString sPlayer;
-      sPlayer.Format("Player %d: %s %s", i + 1, BGame::m_remotePlayer[i].m_sName, sExtra);
+      stringstream sPlayer;
+      sPlayer << "Player " << i + 1 << ": " << BGame::m_remotePlayer[i].m_sName << " " << sExtra;
 
-      BUI::TextRenderer()->DrawSmallTextAt(20, rectWnd.Height() - 128 - 40 - 20 * i, sPlayer, sPlayer.GetLength(), BTextRenderer::TTextAlign::ALIGN_LEFT, dR, dG, dB, 1);
+      BUI::TextRenderer()->DrawSmallTextAt(20, m_rectWnd.h - 128 - 40 - 20 * i, sPlayer.str(), sPlayer.str().length(), BTextRenderer::ALIGN_LEFT, dR, dG, dB, 1);
     }
 
     BUI::TextRenderer()->StopRenderingText();
@@ -827,26 +782,26 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
     // Draw previous and new menu scrolling
     glPushMatrix();
     if(m_scrollDir == SCROLL_RIGHT) {
-      glTranslated(-int(double(rectWnd.Width() * dScrollPhase)), 0, 0);
+      glTranslated(-int(double(m_rectWnd.w * dScrollPhase)), 0, 0);
     } else if(m_scrollDir == SCROLL_LEFT) {
-      glTranslated(+int(double(rectWnd.Width() * dScrollPhase)), 0, 0);
+      glTranslated(+int(double(m_rectWnd.w * dScrollPhase)), 0, 0);
     } else if(m_scrollDir == SCROLL_UP) {
-      glTranslated(0, -int(double(rectWnd.Height() * dScrollPhase)), 0);
+      glTranslated(0, -int(double(m_rectWnd.h * dScrollPhase)), 0);
     } else if(m_scrollDir == SCROLL_DOWN) {
-      glTranslated(0, +int(double(rectWnd.Height() * dScrollPhase)), 0);
+      glTranslated(0, +int(double(m_rectWnd.h * dScrollPhase)), 0);
     }
     DrawMenu(BGame::m_pMenuPrevious);
     glPopMatrix();
 
     glPushMatrix();
     if(m_scrollDir == SCROLL_RIGHT) {
-      glTranslated(int(double(rectWnd.Width() * (1.0 - dScrollPhase))), 0, 0);
+      glTranslated(int(double(m_rectWnd.w * (1.0 - dScrollPhase))), 0, 0);
     } else if(m_scrollDir == SCROLL_LEFT) {
-      glTranslated(-int(double(rectWnd.Width() * (1.0 - dScrollPhase))), 0, 0);
+      glTranslated(-int(double(m_rectWnd.w * (1.0 - dScrollPhase))), 0, 0);
     } else if(m_scrollDir == SCROLL_UP) {
-      glTranslated(0, +int(double(rectWnd.Height() * (1.0 - dScrollPhase))), 0);
+      glTranslated(0, +int(double(m_rectWnd.h * (1.0 - dScrollPhase))), 0);
     } else if(m_scrollDir == SCROLL_DOWN) {
-      glTranslated(0, -int(double(rectWnd.Height() * (1.0 - dScrollPhase))), 0);
+      glTranslated(0, -int(double(m_rectWnd.h * (1.0 - dScrollPhase))), 0);
     }
     DrawMenu(BGame::m_pMenuCurrent);
     glPopMatrix();
@@ -861,7 +816,7 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
     double dCharHeight = BUI::TextRenderer()->GetCharHeight();
     BGame::m_bGameLoading = true;
     glPushMatrix();
-    glTranslatef(rectWnd.Width() / 2, rectWnd.Height() / 2, 0);
+    glTranslatef(m_rectWnd.w / 2, m_rectWnd.h / 2, 0);
     OpenGLHelpers::SetColorFull(1, 1, 1, 1);
     // DrawPanel(dCharWidth * 10, dCharHeight * 2.5, 1.0 * 0.3, 0.5 * 0.3, 0.0 * 0.3, 0.95);
     DrawPanel(dCharWidth * 10, dCharHeight * 2.5, 0.15, 0.15, 0.15, 0.9);
@@ -869,7 +824,7 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
     BUI::TextRenderer()->DrawTextAt(2,
                                     -2,
                                     "LOADING...",
-                                    BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                    BTextRenderer::ALIGN_CENTER,
                                     0,
                                     0,
                                     0,
@@ -877,7 +832,7 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
     BUI::TextRenderer()->DrawTextAt(0,
                                     0,
                                     "LOADING...",
-                                    BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                    BTextRenderer::ALIGN_CENTER,
                                     1,
                                     0.5,
                                     0,
@@ -894,15 +849,14 @@ void CPakoon1View::OnDrawCurrentMenu(CDC* pDC) {
 
   //glFinish();
 
-  SwapBuffers(hDC);
+  SDL_GL_SwapWindow(window);
 
-  LeaveCriticalSection(&(BGame::m_csMutex));
+  SDL_UnlockMutex(BGame::m_csMutex);
 
   // And again and again and...
   if((BGame::m_pMenuCurrent == &(BGame::m_menuPrecachingTerrain)) && !BGame::m_bMultiProcessor) {
-    Sleep(1);
+    SDL_Delay(1);
   }
-  Invalidate();
 }
 
 
@@ -926,7 +880,7 @@ void CPakoon1View::CheckForGameStart() {
       }
       BGame::m_bMultiplayRaceStarter = false;
       BGame::m_clockMultiRaceStarter = 0;
-      BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::WAITING_FOR_RACE;
+      BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::WAITING_FOR_RACE;
       BGame::BroadcastStateChange();
     } else {
       BGame::m_nRemotePlayers = 0;
@@ -934,7 +888,7 @@ void CPakoon1View::CheckForGameStart() {
 
     BGame::m_bRaceStarted  = false;
     BGame::m_bRaceFinished = false;
-    if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+    if(BGame::m_gameMode == BGame::AIRTIME) {
       BGame::m_dRaceTime = BGame::GetSimulation()->GetScene()->m_dAirTimeMaxSec;
     } else {
       BGame::m_dRaceTime = 0.0;
@@ -943,7 +897,7 @@ void CPakoon1View::CheckForGameStart() {
     BGame::m_bSlalomPolesVisualOK = false;
     BGame::m_bForceBreak = false;
     BGame::m_dLiftStarted = 0;
-    BGame::m_cOnScreenInfo &= BGame::TOnScreenInfo::FPS; // Preserve fps setting
+    BGame::m_cOnScreenInfo &= BGame::FPS; // Preserve fps setting
 
     BGame::GetPlayer()->LoadStateFile();
     BGame::GetSimulation()->GetScene()->PlaceTerrainObjects();
@@ -960,9 +914,9 @@ void CPakoon1View::CheckForGameStart() {
       // First setup local vehicle
 
       {
-        CFile fileTmp(BGame::m_sVehicle, CFile::modeRead | CFile::shareDenyNone);
+        //CFile fileTmp(BGame::m_sVehicle, CFile::modeRead | CFile::shareDenyNone); //FIXME
         BGame::m_remotePlayer[BGame::GetMyPlace()].m_pVehicle = BGame::GetSimulation()->GetVehicle();
-        BGame::m_remotePlayer[BGame::GetMyPlace()].m_sVehicleFilename = fileTmp.GetFileName();
+        //BGame::m_remotePlayer[BGame::GetMyPlace()].m_sVehicleFilename = fileTmp.GetFileName(); //FIXME
         BGame::m_remotePlayer[BGame::GetMyPlace()].m_bVehicleReused = true;
       }
 
@@ -981,7 +935,7 @@ void CPakoon1View::CheckForGameStart() {
             continue;
           }
           if(BGame::m_remotePlayer[i].m_pVehicle && 
-             ((BGame::m_remotePlayer[nRemote].m_sVehicleFilename.CompareNoCase(BGame::m_remotePlayer[i].m_sVehicleFilename) == 0))) {
+             ((BGame::m_remotePlayer[nRemote].m_sVehicleFilename.compare(BGame::m_remotePlayer[i].m_sVehicleFilename) == 0))) {
             bReused = true;
             BGame::m_remotePlayer[nRemote].m_pVehicle = BGame::m_remotePlayer[i].m_pVehicle;
             BGame::m_remotePlayer[nRemote].m_bVehicleReused = true;
@@ -1001,7 +955,7 @@ void CPakoon1View::CheckForGameStart() {
 
           BGame::m_remotePlayer[nRemote].m_pVehicle = new BVehicle();
 
-          CString sTmp = ".\\" + BGame::m_remotePlayer[nRemote].m_sVehicleFilename;
+          string sTmp = BGame::m_remotePlayer[nRemote].m_sVehicleFilename;
 
           BGame::m_remotePlayer[nRemote].m_pVehicle->LoadVehicleFromFile(sTmp, true);
           BGame::m_remotePlayer[nRemote].m_pVehicle->m_dFuel = 100; // BGame::GetPlayer()->m_dFuel;
@@ -1020,9 +974,9 @@ void CPakoon1View::CheckForGameStart() {
     BGame::m_dRefTime[6] = -1.0;
     BGame::m_nRefK = 0;
     BScene *pScene = BGame::GetSimulation()->GetScene();
-    if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
+    if(BGame::m_gameMode == BGame::SLALOM) {
       PrepareReferenceTimes(pScene->m_raceRecordSlalomTime);
-    } else if(BGame::m_gameMode == BGame::TGameMode::SPEEDRACE) {
+    } else if(BGame::m_gameMode == BGame::SPEEDRACE) {
       PrepareReferenceTimes(pScene->m_raceRecordBestTime);
     }
 
@@ -1069,7 +1023,7 @@ void CPakoon1View::CheckForGameStart() {
                                                            false);
     BVector vOnGround, vNormal;
     BGame::GetSimulation()->EnsureVehicleIsOverGround();
-    BGame::GetSimulation()->GetCamera()->m_locMode = BCamera::TCameraLoc::FOLLOW;
+    BGame::GetSimulation()->GetCamera()->m_locMode = BCamera::FOLLOW;
     BGame::GetSimulation()->GetCamera()->m_vLocation = BGame::GetSimulation()->GetVehicle()->m_vLocation + BVector(-20, -10, 0);
     BGame::GetSimulation()->GetCamera()->m_orientation.m_vForward = BGame::GetSimulation()->GetVehicle()->m_vLocation - BGame::GetSimulation()->GetCamera()->m_vLocation;
     BGame::GetSimulation()->GetCamera()->m_orientation.m_vUp = BVector(0, 0, -1);
@@ -1105,8 +1059,7 @@ void CPakoon1View::CheckForGameStart() {
       BGame::m_bForceBreak = true;
     }
 
-    ShowCursor(FALSE);
-    Invalidate();
+    SDL_ShowCursor(0);
   }
 }
 
@@ -1116,60 +1069,58 @@ void CPakoon1View::CheckForGameStart() {
 void CPakoon1View::DrawMenuTitle(BMenu *pMenu, double dAlpha, bool bFirstTime) {
   // Draw menu title
   if(pMenu->m_nTitleWidth > 0) {
-    CRect rectWnd;
-    GetClientRect(&rectWnd);
 
     if(bFirstTime) {
 
       // Draw title background
      
       OpenGLHelpers::SwitchToTexture(0);
-      BTextures::Use(BTextures::Texture::MENU_TITLES);
+      BTextures::Use(BTextures::MENU_TITLES);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
-      double dScaler = double(rectWnd.Height()) / 512.0;
+      double dScaler = double(m_rectWnd.h) / 512.0;
 
       glBegin(GL_QUADS);
 
       OpenGLHelpers::SetColorFull(1, 1, 1, 1);
 
       OpenGLHelpers::SetTexCoord(0, 0);
-      glVertex3f(0, rectWnd.Height() - 128.0, 0);
+      glVertex3f(0, m_rectWnd.h - 128.0, 0);
       OpenGLHelpers::SetTexCoord(0, 1);
-      glVertex3f(0, rectWnd.Height(), 0);
+      glVertex3f(0, m_rectWnd.h, 0);
 
       OpenGLHelpers::SetColorFull(1, 1, 1, 0.75);
 
       OpenGLHelpers::SetTexCoord(1, 1);
-      glVertex3f(rectWnd.Width(), rectWnd.Height(), 0);
+      glVertex3f(m_rectWnd.w, m_rectWnd.h, 0);
       OpenGLHelpers::SetTexCoord(1, 0);
-      glVertex3f(rectWnd.Width(), rectWnd.Height() - 128.0, 0);
+      glVertex3f(m_rectWnd.w, m_rectWnd.h - 128.0, 0);
 
       glEnd();
 
       glDisable(GL_TEXTURE_2D);
       OpenGLHelpers::SetColorFull(1, 1, 1, 0.5);
       glBegin(GL_LINES);
-      glVertex3f(0, rectWnd.Height() - 128.0, 0);
-      glVertex3f(rectWnd.Width(), rectWnd.Height() - 128.0, 0);
+      glVertex3f(0, m_rectWnd.h - 128.0, 0);
+      glVertex3f(m_rectWnd.w, m_rectWnd.h - 128.0, 0);
       glEnd();
     }
 
     if(pMenu != &(BGame::m_menuMain)) {
       glPushMatrix();
       BUI::TextRenderer()->StartRenderingText();
-      BUI::TextRenderer()->DrawTextAt(rectWnd.Width() / 2 + 2,
-                                      rectWnd.Height() - 2 - 64,
+      BUI::TextRenderer()->DrawTextAt(m_rectWnd.w / 2 + 2,
+                                      m_rectWnd.h - 2 - 64,
                                       pMenu->m_sName,
-                                      BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                      BTextRenderer::ALIGN_CENTER,
                                       0,
                                       0,
                                       0,
                                       0.7 * dAlpha);
-      BUI::TextRenderer()->DrawTextAt(rectWnd.Width() / 2,
-                                      rectWnd.Height() - 64,
+      BUI::TextRenderer()->DrawTextAt(m_rectWnd.w / 2,
+                                      m_rectWnd.h - 64,
                                       pMenu->m_sName,
-                                      BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                      BTextRenderer::ALIGN_CENTER,
                                       1,
                                       0.75,
                                       0.25,
@@ -1179,20 +1130,20 @@ void CPakoon1View::DrawMenuTitle(BMenu *pMenu, double dAlpha, bool bFirstTime) {
     } else {
       // For main menu, display the Pakoon2 logo
       OpenGLHelpers::SwitchToTexture(0);
-      BTextures::Use(BTextures::Texture::LOGO);
+      BTextures::Use(BTextures::LOGO);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
       OpenGLHelpers::SetColorFull(1, 1, 1, dAlpha);
 
       glBegin(GL_QUADS);
 
       OpenGLHelpers::SetTexCoord(0, 0);
-      glVertex3f(rectWnd.Width() / 2 - 256, rectWnd.Height() - 128, 0);
+      glVertex3f(m_rectWnd.w / 2 - 256, m_rectWnd.h - 128, 0);
       OpenGLHelpers::SetTexCoord(0, 1);
-      glVertex3f(rectWnd.Width() / 2 - 256, rectWnd.Height(), 0);
+      glVertex3f(m_rectWnd.w / 2 - 256, m_rectWnd.h, 0);
       OpenGLHelpers::SetTexCoord(1, 1);
-      glVertex3f(rectWnd.Width() / 2 + 256, rectWnd.Height(), 0);
+      glVertex3f(m_rectWnd.w / 2 + 256, m_rectWnd.h, 0);
       OpenGLHelpers::SetTexCoord(1, 0);
-      glVertex3f(rectWnd.Width() / 2 + 256, rectWnd.Height() - 128, 0);
+      glVertex3f(m_rectWnd.w / 2 + 256, m_rectWnd.h - 128, 0);
 
       glEnd();
     }
@@ -1202,58 +1153,55 @@ void CPakoon1View::DrawMenuTitle(BMenu *pMenu, double dAlpha, bool bFirstTime) {
 
 //*************************************************************************************************
 void CPakoon1View::DrawHiscores(BMenu *pMenu) {
-  CRect rectWnd;
-  GetClientRect(&rectWnd);
-
   // Draw lists of best times for Speedrace, Slalom and Airtime
   // OpenGLHelpers::SetColorFull(1, 0.5, 0.5, 1);
 
   double dCharHeight = BUI::TextRenderer()->GetCharHeight();
 
   BUI::TextRenderer()->StartRenderingText();
-  CString sText = "SPEEDRACE";
-  BUI::TextRenderer()->DrawSmallTextAt(rectWnd.Width() / 2, 
-                                       rectWnd.Height() / 2 + dCharHeight * (1.0 + (double(BGame::m_listHSSpeedrace.GetNofItems()) / 2.0)), 
+  string sText = "SPEEDRACE";
+  BUI::TextRenderer()->DrawSmallTextAt(m_rectWnd.w / 2, 
+                                       m_rectWnd.h / 2 + dCharHeight * (1.0 + (double(BGame::m_listHSSpeedrace.GetNofItems()) / 2.0)), 
                                        sText, 
-                                       sText.GetLength(), 
-                                       BTextRenderer::TTextAlign::ALIGN_LEFT, 
+                                       sText.length(), 
+                                       BTextRenderer::ALIGN_LEFT, 
                                        1, 0.25, 0.25, 
                                        1);
   sText = "SLALOM";
-  BUI::TextRenderer()->DrawSmallTextAt(rectWnd.Width() / 2 + 120 + 13,
-                                       rectWnd.Height() / 2 + dCharHeight * (1.0 + (double(BGame::m_listHSSpeedrace.GetNofItems()) / 2.0)), 
+  BUI::TextRenderer()->DrawSmallTextAt(m_rectWnd.w / 2 + 120 + 13,
+                                       m_rectWnd.h / 2 + dCharHeight * (1.0 + (double(BGame::m_listHSSpeedrace.GetNofItems()) / 2.0)), 
                                        sText, 
-                                       sText.GetLength(), 
-                                       BTextRenderer::TTextAlign::ALIGN_LEFT, 
+                                       sText.length(), 
+                                       BTextRenderer::ALIGN_LEFT, 
                                        0.25, 1, 0.25, 
                                        1);
   sText = "AIRTIME";
-  BUI::TextRenderer()->DrawSmallTextAt(rectWnd.Width() / 2 + 240 + 8,
-                                       rectWnd.Height() / 2 + dCharHeight * (1.0 + (double(BGame::m_listHSSpeedrace.GetNofItems()) / 2.0)), 
+  BUI::TextRenderer()->DrawSmallTextAt(m_rectWnd.w / 2 + 240 + 8,
+                                       m_rectWnd.h / 2 + dCharHeight * (1.0 + (double(BGame::m_listHSSpeedrace.GetNofItems()) / 2.0)), 
                                        sText, 
-                                       sText.GetLength(), 
-                                       BTextRenderer::TTextAlign::ALIGN_LEFT, 
+                                       sText.length(), 
+                                       BTextRenderer::ALIGN_LEFT, 
                                        0.25, 0.25, 1, 
                                        1);
   BUI::TextRenderer()->StopRenderingText();
 
-  BGame::m_listHSSpeedrace.DrawAt(rectWnd.Width() / 2.0, 
-                                  rectWnd.Height() / 2, 
-                                  BTextRenderer::TTextAlign::ALIGN_LEFT, 
+  BGame::m_listHSSpeedrace.DrawAt(m_rectWnd.w / 2.0, 
+                                  m_rectWnd.h / 2, 
+                                  BTextRenderer::ALIGN_LEFT, 
                                   1, 
                                   0.5, 
                                   0.5, 
                                   false);
-  BGame::m_listHSSlalom.DrawAt(rectWnd.Width() / 2.0 + 120, 
-                               rectWnd.Height() / 2, 
-                               BTextRenderer::TTextAlign::ALIGN_LEFT, 
+  BGame::m_listHSSlalom.DrawAt(m_rectWnd.w / 2.0 + 120, 
+                               m_rectWnd.h / 2, 
+                               BTextRenderer::ALIGN_LEFT, 
                                0.5, 
                                1, 
                                0.5, 
                                false);
-  BGame::m_listHSAirtime.DrawAt(rectWnd.Width() / 2.0 + 240, 
-                                rectWnd.Height() / 2, 
-                                BTextRenderer::TTextAlign::ALIGN_LEFT, 
+  BGame::m_listHSAirtime.DrawAt(m_rectWnd.w / 2.0 + 240, 
+                                m_rectWnd.h / 2, 
+                                BTextRenderer::ALIGN_LEFT, 
                                 0.5, 
                                 0.5, 
                                 1, 
@@ -1263,9 +1211,6 @@ void CPakoon1View::DrawHiscores(BMenu *pMenu) {
 
 //*************************************************************************************************
 void CPakoon1View::DrawEarth(BMenu *pMenu) {
-  CRect rectWnd;
-  GetClientRect(&rectWnd);
-
   glPushMatrix();
   GLdouble mtxCurr[16];
   glGetDoublev(GL_MODELVIEW_MATRIX, mtxCurr);
@@ -1276,9 +1221,9 @@ void CPakoon1View::DrawEarth(BMenu *pMenu) {
   glLoadIdentity();
   glScaled(-1.0, 1.0, 1.0);
 
-  double dWidth = rectWnd.Width() - rectWnd.Width() / 3;
+  double dWidth = m_rectWnd.w - m_rectWnd.w / 3;
 
-  double dAspect = dWidth / (double) rectWnd.Height();
+  double dAspect = dWidth / (double) m_rectWnd.h;
   gluPerspective(70.0, dAspect, 1.0f, 2000.0);
 
   glMatrixMode(GL_MODELVIEW);
@@ -1287,10 +1232,10 @@ void CPakoon1View::DrawEarth(BMenu *pMenu) {
   int nScrollXOffset = int(mtxCurr[12]);
   int nScrollYOffset = int(mtxCurr[13]);
 
-  glViewport(nScrollXOffset + (GLint) rectWnd.Width() / 3, 
+  glViewport(nScrollXOffset + (GLint) m_rectWnd.w / 3, 
              nScrollYOffset, 
              (GLint) dWidth, 
-             (GLint) rectWnd.Height());
+             (GLint) m_rectWnd.h);
 
   static int nPrevSel = -1;
   static BVector vPrevCamera(0, -1000, 0);
@@ -1299,7 +1244,7 @@ void CPakoon1View::DrawEarth(BMenu *pMenu) {
   static clock_t clockPrevStart = 0;
   clock_t clockNow = clock();
 
-  CString sTmp;
+  string sTmp;
   int nSelected = pMenu->m_listMenu.GetSelectedItem(sTmp);
   if(nSelected != nPrevSel) {
     nPrevSel = nSelected;
@@ -1474,15 +1419,12 @@ void CPakoon1View::DrawEarth(BMenu *pMenu) {
 
 //*************************************************************************************************
 void CPakoon1View::DrawMenu(BMenu *pMenu) {
-  CRect rectWnd;
-  GetClientRect(&rectWnd);
-
   if(pMenu) {
 
-    if(pMenu->m_type == BMenu::TType::CHOOSE_SCENE) {
+    if(pMenu->m_type == BMenu::CHOOSE_SCENE) {
       DrawEarth(pMenu);
     }
-    if(pMenu->m_type == BMenu::TType::HISCORES) {
+    if(pMenu->m_type == BMenu::HISCORES) {
       DrawHiscores(pMenu);
     }
 
@@ -1493,12 +1435,11 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
     if(pMenu->m_listMenu.GetNofItems()) {
       int i;
 
-      if(pMenu->m_type == BMenu::TType::CHOOSE_VEHICLE) {
+      if(pMenu->m_type == BMenu::CHOOSE_VEHICLE) {
         for(i = 0; i < pMenu->m_nItems; ++i) {
           // Check for owned vehicles
-          CString sVehicle;
-          sVehicle.Format(">%s<", pMenu->m_items[i].m_sText);
-          if(BGame::GetPlayer()->m_sValidVehicles.Find(sVehicle) == -1) {
+          string sVehicle = ">" + pMenu->m_items[i].m_sText + "<";
+          if(BGame::GetPlayer()->m_sValidVehicles.find(sVehicle) == -1) {
             pMenu->m_items[i].m_bDisabled = false; // allow all vehicles
           } else {
             pMenu->m_items[i].m_bDisabled = false;
@@ -1507,8 +1448,8 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
       }
 
       // Draw menu's main list
-      pMenu->m_listMenu.DrawAt(rectWnd.Width() / 2 - int(double(rectWnd.Width()) * pMenu->m_listMenu.m_dOffsetToLeft), 
-                               rectWnd.Height() / 2, 
+      pMenu->m_listMenu.DrawAt(m_rectWnd.w / 2 - int(double(m_rectWnd.w) * pMenu->m_listMenu.m_dOffsetToLeft), 
+                               m_rectWnd.h / 2, 
                                pMenu->m_align, 
                                1, 
                                1, 
@@ -1522,31 +1463,31 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
       // Draw remote multiplayer selections
       if(BGame::m_bMultiplayOn) {
         DrawMultiplayMenuStuff(pMenu, 
-                               rectWnd.Width() / 2 - int(double(rectWnd.Width()) * pMenu->m_listMenu.m_dOffsetToLeft), 
-                               rectWnd.Height() / 2);
+                               m_rectWnd.w / 2 - int(double(m_rectWnd.w) * pMenu->m_listMenu.m_dOffsetToLeft), 
+                               m_rectWnd.h / 2);
       }
 
       // If there are menu items that have an associated component,
       // draw them also
       for(i = 0; i < pMenu->m_nItems; ++i) {
-        if(pMenu->m_items[i].m_type == BMenuItem::TType::STRING_FROM_LIST) {
+        if(pMenu->m_items[i].m_type == BMenuItem::STRING_FROM_LIST) {
           // Draw list string
-          DrawMenuItemTextAtRelPos(rectWnd.Width() / 2, 
-                                   rectWnd.Height() / 2, 
+          DrawMenuItemTextAtRelPos(m_rectWnd.w / 2, 
+                                   m_rectWnd.h / 2, 
                                    pMenu->m_nItems,
                                    i, 
                                    &(pMenu->m_items[i]));
-        } else if(pMenu->m_items[i].m_type == BMenuItem::TType::SLIDER) {
+        } else if(pMenu->m_items[i].m_type == BMenuItem::SLIDER) {
           // Draw slider
-          DrawMenuItemSliderAtRelPos(rectWnd.Width() / 2, 
-                                     rectWnd.Height() / 2, 
+          DrawMenuItemSliderAtRelPos(m_rectWnd.w / 2, 
+                                     m_rectWnd.h / 2, 
                                      pMenu->m_nItems,
                                      i, 
                                      &(pMenu->m_items[i]));
-        } else if(pMenu->m_items[i].m_type == BMenuItem::TType::EDITBOX) {
+        } else if(pMenu->m_items[i].m_type == BMenuItem::EDITBOX) {
           // Draw slider
-          DrawMenuItemEditBoxAtRelPos(rectWnd.Width() / 2, 
-                                      rectWnd.Height() / 2, 
+          DrawMenuItemEditBoxAtRelPos(m_rectWnd.w / 2, 
+                                      m_rectWnd.h / 2, 
                                       pMenu->m_nItems,
                                       i, 
                                       &(pMenu->m_items[i]));
@@ -1556,11 +1497,11 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
       // Draw open subitem
       for(i = 0; i < pMenu->m_nItems; ++i) {
         if(pMenu->m_items[i].m_bOpen) {
-          if(pMenu->m_items[i].m_type == BMenuItem::TType::STRING_FROM_LIST) {
+          if(pMenu->m_items[i].m_type == BMenuItem::STRING_FROM_LIST) {
             // Draw submenu
-            pMenu->m_items[i].m_listMenu.DrawAt(rectWnd.Width() / 2 + 35, 
-                                                rectWnd.Height() / 2 + double(i) * -dCharHeight + (dCharHeight * double(pMenu->m_nItems)) / 2.0, 
-                                                BTextRenderer::TTextAlign::ALIGN_LEFT,
+            pMenu->m_items[i].m_listMenu.DrawAt(m_rectWnd.w / 2 + 35, 
+                                                m_rectWnd.h / 2 + double(i) * -dCharHeight + (dCharHeight * double(pMenu->m_nItems)) / 2.0, 
+                                                BTextRenderer::ALIGN_LEFT,
                                                 1, 
                                                 1, 
                                                 1,
@@ -1574,8 +1515,8 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
       }
 
       // Draw associated image, if one is available
-      if(pMenu->m_type != BMenu::TType::CHOOSE_SCENE) {
-        CString sTmp;
+      if(pMenu->m_type != BMenu::CHOOSE_SCENE) {
+        string sTmp;
         int nSelected = pMenu->m_listMenu.GetSelectedItem(sTmp);
         if((nSelected != -1) && (pMenu->m_items[nSelected].m_nAssocImage != -1)) {
 
@@ -1587,8 +1528,8 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
           BTextures::Use(pMenu->m_items[nSelected].m_nAssocImage);
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
           glPushMatrix();
-          glTranslated(rectWnd.Width() / 2 + rectWnd.Width() / 40,
-                       rectWnd.Height() / 2, 
+          glTranslated(m_rectWnd.w / 2 + m_rectWnd.w / 40,
+                       m_rectWnd.h / 2, 
                        0);
           glBegin(GL_TRIANGLE_STRIP);
           OpenGLHelpers::SetTexCoord(1.0/256.0, 1.0/256.0);
@@ -1625,7 +1566,7 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
     }
 
     // Draw credits images with fade, if showing credits
-    if(pMenu->m_type == BMenu::TType::CREDITS) {
+    if(pMenu->m_type == BMenu::CREDITS) {
       // Find the active item(s)
       int    i;
       int    nItems = 0;
@@ -1645,7 +1586,6 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_UP);
-        Invalidate();
         return;
       } else {
         for(i = 0; i < pMenu->m_nItems; ++i) {
@@ -1676,8 +1616,8 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
 
         // Draw the two menu items (their images)
         glPushMatrix();
-        glTranslated(rectWnd.Width() / 2 - 256.0,
-                     rectWnd.Height() / 2 + 64.0, 
+        glTranslated(m_rectWnd.w / 2 - 256.0,
+                     m_rectWnd.h / 2 + 64.0, 
                      0);
         for(i = 0; i < nItems; ++i) {
           if(pMenu->m_items[nItemsToDraw[i]].m_nAssocImage >= 0) {
@@ -1777,16 +1717,16 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
     }
 
     // Finally, draw message box over menu, if needed
-    if(pMenu->m_type == BMenu::TType::GAMEMODE) {
+    if(pMenu->m_type == BMenu::GAMEMODE) {
       glPushMatrix();
-      glTranslated(rectWnd.Width() / 2, rectWnd.Height() / 2, 0);
+      glTranslated(m_rectWnd.w / 2, m_rectWnd.h / 2, 0);
       if(BGame::m_bExitingMultiplay) {
         DrawPanel(dCharWidth * 26, dCharHeight * 6, 0.3, 0.05, 0);
         BUI::TextRenderer()->StartRenderingText();
-        BUI::TextRenderer()->DrawTextAt(0, dCharHeight, "Do you want to exit multiplay?", BTextRenderer::TTextAlign::ALIGN_CENTER);
-        CString sTmp;
+        BUI::TextRenderer()->DrawTextAt(0, dCharHeight, "Do you want to exit multiplay?", BTextRenderer::ALIGN_CENTER);
+        string sTmp;
         BUI::TextRenderer()->StopRenderingText();
-        BGame::m_listYesNo.DrawAt(0, -dCharHeight * 1.5, BTextRenderer::TTextAlign::ALIGN_CENTER, 1, 1, 1, false);
+        BGame::m_listYesNo.DrawAt(0, -dCharHeight * 1.5, BTextRenderer::ALIGN_CENTER, 1, 1, 1, false);
       }
       glPopMatrix();
     }
@@ -1797,17 +1737,17 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
 //*************************************************************************************************
 void CPakoon1View::DrawFinalPosition() {
   if(!BGame::m_bShowGameMenu && 
-     (BGame::m_remotePlayer[BGame::GetMyPlace()].m_state == BRemotePlayer::TRemoteState::FINISHED)) {
-    CString sFinalPos;
+     (BGame::m_remotePlayer[BGame::GetMyPlace()].m_state == BRemotePlayer::FINISHED)) {
+    string sFinalPos;
     switch(BGame::m_remotePlayer[BGame::GetMyPlace()].m_nRacePosition) {
       case 1:
-        sFinalPos = _T("YOU'RE THE WINNER!");
+        sFinalPos = "YOU'RE THE WINNER!";
         break;
       case 2:
-        sFinalPos = _T("YOU FINISHED 2ND");
+        sFinalPos = "YOU FINISHED 2ND";
         break;
       case 3:
-        sFinalPos = _T("YOU FINISHED 3RD");
+        sFinalPos = "YOU FINISHED 3RD";
         break;
       case 4:
       case 5:
@@ -1816,7 +1756,9 @@ void CPakoon1View::DrawFinalPosition() {
       case 8:
       case 9:
       case 10:
-        sFinalPos.Format("YOU FINISHED %dTH", BGame::m_remotePlayer[BGame::GetMyPlace()].m_nRacePosition);
+		stringstream val;
+		val << "YOU FINISHED " << BGame::m_remotePlayer[BGame::GetMyPlace()].m_nRacePosition << "TH";
+		sFinalPos = val.str();
         break;
     }
 
@@ -1833,25 +1775,25 @@ void CPakoon1View::DrawFinalPosition() {
 
     OpenGLHelpers::SetColorFull(0, 0, 1, dAlpha);
 
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2,
-               m_rectWnd.Height() / 2 - 35, 0);
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2,
-               m_rectWnd.Height() / 2 - 35, 0);
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2,
-               m_rectWnd.Height() / 2 + 35, 0);
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2,
-               m_rectWnd.Height() / 2 + 35, 0);
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2,
+               m_rectWnd.h / 2 - 35, 0);
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2,
+               m_rectWnd.h / 2 - 35, 0);
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2,
+               m_rectWnd.h / 2 + 35, 0);
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2,
+               m_rectWnd.h / 2 + 35, 0);
 
     OpenGLHelpers::SetColorFull(0, 0, 0, dAlpha);
 
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2,
-               m_rectWnd.Height() / 2 - 28, 0);
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2,
-               m_rectWnd.Height() / 2 - 28, 0);
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2,
-               m_rectWnd.Height() / 2 + 28, 0);
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2,
-               m_rectWnd.Height() / 2 + 28, 0);
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2,
+               m_rectWnd.h / 2 - 28, 0);
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2,
+               m_rectWnd.h / 2 - 28, 0);
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2,
+               m_rectWnd.h / 2 + 28, 0);
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2,
+               m_rectWnd.h / 2 + 28, 0);
 
     glEnd();
 
@@ -1861,22 +1803,22 @@ void CPakoon1View::DrawFinalPosition() {
 
     OpenGLHelpers::SetColorFull(0, 0, 1, dAlpha);
 
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, m_rectWnd.Height() / 2, 0);
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2, m_rectWnd.h / 2, 0);
 
     for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-      glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2 - 35.0 * sin(dAngle / 180.0 * g_cdPI), 
-                 m_rectWnd.Height() / 2 + 35.0 * cos(dAngle / 180.0 * g_cdPI), 0);
+      glVertex3f(m_rectWnd.w / 2 - dWidth / 2 - 35.0 * sin(dAngle / 180.0 * g_cdPI), 
+                 m_rectWnd.h / 2 + 35.0 * cos(dAngle / 180.0 * g_cdPI), 0);
     }
 
     glEnd();
 
     glBegin(GL_TRIANGLE_FAN);
 
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, m_rectWnd.Height() / 2, 0);
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2, m_rectWnd.h / 2, 0);
 
     for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-      glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2 + 35.0 * sin(dAngle / 180.0 * g_cdPI), 
-                 m_rectWnd.Height() / 2 + 35.0 * cos(dAngle / 180.0 * g_cdPI), 0);
+      glVertex3f(m_rectWnd.w / 2 + dWidth / 2 + 35.0 * sin(dAngle / 180.0 * g_cdPI), 
+                 m_rectWnd.h / 2 + 35.0 * cos(dAngle / 180.0 * g_cdPI), 0);
     }
 
     glEnd();
@@ -1885,22 +1827,22 @@ void CPakoon1View::DrawFinalPosition() {
 
     OpenGLHelpers::SetColorFull(0, 0, 0, dAlpha);
 
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, m_rectWnd.Height() / 2, 0);
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2, m_rectWnd.h / 2, 0);
 
     for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-      glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2 - 28.0 * sin(dAngle / 180.0 * g_cdPI), 
-                 m_rectWnd.Height() / 2 + 28.0 * cos(dAngle / 180.0 * g_cdPI), 0);
+      glVertex3f(m_rectWnd.w / 2 - dWidth / 2 - 28.0 * sin(dAngle / 180.0 * g_cdPI), 
+                 m_rectWnd.h / 2 + 28.0 * cos(dAngle / 180.0 * g_cdPI), 0);
     }
 
     glEnd();
 
     glBegin(GL_TRIANGLE_FAN);
 
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, m_rectWnd.Height() / 2, 0);
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2, m_rectWnd.h / 2, 0);
 
     for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-      glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2 + 28.0 * sin(dAngle / 180.0 * g_cdPI), 
-                 m_rectWnd.Height() / 2 + 28.0 * cos(dAngle / 180.0 * g_cdPI), 0);
+      glVertex3f(m_rectWnd.w / 2 + dWidth / 2 + 28.0 * sin(dAngle / 180.0 * g_cdPI), 
+                 m_rectWnd.h / 2 + 28.0 * cos(dAngle / 180.0 * g_cdPI), 0);
     }
 
     glEnd();
@@ -1908,10 +1850,10 @@ void CPakoon1View::DrawFinalPosition() {
     // Draw final position text
 
     BUI::TextRenderer()->StartRenderingText();
-    BUI::TextRenderer()->DrawTextAt(m_rectWnd.Width() / 2, 
-                                    m_rectWnd.Height() / 2, 
+    BUI::TextRenderer()->DrawTextAt(m_rectWnd.w / 2, 
+                                    m_rectWnd.h / 2, 
                                     sFinalPos, 
-                                    BTextRenderer::TTextAlign::ALIGN_CENTER, 
+                                    BTextRenderer::ALIGN_CENTER, 
                                     1, 
                                     1, 
                                     1, 
@@ -1922,7 +1864,7 @@ void CPakoon1View::DrawFinalPosition() {
 
 
 //*************************************************************************************************
-void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool bNormal, bool bChatColor) {
+void CPakoon1View::DrawMultiplayMessage(int i, string sMsg, double dAlpha, bool bNormal, bool bChatColor) {
   // Draw background
 
   glDisable(GL_TEXTURE_2D);
@@ -1936,7 +1878,7 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
   if(bNormal) {
     glTranslatef(0, 60 + 40 * i, 0);
   } else {
-    glTranslatef(-m_rectWnd.Width() / 2 + dWidth / 2 + 30, m_rectWnd.Height() / 2, 0);
+    glTranslatef(-m_rectWnd.w / 2 + dWidth / 2 + 30, m_rectWnd.h / 2, 0);
   }
 
   if(bNormal && !bChatColor) {
@@ -1947,17 +1889,17 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
 
   glBegin(GL_QUADS);
 
-  glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, -22, 0);
-  glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, -22, 0);
-  glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, 22, 0);
-  glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, 22, 0);
+  glVertex3f(m_rectWnd.w / 2 - dWidth / 2, -22, 0);
+  glVertex3f(m_rectWnd.w / 2 + dWidth / 2, -22, 0);
+  glVertex3f(m_rectWnd.w / 2 + dWidth / 2, 22, 0);
+  glVertex3f(m_rectWnd.w / 2 - dWidth / 2, 22, 0);
 
   OpenGLHelpers::SetColorFull(0, 0, 0, dAlpha);
 
-  glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, -16, 0);
-  glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, -16, 0);
-  glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, 16, 0);
-  glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, 16, 0);
+  glVertex3f(m_rectWnd.w / 2 - dWidth / 2, -16, 0);
+  glVertex3f(m_rectWnd.w / 2 + dWidth / 2, -16, 0);
+  glVertex3f(m_rectWnd.w / 2 + dWidth / 2, 16, 0);
+  glVertex3f(m_rectWnd.w / 2 - dWidth / 2, 16, 0);
 
   glEnd();
 
@@ -1971,10 +1913,10 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
     OpenGLHelpers::SetColorFull(0, 0, 1, dAlpha);
   }
 
-  glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, 0, 0);
+  glVertex3f(m_rectWnd.w / 2 - dWidth / 2, 0, 0);
 
   for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2 - 22.0 * sin(dAngle / 180.0 * g_cdPI), 
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2 - 22.0 * sin(dAngle / 180.0 * g_cdPI), 
                22.0 * cos(dAngle / 180.0 * g_cdPI), 0);
   }
 
@@ -1982,10 +1924,10 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
 
   glBegin(GL_TRIANGLE_FAN);
 
-  glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, 0, 0);
+  glVertex3f(m_rectWnd.w / 2 + dWidth / 2, 0, 0);
 
   for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2 + 22.0 * sin(dAngle / 180.0 * g_cdPI), 
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2 + 22.0 * sin(dAngle / 180.0 * g_cdPI), 
                22.0 * cos(dAngle / 180.0 * g_cdPI), 0);
   }
 
@@ -1995,10 +1937,10 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
 
   OpenGLHelpers::SetColorFull(0, 0, 0, dAlpha);
 
-  glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2, 0, 0);
+  glVertex3f(m_rectWnd.w / 2 - dWidth / 2, 0, 0);
 
   for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-    glVertex3f(m_rectWnd.Width() / 2 - dWidth / 2 - 16.0 * sin(dAngle / 180.0 * g_cdPI), 
+    glVertex3f(m_rectWnd.w / 2 - dWidth / 2 - 16.0 * sin(dAngle / 180.0 * g_cdPI), 
                16.0 * cos(dAngle / 180.0 * g_cdPI), 0);
   }
 
@@ -2006,10 +1948,10 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
 
   glBegin(GL_TRIANGLE_FAN);
 
-  glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2, 0, 0);
+  glVertex3f(m_rectWnd.w / 2 + dWidth / 2, 0, 0);
 
   for(dAngle = 0; dAngle <= 180.0; dAngle += 20) {
-    glVertex3f(m_rectWnd.Width() / 2 + dWidth / 2 + 16.0 * sin(dAngle / 180.0 * g_cdPI), 
+    glVertex3f(m_rectWnd.w / 2 + dWidth / 2 + 16.0 * sin(dAngle / 180.0 * g_cdPI), 
                16.0 * cos(dAngle / 180.0 * g_cdPI), 0);
   }
 
@@ -2018,11 +1960,11 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
   // Draw message text
 
   BUI::TextRenderer()->StartRenderingText();
-  BUI::TextRenderer()->DrawSmallTextAt(m_rectWnd.Width() / 2, 
+  BUI::TextRenderer()->DrawSmallTextAt(m_rectWnd.w / 2, 
                                        0, 
                                        sMsg, 
-                                       sMsg.GetLength(), 
-                                       BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                       sMsg.length(), 
+                                       BTextRenderer::ALIGN_CENTER,
                                        1, 1, 1, dAlpha);
   BUI::TextRenderer()->StopRenderingText();
 
@@ -2032,7 +1974,7 @@ void CPakoon1View::DrawMultiplayMessage(int i, CString sMsg, double dAlpha, bool
     OpenGLHelpers::SetColorFull(0.5, 0.5, 1, dAlpha);
     glBegin(GL_QUADS);
     double dLen = BUI::TextRenderer()->GetCharWidth() * 0.5;
-    double dXOffset = m_rectWnd.Width() / 2 + dWidth / 2 + 3 - dLen;
+    double dXOffset = m_rectWnd.w / 2 + dWidth / 2 + 3 - dLen;
     double dCharHeight = BUI::TextRenderer()->GetCharHeight() * 0.5;
     glVertex3f(dXOffset, -dCharHeight / 2.0, 0);
     glVertex3f(dXOffset, dCharHeight / 2.0, 0);
@@ -2075,13 +2017,12 @@ void CPakoon1View::DrawMultiplayMessages() {
   if(BGame::m_bMultiplayOn) {
     BUI::TextRenderer()->StartRenderingText();
     if(!BGame::m_bTABChatting) {
-      // BUI::TextRenderer()->DrawSmallTextAt(5, m_rectWnd.Height() / 2, "TAB:CHAT", 8, BTextRenderer::TTextAlign::ALIGN_LEFT, 0.25, 0.25, 1, 1);
-      BUI::TextRenderer()->DrawTextAt(5, m_rectWnd.Height() / 2, "`", BTextRenderer::TTextAlign::ALIGN_LEFT, 1, 1, 1, 1);
-      BUI::TextRenderer()->DrawSmallTextAt(30, m_rectWnd.Height() / 2, "(TAB)", 1, BTextRenderer::TTextAlign::ALIGN_LEFT, 0.25, 0.25, 1, 1);
+      // BUI::TextRenderer()->DrawSmallTextAt(5, m_rectWnd.h / 2, "TAB:CHAT", 8, BTextRenderer::ALIGN_LEFT, 0.25, 0.25, 1, 1);
+      BUI::TextRenderer()->DrawTextAt(5, m_rectWnd.h / 2, "`", BTextRenderer::ALIGN_LEFT, 1, 1, 1, 1);
+      BUI::TextRenderer()->DrawSmallTextAt(30, m_rectWnd.h / 2, "(TAB)", 1, BTextRenderer::ALIGN_LEFT, 0.25, 0.25, 1, 1);
     } else {
       // Draw chat message and it's cursor
-      CString sChatMsg;
-      sChatMsg.Format("` %s", BGame::m_sChatMsg);
+      string sChatMsg = "` " + BGame::m_sChatMsg;
       DrawMultiplayMessage(0, sChatMsg, 1, false, true);
     }
     BUI::TextRenderer()->StopRenderingText();
@@ -2112,7 +2053,7 @@ void CPakoon1View::DrawMultiplayMenuStuff(BMenu *pMenu, double dX, double dY) {
     // Check which players have selected this item
     for(int p = 0; p < BGame::m_nRemotePlayers; ++p) {
       if(p != BGame::GetMultiplay()->m_params.m_nMyPlace) {
-        if(BGame::m_remotePlayer[p].m_sCurrentMenuSel.CompareNoCase(pMenu->m_listMenu.m_psItems[i]) == 0) {
+        if(BGame::m_remotePlayer[p].m_sCurrentMenuSel.compare(pMenu->m_listMenu.m_psItems[i]) == 0) {
           DrawRemoteMenuTriangleAt(pMenu, i, nRelativeTriPos, p);
           ++nRelativeTriPos;
         }
@@ -2130,9 +2071,9 @@ void CPakoon1View::DrawRemoteMenuTriangleAt(BMenu *pMenu, int i, int nRelativeTr
   double dYBase = double(i) * -dCharHeight;
 
   double dXOffset = 0;
-  if(pMenu->m_align == BTextRenderer::TTextAlign::ALIGN_CENTER) {
+  if(pMenu->m_align == BTextRenderer::ALIGN_CENTER) {
     dXOffset = -dLen / 2.0;
-  } else if(pMenu->m_align == BTextRenderer::TTextAlign::ALIGN_RIGHT) {
+  } else if(pMenu->m_align == BTextRenderer::ALIGN_RIGHT) {
     dXOffset = -dLen;
   }
 
@@ -2244,7 +2185,7 @@ void CPakoon1View::DrawMenuItemTextAtRelPos(int nX, int nY, int nItems, int nInd
     BUI::TextRenderer()->DrawTextAt(nX,
                                     nY + double(nIndex) * -dCharHeight,
                                     pMenuItem->m_sAssocListItems[pMenuItem->m_nValue],
-                                    BTextRenderer::TTextAlign::ALIGN_LEFT,
+                                    BTextRenderer::ALIGN_LEFT,
                                     0.7,
                                     0.7,
                                     0.7);
@@ -2260,7 +2201,7 @@ void CPakoon1View::DrawMenuItemEditBoxAtRelPos(int nX, int nY, int nItems, int n
   double dCharHeight = BUI::TextRenderer()->GetCharHeight();
   glPushMatrix();
   glTranslated(nX + 10, -1 + nY + double(nIndex) * -dCharHeight + (dCharHeight * double(nItems)) / 2.0, 0);
-  pMenuItem->m_ebAssocEditBox.DrawAt(0, 0, pMenuItem->m_bOpen, BTextRenderer::TTextAlign::ALIGN_LEFT, pMenuItem);
+  pMenuItem->m_ebAssocEditBox.DrawAt(0, 0, pMenuItem->m_bOpen, BTextRenderer::ALIGN_LEFT, pMenuItem);
   glPopMatrix();
 }
 
@@ -2377,7 +2318,7 @@ void CPakoon1View::DrawMenuItemSliderAtRelPos(int nX, int nY, int nItems, int nI
 //*************************************************************************************************
 void CPakoon1View::ReturnPressedOnGameMenu() {
 
-  CString sTmp;
+  string sTmp;
   int nSelected = BGame::m_menuGame.m_listMenu.GetSelectedItem(sTmp);
   BMenuItem *pMenuItem = 0;
   if(nSelected != -1) {
@@ -2385,7 +2326,6 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
     if(pMenuItem->m_bDisabled) {
       BUI::StartUsingSelectionList(&(BGame::m_menuGame.m_listMenu), 
                                    &CPakoon1View::OnKeyDownGame);
-      Invalidate();
       return;
     }
   }
@@ -2394,22 +2334,22 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
     case 4:
       // Quit (Return to main menu)
 
-      BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::WANTS_TO_SELECT_NEW_RACE;
+      BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::WANTS_TO_SELECT_NEW_RACE;
       BGame::BroadcastStateChange();
 
       BGame::m_bOKToProceedInMultiplayMenu = false;
 
       { // Choose new random menu background
-        CString sTitle;
+        stringstream sTitle;
         srand((unsigned)time(NULL));
-        sTitle.Format(".\\Textures\\MenuTitle_%d.tga", rand() % 6);
-        BTextures::ReloadTexture(BTextures::Texture::MENU_TITLES, sTitle);
+        sTitle << "Textures/MenuTitle_" << rand() % 6 << ".tga";
+        BTextures::ReloadTexture(BTextures::MENU_TITLES, sTitle.str());
       }
 
       BGame::GetPlayer()->m_dFuel = BGame::GetSimulation()->GetVehicle()->m_dFuel;
       BGame::GetPlayer()->SaveStateFile();
       BGame::GetPlayer()->SaveCurrentSceneInfo();
-      ShowCursor(FALSE);
+      SDL_ShowCursor(0);
       m_nMenuTime += BGame::ContinueSimulation();
       m_game.m_bShowGameMenu = false;
       BGame::m_bMenuMode = true;
@@ -2431,37 +2371,42 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
       BGame::m_bGameReadyToStart = false;
       m_bDrawOnlyMenu = false;
       m_bFullRedraw = true;
-      InvalidateRect(NULL);
 
-      // Save log info
-      {
-        BGame::MyAfxMessageBox("------------------------------------");
-        BGame::MyAfxMessageBox("EXITING SCENE");
-        CString sLogInfo;
-        sLogInfo.Format("Vehicle: %s", BGame::GetSimulation()->GetVehicle()->m_sName);
-        BGame::MyAfxMessageBox(sLogInfo);
-        sLogInfo.Format("Scene: %s", BGame::GetSimulation()->GetScene()->m_sName);
-        BGame::MyAfxMessageBox(sLogInfo);
-        sLogInfo.Format("Screen: %d*%d*%d @ %dHz", BGame::m_nDispWidth, BGame::m_nDispHeight, BGame::m_nDispBits, BGame::m_nDispHz);
-        BGame::MyAfxMessageBox(sLogInfo);
-        sLogInfo.Format("Terrain: %d", BGame::m_nTerrainResolution);
-        BGame::MyAfxMessageBox(sLogInfo);
-        sLogInfo.Format("Effects: dust=%d water=%d", BGame::m_nDustAndClouds, BGame::m_nWaterSurface);
-        BGame::MyAfxMessageBox(sLogInfo);
-        sLogInfo.Format("FPS: AVE=%.2lf, Last10=%.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf %.1lf ", 
-                        g_dRate,
-                        g_d10LastFPS[0],
-                        g_d10LastFPS[1],
-                        g_d10LastFPS[2],
-                        g_d10LastFPS[3],
-                        g_d10LastFPS[4],
-                        g_d10LastFPS[5],
-                        g_d10LastFPS[6],
-                        g_d10LastFPS[7],
-                        g_d10LastFPS[8],
-                        g_d10LastFPS[9]);
-        BGame::MyAfxMessageBox(sLogInfo);
-      }
+	  // Save log info
+	  {
+		stringstream outputStream;
+		BGame::MyAfxMessageBox("------------------------------------");
+		BGame::MyAfxMessageBox("EXITING SCENE");
+		string sLogInfo;
+		sLogInfo = "Vehicle: " + BGame::GetSimulation()->GetVehicle()->m_sName;
+		sLogInfo = "Scene: " + BGame::GetSimulation()->GetScene()->m_sName;
+		BGame::MyAfxMessageBox(sLogInfo);
+		outputStream << "Screen: " << BGame::m_nDispWidth << "*" << BGame::m_nDispHeight << "*" << BGame::m_nDispBits << " @ " << BGame::m_nDispHz << "Hz";
+		sLogInfo = outputStream.str();
+		BGame::MyAfxMessageBox(sLogInfo);
+		outputStream.str("");
+		outputStream << "Terrain: " << BGame::m_nTerrainResolution;
+		sLogInfo = outputStream.str();
+		BGame::MyAfxMessageBox(sLogInfo);
+		outputStream.str("");
+		outputStream << "Effects: dust=" << BGame::m_nDustAndClouds << " water=" << BGame::m_nWaterSurface;
+		sLogInfo = outputStream.str();
+		BGame::MyAfxMessageBox(sLogInfo);
+		outputStream.str("");
+		outputStream << "FPS: AVE=" << g_dRate << ", Last10=" <<
+						g_d10LastFPS[0] << " " <<
+						g_d10LastFPS[1] << " " <<
+						g_d10LastFPS[2] << " " <<
+						g_d10LastFPS[3] << " " <<
+						g_d10LastFPS[4] << " " <<
+						g_d10LastFPS[5] << " " <<
+						g_d10LastFPS[6] << " " <<
+						g_d10LastFPS[7] << " " <<
+						g_d10LastFPS[8] << " " <<
+						g_d10LastFPS[9];
+		sLogInfo = outputStream.str();
+		BGame::MyAfxMessageBox(sLogInfo);
+	  }
 
       // Start menu music
       SoundModule::StopGameMusic(true);
@@ -2486,7 +2431,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
           }
           BGame::m_bMultiplayRaceStarter = false;
           BGame::m_clockMultiRaceStarter = 0;
-          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::WAITING_FOR_RACE;
+          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::WAITING_FOR_RACE;
           BGame::BroadcastStateChange();
         } else {
           BGame::m_nRemotePlayers = 0;
@@ -2494,7 +2439,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
 
         BGame::m_bRaceStarted  = false;
         BGame::m_bRaceFinished = false;
-        if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+        if(BGame::m_gameMode == BGame::AIRTIME) {
           BGame::m_dRaceTime = BGame::GetSimulation()->GetScene()->m_dAirTimeMaxSec;
         } else {
           BGame::m_dRaceTime = 0.0;
@@ -2504,7 +2449,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         BGame::GetSimulation()->GetVehicle()->m_bBreaking = false;
         BGame::m_dLiftStarted = 0;
         BGame::GetSimulation()->GetCamera()->m_dFollowHeight = -3.0;
-        BGame::m_cOnScreenInfo &= BGame::TOnScreenInfo::FPS; // Preserve fps setting
+        BGame::m_cOnScreenInfo &= BGame::FPS; // Preserve fps setting
         BGame::GetSimulation()->GetTerrain()->CreateTerrainDisplayLists();
 
         // Initialize reference times
@@ -2517,9 +2462,9 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         BGame::m_dRefTime[6] = -1.0;
         BGame::m_nRefK = 0;
         BScene *pScene = BGame::GetSimulation()->GetScene();
-        if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
+        if(BGame::m_gameMode == BGame::SLALOM) {
           PrepareReferenceTimes(pScene->m_raceRecordSlalomTime);
-        } else if(BGame::m_gameMode == BGame::TGameMode::SPEEDRACE) {
+        } else if(BGame::m_gameMode == BGame::SPEEDRACE) {
           PrepareReferenceTimes(pScene->m_raceRecordBestTime);
         }
 
@@ -2563,7 +2508,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
                                                                false);
         BVector vOnGround, vNormal;
         FixCarToBasicOrientation(0.0);
-        BGame::GetSimulation()->GetCamera()->m_locMode = BCamera::TCameraLoc::FOLLOW;
+        BGame::GetSimulation()->GetCamera()->m_locMode = BCamera::FOLLOW;
         BGame::GetSimulation()->GetCamera()->m_vLocation = BGame::GetSimulation()->GetVehicle()->m_vLocation + BVector(-20, -10, 0);
         BGame::GetSimulation()->GetCamera()->m_orientation.m_vForward = BGame::GetSimulation()->GetVehicle()->m_vLocation - BGame::GetSimulation()->GetCamera()->m_vLocation;
         BGame::GetSimulation()->GetCamera()->m_orientation.m_vUp = BVector(0, 0, -1);
@@ -2590,9 +2535,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
           BGame::m_bForceBreak = true;
         }
 
-        ShowCursor(FALSE);
-        Invalidate();
-
+        SDL_ShowCursor(0);
 
         m_nMenuTime += BGame::ContinueSimulation();
         m_pKeyDownFunction = &CPakoon1View::OnKeyDownGame;
@@ -2610,7 +2553,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
       m_pDrawFunction = &CPakoon1View::OnDrawCurrentMenu;
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownSelectionList);
-      Invalidate();
+      
       break;
     case 3:
       // Show Help
@@ -2645,7 +2588,7 @@ void CPakoon1View::CancelPressedOnGameMenu() {
 
 //*************************************************************************************************
 void CPakoon1View::ReturnPressedOnCurrentMenu() {
-  CString sTmp;
+  string sTmp;
   int nSelected = BGame::m_pMenuCurrent->m_listMenu.GetSelectedItem(sTmp);
   BMenuItem *pMenuItem = 0;
   if(nSelected != -1) {
@@ -2653,38 +2596,38 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
     if(pMenuItem->m_bDisabled) {
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownCurrentMenu);
-      Invalidate();
+      
       return;
     }
   }
 
-  if(BGame::m_pMenuCurrent->m_type == BMenu::TType::SETTINGS) {
+  if(BGame::m_pMenuCurrent->m_type == BMenu::SETTINGS) {
     // See if we need to open/close sublist/slider
     if(nSelected != -1) {
       if(!pMenuItem->m_bOpen) {
-        if(pMenuItem->m_type == BMenuItem::TType::STRING_FROM_LIST) {
+        if(pMenuItem->m_type == BMenuItem::STRING_FROM_LIST) {
           // Open menu
           pMenuItem->m_bOpen = true;
           pMenuItem->m_listMenu.SetItems(pMenuItem->m_sAssocListItems, pMenuItem->m_nAssocListItems);
           pMenuItem->m_listMenu.SelectItem(pMenuItem->m_sAssocListItems[pMenuItem->m_nValue]);
           BUI::StartUsingSelectionList(&(pMenuItem->m_listMenu), 
                                        &CPakoon1View::OnKeyDownCurrentMenu);
-        } else if(pMenuItem->m_type == BMenuItem::TType::SLIDER) {
+        } else if(pMenuItem->m_type == BMenuItem::SLIDER) {
           // Open slider
           pMenuItem->m_bOpen = true;
           BUI::StartUsingSlider(&(pMenuItem->m_nValue), 
                                 &CPakoon1View::OnKeyDownCurrentMenu);
         }
-        Invalidate();
+        
       } else {
-        if(pMenuItem->m_type == BMenuItem::TType::STRING_FROM_LIST) {
+        if(pMenuItem->m_type == BMenuItem::STRING_FROM_LIST) {
           // Update value
           pMenuItem->m_nValue = pMenuItem->m_listMenu.GetSelectedItem(sTmp);
-        } else if(pMenuItem->m_type == BMenuItem::TType::SLIDER) {
+        } else if(pMenuItem->m_type == BMenuItem::SLIDER) {
           // Set the selected volume
-          if(pMenuItem->m_sText.CompareNoCase("Music Volume:") == 0) {
+          if(pMenuItem->m_sText.compare("Music Volume:") == 0) {
             SoundModule::SetMenuMusicVolume(int(double(pMenuItem->m_nValue) / 100.0 * 255.0));
-          } else if(pMenuItem->m_sText.CompareNoCase("Sound Effects Volume:") == 0) {
+          } else if(pMenuItem->m_sText.compare("Sound Effects Volume:") == 0) {
             SoundModule::SetVehicleSoundsVolume(int(double(pMenuItem->m_nValue) / 100.0 * 255.0));
           }
         }
@@ -2692,10 +2635,10 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         pMenuItem->m_bOpen = false;
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
-        Invalidate();
+        
       }
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::MAIN) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::MAIN) {
 
     switch(nSelected) {
       case 0: // SINGLEPLAYER
@@ -2704,7 +2647,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_RIGHT);
-        Invalidate();
+        
         break;
       case 1: // MULTIPLAYER
 
@@ -2716,7 +2659,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_RIGHT);
-        Invalidate();
+        
         break;
       case 2: // SETTINGS
         BGame::m_bSettingsFromGame = false;
@@ -2725,7 +2668,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_LEFT);
-        Invalidate();
+        
         break;
       case 3: // HISCORES
         BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
@@ -2733,7 +2676,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_UP);
-        Invalidate();
+        
         break;
       case 4: // CREDITS
         BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
@@ -2742,7 +2685,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_DOWN);
-        Invalidate();
+        
         break;
       case 5: // EXIT
         // Exit
@@ -2754,40 +2697,40 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BGame::GetPlayer()->SaveStateFile();
         Settings::WriteSettings(m_game.GetSimulation());
 
-        AfxGetMainWnd()->PostMessage(WM_COMMAND, ID_FILE_CLOSE, 0);
+        setExit();
         break;
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::MULTIPLAYER) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::MULTIPLAYER) {
 
     // See if we need to open/close sublist/slider
     if(nSelected != -1) {
       if(!pMenuItem->m_bOpen) {
-        if(pMenuItem->m_type == BMenuItem::TType::STRING_FROM_LIST) {
+        if(pMenuItem->m_type == BMenuItem::STRING_FROM_LIST) {
           // Open menu
           pMenuItem->m_bOpen = true;
           pMenuItem->m_listMenu.SetItems(pMenuItem->m_sAssocListItems, pMenuItem->m_nAssocListItems);
           pMenuItem->m_listMenu.SelectItem(pMenuItem->m_sAssocListItems[pMenuItem->m_nValue]);
           BUI::StartUsingSelectionList(&(pMenuItem->m_listMenu), 
                                        &CPakoon1View::OnKeyDownCurrentMenu);
-        } else if(pMenuItem->m_type == BMenuItem::TType::EDITBOX) {
+        } else if(pMenuItem->m_type == BMenuItem::EDITBOX) {
           // Open editbox
           pMenuItem->m_bOpen = true;
           BUI::StartUsingEditbox(&(pMenuItem->m_sValue), 
                                  &CPakoon1View::OnKeyDownCurrentMenu);
-          pMenuItem->m_ebAssocEditBox.status = BUIEdit::TStatus::EDITING;
+          pMenuItem->m_ebAssocEditBox.status = BUIEdit::EDITING;
         }
-        Invalidate();
+        
       } else {
-        if(pMenuItem->m_type == BMenuItem::TType::STRING_FROM_LIST) {
+        if(pMenuItem->m_type == BMenuItem::STRING_FROM_LIST) {
           // Update value
           pMenuItem->m_nValue = pMenuItem->m_listMenu.GetSelectedItem(sTmp);
 
           // Check if Server IP edit box status needs to be changed
-          if(pMenuItem->m_sText.CompareNoCase("Role:") == 0) {
-            bool bDisable = (sTmp.CompareNoCase("SERVER") == 0);
+          if(pMenuItem->m_sText.compare("Role:") == 0) {
+            bool bDisable = (sTmp.compare("SERVER") == 0);
             BGame::m_pMenuCurrent->m_items[2].m_bDisabled = bDisable;
           }
-        } else if(pMenuItem->m_type == BMenuItem::TType::EDITBOX) {
+        } else if(pMenuItem->m_type == BMenuItem::EDITBOX) {
           // Close editbox
           BUIEdit::TStatus status;
           pMenuItem->m_sValue = pMenuItem->m_ebAssocEditBox.GetValue(status);
@@ -2796,7 +2739,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         pMenuItem->m_bOpen = false;
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
-        Invalidate();
+        
       }
     }
 
@@ -2805,10 +2748,10 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         {
           BMultiplayParams params;
 
-          CString sRole;
+          string sRole;
           BGame::m_menuMultiplay.m_items[1].m_listMenu.GetSelectedItem(sRole);
 
-          params.m_bHost = (sRole.CompareNoCase("SERVER") == 0);
+          params.m_bHost = (sRole.compare("SERVER") == 0);
           params.m_sHostIPAddress = BGame::m_menuMultiplay.m_items[2].m_sValue;
           params.m_sPlayerName = BGame::m_menuMultiplay.m_items[0].m_sValue;
 
@@ -2822,18 +2765,18 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
           StartMenuScroll(SCROLL_RIGHT);
           BroadcastMenuBrowse();
 
-          Invalidate();
+          
           break;
         }
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::GAMEMODE) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::GAMEMODE) {
 
     // Get rid of intro sound, if it's still playing
     SoundModule::StopIntroSound(); 
 
     if(BGame::m_bExitingMultiplay) {
       // Check whether user wants to exit multiplay or not
-      CString sTmp;
+      string sTmp;
       int nYesNo = BGame::m_listYesNo.GetSelectedItem(sTmp);
       if(nYesNo == 0) {
         // exit multiplay    
@@ -2856,7 +2799,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BroadcastMenuSelection();
       } else {
         BGame::m_bOKToProceedInMultiplayMenu = false;
-        CString sTmp;
+        string sTmp;
         int nSelected = BGame::m_pMenuCurrent->m_listMenu.GetSelectedItem(sTmp);
 
         switch(nSelected) {
@@ -2864,11 +2807,11 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
           case 1: // SPEEDRACE
           case 2: // AIRTIME
             if(nSelected == 0) {
-              BGame::m_gameMode = BGame::TGameMode::SPEEDRACE;
+              BGame::m_gameMode = BGame::SPEEDRACE;
             } else if(nSelected == 1) {
-              BGame::m_gameMode = BGame::TGameMode::SLALOM;
+              BGame::m_gameMode = BGame::SLALOM;
             } else if(nSelected == 2) {
-              BGame::m_gameMode = BGame::TGameMode::AIRTIME;
+              BGame::m_gameMode = BGame::AIRTIME;
             }
             BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
             BGame::m_pMenuCurrent = &(BGame::m_menuChooseScene);
@@ -2876,15 +2819,15 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
                                          &CPakoon1View::OnKeyDownCurrentMenu);
             StartMenuScroll(SCROLL_RIGHT);
             BroadcastMenuBrowse();
-            Invalidate();            
+                        
             break;
         }
       }
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::CHOOSE_SCENE) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_SCENE) {
 
     if(BGame::m_bMultiplayOn) {
-      BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::PREPARING_TO_RACE;
+      BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::PREPARING_TO_RACE;
       BGame::BroadcastStateChange();
     }
 
@@ -2901,9 +2844,9 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
                                    &CPakoon1View::OnKeyDownCurrentMenu);
       StartMenuScroll(SCROLL_RIGHT);
       BroadcastMenuBrowse();
-      Invalidate();
+      
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::CHOOSE_VEHICLE) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_VEHICLE) {
 
     BGame::m_sVehicle = BGame::m_pMenuCurrent->m_items[nSelected].m_sAssocFile;
 
@@ -2926,9 +2869,9 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
                                    &CPakoon1View::OnKeyDownCurrentMenu);
     } else if(BGame::m_pMenuCurrent->m_items[nSelected].m_bDisabled) {
       double dPrice = 100.0;
-      if(BGame::m_pMenuCurrent->m_items[nSelected].m_sText.CompareNoCase("Spirit") == 0) {
+      if(BGame::m_pMenuCurrent->m_items[nSelected].m_sText.compare("Spirit") == 0) {
         dPrice = 500.0;
-      } else if(BGame::m_pMenuCurrent->m_items[nSelected].m_sText.CompareNoCase("Veyronette") == 0) {
+      } else if(BGame::m_pMenuCurrent->m_items[nSelected].m_sText.compare("Veyronette") == 0) {
         dPrice = 300.0;
       }
       BGame::m_dPurchasePrice = dPrice;
@@ -2945,10 +2888,11 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
 
         // Broadcast the selected vehicle filename for all remote players
 
-        {
+		//FIXME
+        /*{
           CFile fileTmp(BGame::m_pMenuCurrent->m_items[nSelected].m_sAssocFile, CFile::modeRead | CFile::shareDenyNone);
           BroadcastSelectedVehicleFilename(fileTmp.GetFileName());
-        }
+        }*/
 
         // Broadcast a vehicle has been selected
 
@@ -2960,24 +2904,24 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BGame::m_bGameReadyToStart = true;
       }
     }
-    Invalidate();
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::CREDITS) {
+    
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::CREDITS) {
     // "Do nothing"
     BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                  &CPakoon1View::OnKeyDownCurrentMenu);
-    Invalidate();
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::HISCORES) {
+    
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::HISCORES) {
     // "Do nothing"
     BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                  &CPakoon1View::OnKeyDownCurrentMenu);
-    Invalidate();
+    
   }
 }
 
 
 //*************************************************************************************************
 void CPakoon1View::CancelPressedOnCurrentMenu() {
-  if(BGame::m_pMenuCurrent->m_type == BMenu::TType::MAIN) {
+  if(BGame::m_pMenuCurrent->m_type == BMenu::MAIN) {
     // NOT YET DONE, JUST RETURN TO MAIN MENU!!!
     // Setup for first menu
     BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
@@ -2989,10 +2933,10 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
     //Settings::WriteSettings(m_game.GetSimulation());
 
     //AfxGetMainWnd()->PostMessage(WM_COMMAND, ID_FILE_CLOSE, 0);
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::SETTINGS) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::SETTINGS) {
     // See if we need to open/close sublist/slider
     BMenu *pMenu = BGame::m_pMenuCurrent;
-    CString sTmp;
+    string sTmp;
     int nSelected = pMenu->m_listMenu.GetSelectedItem(sTmp);
     if(nSelected != -1) {
       BMenuItem *pMenuItem = &(pMenu->m_items[nSelected]);
@@ -3001,14 +2945,14 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
         pMenuItem->m_bOpen = false;
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
-        Invalidate();
+        
       } else {
 
         // Save settings
-        CString sTmp;
-        sscanf(LPCTSTR(pMenu->m_items[0].m_sAssocListItems[pMenu->m_items[0].m_nValue]), "%d*%d", &(BGame::m_nDispWidth), &(BGame::m_nDispHeight));
-        sscanf(LPCTSTR(pMenu->m_items[1].m_sAssocListItems[pMenu->m_items[1].m_nValue]), "%d", &(BGame::m_nDispBits));
-        sscanf(LPCTSTR(pMenu->m_items[2].m_sAssocListItems[pMenu->m_items[2].m_nValue]), "%d", &(BGame::m_nDispHz));
+        string sTmp;
+        //sscanf(pMenu->m_items[0].m_sAssocListItems[pMenu->m_items[0].m_nValue].c_str(), "%d*%d", &(BGame::m_nDispWidth), &(BGame::m_nDispHeight)); //we use desktop resolution only for now
+        sscanf(pMenu->m_items[1].m_sAssocListItems[pMenu->m_items[1].m_nValue].c_str(), "%d", &(BGame::m_nDispBits));
+        sscanf(pMenu->m_items[2].m_sAssocListItems[pMenu->m_items[2].m_nValue].c_str(), "%d", &(BGame::m_nDispHz));
         BGame::m_nTerrainResolution = pMenu->m_items[3].m_nValue;
         BGame::m_nCarDetails = pMenu->m_items[4].m_nValue;
         BGame::m_nWaterSurface = pMenu->m_items[5].m_nValue;
@@ -3031,7 +2975,8 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
         BGame::m_bNight = (BGame::m_nWaterSurface == 1);
 
         // See if resolution needs to be changed
-        DEVMODE devmode;
+        //FIXME
+        /*DEVMODE devmode;
         EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode);
         if((devmode.dmPelsWidth  != (DWORD)BGame::m_nDispWidth) || 
            (devmode.dmPelsHeight != (DWORD)BGame::m_nDispHeight) || 
@@ -3043,7 +2988,7 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
           devmode.dmDisplayFrequency = (DWORD)BGame::m_nDispHz;
           ChangeDisplaySettings(&devmode, CDS_FULLSCREEN);
           AfxGetMainWnd()->SetWindowPos(NULL, -2, -2, BGame::m_nDispWidth + 4, BGame::m_nDispHeight + 4, 0);
-        }
+        }*/
 
         // Go back to main menu or game menu
 
@@ -3054,7 +2999,7 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
           m_pDrawFunction = &CPakoon1View::OnDrawGame;
           // m_game.m_bFadingIn = true;
           // m_game.m_clockFadeStart = clock();
-          ShowCursor(FALSE);
+          SDL_ShowCursor(0);
         } else {
           StartMenuScroll(SCROLL_RIGHT);
           BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
@@ -3062,12 +3007,12 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
           BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                        &CPakoon1View::OnKeyDownCurrentMenu);
         }
-        Invalidate();
+        
       }
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::MULTIPLAYER) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::MULTIPLAYER) {
     BMenu *pMenu = BGame::m_pMenuCurrent;
-    CString sTmp;
+    string sTmp;
     int nSelected = pMenu->m_listMenu.GetSelectedItem(sTmp);
     if(nSelected != -1) {
       BMenuItem *pMenuItem = &(pMenu->m_items[nSelected]);
@@ -3076,17 +3021,17 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
         pMenuItem->m_bOpen = false;
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
-        Invalidate();
+        
       } else {
         StartMenuScroll(SCROLL_LEFT);
         BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
         BGame::m_pMenuCurrent = &(BGame::m_menuMain);
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
-        Invalidate();
+        
       }
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::GAMEMODE) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::GAMEMODE) {
     if(BGame::m_bMultiplayOn) {
       BGame::m_bExitingMultiplay = true;
 
@@ -3100,20 +3045,20 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownCurrentMenu);
     }
-    Invalidate();
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::CHOOSE_SCENE) {
+    
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_SCENE) {
     if(!BGame::m_bMultiplayOn) { // Don't allow back menu command on multiplay
       StartMenuScroll(SCROLL_LEFT);
       BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
       BGame::m_pMenuCurrent = &(BGame::m_menuChooseGameMode);
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownCurrentMenu);
-      Invalidate();
+      
     } else {
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownCurrentMenu);
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::CHOOSE_VEHICLE) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_VEHICLE) {
     if(!BGame::m_bMultiplayOn) { // Don't allow back menu command on multiplay
       if(BGame::m_bBuyingVehicle || BGame::m_bCannotBuyVehicle) {
         BGame::m_bBuyingVehicle = false;
@@ -3127,25 +3072,25 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
       }
-      Invalidate();
+      
     } else {
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownCurrentMenu);
     }
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::CREDITS) {
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::CREDITS) {
     StartMenuScroll(SCROLL_UP);
     BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
     BGame::m_pMenuCurrent = &(BGame::m_menuMain);
     BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                  &CPakoon1View::OnKeyDownCurrentMenu);
-    Invalidate();
-  } else if(BGame::m_pMenuCurrent->m_type == BMenu::TType::HISCORES) {
+    
+  } else if(BGame::m_pMenuCurrent->m_type == BMenu::HISCORES) {
     StartMenuScroll(SCROLL_DOWN);
     BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
     BGame::m_pMenuCurrent = &(BGame::m_menuMain);
     BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                  &CPakoon1View::OnKeyDownCurrentMenu);
-    Invalidate();
+    
   }
 }
 
@@ -3161,13 +3106,11 @@ void CPakoon1View::StartMenuScroll(TMenuScroll scroll) {
 //*************************************************************************************************
 void CPakoon1View::BroadcastMenuBrowse() {
   if(BGame::m_bMultiplayOn) {
-    CString sMsg;
-    CString sSelection;
+    stringstream sMsg;
+    string sSelection;
     (void) BGame::m_pMenuCurrent->m_listMenu.GetSelectedItem(sSelection);
-    sMsg.Format("%c%s", 
-                char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1),
-                sSelection);
-    BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::MENU_BROWSE, sMsg);
+    sMsg << char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1) << sSelection;
+    BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::MENU_BROWSE, sMsg.str());
   }
 }
 
@@ -3175,7 +3118,7 @@ void CPakoon1View::BroadcastMenuBrowse() {
 void CPakoon1View::BroadcastMenuSelection() {
 
   if(BGame::m_bMultiplayOn) {
-    CString sSelection;
+    string sSelection;
     (void) BGame::m_pMenuCurrent->m_listMenu.GetSelectedItem(sSelection);
 
     if(BGame::GetMultiplay()->GetParams()->m_bHost) {
@@ -3187,23 +3130,19 @@ void CPakoon1View::BroadcastMenuSelection() {
       CheckForMultiplayMenuProceed();
 
     } else {
-      CString sMsg;
-      sMsg.Format("%c%s", 
-                  char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1),
-                  sSelection);
-      BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::MENU_SELECTION, sMsg);
+      stringstream sMsg;
+      sMsg << char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1) << sSelection;
+      BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::MENU_SELECTION, sMsg.str());
     }
   }
 }
 
 
 //*************************************************************************************************
-void CPakoon1View::BroadcastSelectedVehicleFilename(CString sFilename) {
-  CString sMsg;
-  sMsg.Format("%c%s", 
-              char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1),
-              sFilename);
-  BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::I_CHOSE_VEHICLE_FILENAME, sMsg);
+void CPakoon1View::BroadcastSelectedVehicleFilename(string sFilename) {
+  stringstream sMsg;
+  sMsg << char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1) << sFilename;
+  BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::I_CHOSE_VEHICLE_FILENAME, sMsg.str());
 }
 
 
@@ -3230,13 +3169,13 @@ void CPakoon1View::CheckForMultiplayMenuProceed() {
 
       for(i = 0; i < 100; ++i) {
         selections[i].m_nRefCount = 0;
-        selections[i].m_sSelection = _T("");
+        selections[i].m_sSelection = "";
       }
 
       for(i = 0; i < BGame::m_nRemotePlayers; ++i) {
         bool bFound = false;
         for(int j = 0; j < nSelections; ++j) {
-          if(selections[j].m_sSelection.CompareNoCase(BGame::m_remotePlayer[i].m_sCurrentMenuSel) == 0) {
+          if(selections[j].m_sSelection.compare(BGame::m_remotePlayer[i].m_sCurrentMenuSel) == 0) {
             ++(selections[j].m_nRefCount);
             bFound = true;
           }
@@ -3263,7 +3202,7 @@ void CPakoon1View::CheckForMultiplayMenuProceed() {
         }
       }
 
-      CString sSelection;
+      string sSelection;
 
       if(bUniqueMaxFound) {
         // majority rules
@@ -3273,16 +3212,15 @@ void CPakoon1View::CheckForMultiplayMenuProceed() {
         sSelection = BGame::m_remotePlayer[BGame::GetMyPlace()].m_sCurrentMenuSel;
       }
 
-      CString sMsg;
-      sMsg.Format("%s", sSelection);
-      BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::HIGHLIGHT_MENU_SELECTION, sMsg);
+      string sMsg = sSelection;
+      BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::HIGHLIGHT_MENU_SELECTION, sMsg);
 
       // Syncronize watches
-      BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::CLOCK_IS_NOW_0, _T(""));
+      BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::CLOCK_IS_NOW_0, "");
 
-      EnterCriticalSection(&(BGame::m_csMutex)); 
-      BGame::m_clockOffsetFromZeroTime = ::GetTickCount();
-      LeaveCriticalSection(&(BGame::m_csMutex)); 
+      SDL_LockMutex(BGame::m_csMutex);
+      BGame::m_clockOffsetFromZeroTime = SDL_GetTicks();
+      SDL_UnlockMutex(BGame::m_csMutex);
 
       // Emulate self message
       HighlightMenuSelection(sSelection);
@@ -3293,7 +3231,7 @@ void CPakoon1View::CheckForMultiplayMenuProceed() {
 
 
 //*************************************************************************************************
-void CPakoon1View::HighlightMenuSelection(CString sSelection) {
+void CPakoon1View::HighlightMenuSelection(string sSelection) {
   // In multiplay mode, proceed as if return has been pressed
   int i;
   for(i = 0; i < BGame::m_nRemotePlayers; ++i) {
@@ -3303,9 +3241,9 @@ void CPakoon1View::HighlightMenuSelection(CString sSelection) {
   // Give 1 second feedback to user about the selection!!!
 
   for(i = 0; i < BGame::m_pMenuCurrent->m_listMenu.m_nItems; ++i) {
-    if(BGame::m_pMenuCurrent->m_listMenu.m_psItems[i].CompareNoCase(sSelection) == 0) {
+    if(BGame::m_pMenuCurrent->m_listMenu.m_psItems[i].compare(sSelection) == 0) {
 
-      if(BGame::m_pMenuCurrent->m_type != BMenu::TType::CHOOSE_VEHICLE) { // Everyone gets to choose their own vehicle
+      if(BGame::m_pMenuCurrent->m_type != BMenu::CHOOSE_VEHICLE) { // Everyone gets to choose their own vehicle
         BGame::m_pMenuCurrent->m_listMenu.m_nSelected = i;
       }
       break;
@@ -3315,18 +3253,18 @@ void CPakoon1View::HighlightMenuSelection(CString sSelection) {
   // Highlight commonly selected menu item
   m_clockHighlightMenu = clock();
   BGame::m_bOKToProceedInMultiplayMenu = true;
-  Invalidate();
+  
 }
 
 
 
 
 //*************************************************************************************************
-void CPakoon1View::OnDrawGame(CDC* pDC) {
+void CPakoon1View::OnDrawGame() {
   static int nFrameNo = 0;
   static clock_t clockLastCheckPoint = clock();
   static clock_t clockLastCheckPoint2 = clock();
-  static CString sRate = _T("");
+  static string sRate = "";
 
   BScene  *pScene  = BGame::GetSimulation()->GetScene();
   BCamera *pCamera = m_game.GetSimulation()->GetCamera();
@@ -3340,12 +3278,6 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
     clockLastCheckPoint = clock();
     m_bInitClock = false;
   }
-
-  HDC hDC = pDC->GetSafeHdc();
-  wglMakeCurrent(hDC, m_hGLRC); 
-  
-  CRect rect;
-  GetClientRect(&rect);
 
   // glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT | GL_FOG_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_POLYGON_BIT | GL_STENCIL_BUFFER_BIT | GL_TEXTURE_BIT);
 
@@ -3380,18 +3312,18 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
     dScreenFormat = 2.0 / 3.0;
   }
   double aspect = 1.0;
-  aspect = (double) rect.Width() / (double) (rect.Height() * dScreenFormat);
+  aspect = (double) m_rectWnd.w / (double) (m_rectWnd.h * dScreenFormat);
 
   {
     if(BGame::m_bRecordSlalom) {
-      CString sSlalomRecord;
+      stringstream sSlalomRecord;
       if(BGame::m_bPassFromRightSlalom) {
-        sSlalomRecord.Format("RIGHT (%d)", pScene->m_slalom.m_nCurrentPole);
+        sSlalomRecord << "RIGHT (" << pScene->m_slalom.m_nCurrentPole << ")";
       } else {
-        sSlalomRecord.Format("LEFT (%d)", pScene->m_slalom.m_nCurrentPole);
+        sSlalomRecord << "LEFT (" << pScene->m_slalom.m_nCurrentPole << ")";
       }
       BMessages::Remove("slalomrecord");
-      BMessages::Show(40, "slalomrecord", sSlalomRecord, 60, false, 0.5, 0.5, 1.0, false, true);
+      BMessages::Show(40, "slalomrecord", sSlalomRecord.str(), 60, false, 0.5, 0.5, 1.0, false, true);
     }
   }
 
@@ -3426,13 +3358,13 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
       pScene->m_raceRecord.m_dCarWidth  = BGame::GetSimulation()->GetVehicle()->m_dVisualWidth;
       pScene->m_raceRecord.m_dCarHeight = BGame::GetSimulation()->GetVehicle()->m_dVisualHeight;
       BGame::m_bRaceStarted = true;
-      if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+      if(BGame::m_gameMode == BGame::AIRTIME) {
         BGame::m_dRaceTime = pScene->m_dAirTimeMaxSec;
       } else {
         BGame::m_dRaceTime = 0.0;
       }
       m_clockTimerStart = clock();
-      BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::TIMER_STARTED;
+      BGame::m_cOnScreenInfo |= BGame::TIMER_STARTED;
 
       if(!pScene->m_bVerified) {
         BGame::ShowMultiplayMessage("UNVERIFIED SCENE");
@@ -3466,7 +3398,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
 
         SoundModule::PlayGoalFanfarSound();
 
-        BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::FINISHED;
+        BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::FINISHED;
         BGame::BroadcastStateChange();
 
         pScene->m_raceRecord.m_dTotalTime = BGame::m_dRaceTime;
@@ -3474,12 +3406,12 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
         int nSeconds = (BGame::m_dRaceTime - (nMinutes * g_dPhysicsStepsInSecond * 60)) / g_dPhysicsStepsInSecond;
         int n100Seconds = (100 * (BGame::m_dRaceTime - (nMinutes * g_dPhysicsStepsInSecond * 60 + nSeconds * g_dPhysicsStepsInSecond))) / g_dPhysicsStepsInSecond;
 
-        if(BGame::m_gameMode == BGame::TGameMode::SPEEDRACE) {
+        if(BGame::m_gameMode == BGame::SPEEDRACE) {
           if(pScene->m_bVerified && BGame::GetSimulation()->GetVehicle()->m_bVerified &&
              (!pScene->m_raceRecordBestTime.m_bValid || 
               (pScene->m_raceRecordBestTime.m_dTotalTime > pScene->m_raceRecord.m_dTotalTime))) {
             // Copy new best time record
-            BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::NEW_RECORD;
+            BGame::m_cOnScreenInfo |= BGame::NEW_RECORD;
             pScene->m_raceRecordBestTime.m_bValid = true;
             pScene->m_raceRecordBestTime = pScene->m_raceRecord;
             for(int i = 0; i < pScene->m_raceRecord.m_nNextSlot; ++i) {
@@ -3488,12 +3420,12 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
             // Save the best time record fpr the scene
             pScene->SaveBestTimeRecord();
           }
-        } else if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
+        } else if(BGame::m_gameMode == BGame::SLALOM) {
           if(pScene->m_bVerified && BGame::GetSimulation()->GetVehicle()->m_bVerified &&
              (!pScene->m_raceRecordSlalomTime.m_bValid || 
               (pScene->m_raceRecordSlalomTime.m_dTotalTime > pScene->m_raceRecord.m_dTotalTime))) {
             // Copy new best time record
-            BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::NEW_RECORD;
+            BGame::m_cOnScreenInfo |= BGame::NEW_RECORD;
             pScene->m_raceRecordSlalomTime.m_bValid = true;
             pScene->m_raceRecordSlalomTime = pScene->m_raceRecord;
             for(int i = 0; i < pScene->m_raceRecord.m_nNextSlot; ++i) {
@@ -3502,11 +3434,11 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
             // Save the best time record fpr the scene
             pScene->SaveSlalomTimeRecord();
           }
-        } else if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+        } else if(BGame::m_gameMode == BGame::AIRTIME) {
           if(pScene->m_bVerified && BGame::GetSimulation()->GetVehicle()->m_bVerified &&
              (BGame::m_dAirTime > pScene->m_dBestAirTime)) {
             // Copy new best time record
-            BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::NEW_RECORD;
+            BGame::m_cOnScreenInfo |= BGame::NEW_RECORD;
             pScene->m_dBestAirTime = BGame::m_dAirTime;
             // Save the best time record fpr the scene
             pScene->Save();
@@ -3517,7 +3449,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
         // Update high scores
 
         if(pScene->m_bVerified && BGame::GetSimulation()->GetVehicle()->m_bVerified) {
-          if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+          if(BGame::m_gameMode == BGame::AIRTIME) {
             BGame::UpdateHighScores(pScene->m_sName, BGame::m_gameMode, BGame::m_dAirTime);
           } else {
             BGame::UpdateHighScores(pScene->m_sName, BGame::m_gameMode, pScene->m_raceRecord.m_dTotalTime);
@@ -3525,10 +3457,10 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
         }
       } else {
 
-        if(!(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::DISQUALIFIED_GOAL)) {
-          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::MISSED_GOAL;
+        if(!(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_GOAL)) {
+          BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::MISSED_GOAL;
           BGame::BroadcastStateChange();
-          BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::DISQUALIFIED_GOAL;
+          BGame::m_cOnScreenInfo |= BGame::DISQUALIFIED_GOAL;
           SoundModule::PlayDisqualifiedSound();
         }
       }
@@ -3561,14 +3493,14 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
     }
   }
 
-  m_game.GetSimulation()->m_rectWnd = rect;
+  m_game.GetSimulation()->m_rectWnd = m_rectWnd;
   if(!m_game.m_bFrozen) {
     if(BGame::m_bForceBreak) {
       BGame::GetSimulation()->GetVehicle()->m_bBreaking = true;
       BGame::GetSimulation()->GetVehicle()->m_bAccelerating = false;
       BGame::GetSimulation()->GetVehicle()->m_bReversing = false;
     }
-    m_game.GetSimulation()->PrePaint(pDC);
+    m_game.GetSimulation()->PrePaint();
   }
 
   // Restore original acceleration factor
@@ -3596,13 +3528,13 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
 
   // Set look at -point for camera 
   glViewport(0, 
-             (GLint) ((rect.Height() - rect.Height() * dScreenFormat) / 2), 
-             (GLint) rect.Width(), 
-             (GLint) (double(rect.Height()) * dScreenFormat));
+             (GLint) ((m_rectWnd.h - m_rectWnd.h * dScreenFormat) / 2), 
+             (GLint) m_rectWnd.w, 
+             (GLint) (double(m_rectWnd.h) * dScreenFormat));
 
   static double dSortaClock = 0.0;
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static clock_t clockPrev = SDL_GetTicks();
+  clock_t clockNow = SDL_GetTicks();
   dSortaClock += 0.001 * double(clockNow - clockPrev);
   clockPrev = clockNow;
   double dVert;
@@ -3677,31 +3609,31 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
   // Draw the world
 
   glEnable(GL_DEPTH_TEST);
-  m_nMenuTime += m_game.GetSimulation()->Paint(pDC, m_bCreateDLs, m_bWireframe, m_bNormals, rect);
+  m_nMenuTime += m_game.GetSimulation()->Paint(m_bCreateDLs, m_bWireframe, m_bNormals, m_rectWnd);
   m_bCreateDLs = false;
 
   if(BGame::m_bMultiplayOn) {
     // Draw remote cars
-    EnterCriticalSection(&(BGame::m_csMutex));
+    SDL_LockMutex(BGame::m_csMutex);
     DrawRemoteCars();
-    LeaveCriticalSection(&(BGame::m_csMutex));
+    SDL_UnlockMutex(BGame::m_csMutex);
   }
 
 
   // Draw ghost car, if there is one
-  if(BGame::m_gameMode == BGame::TGameMode::SPEEDRACE) {
+  if(BGame::m_gameMode == BGame::SPEEDRACE) {
     if(pScene->m_raceRecordBestTime.m_bValid && 
        BGame::m_bRaceStarted && 
        !BGame::m_bRaceFinished) {
       DrawGhostCar(nNowFrame, &(pScene->m_raceRecordBestTime));
     }
-  } else if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
+  } else if(BGame::m_gameMode == BGame::SLALOM) {
     if(pScene->m_raceRecordSlalomTime.m_bValid && 
        BGame::m_bRaceStarted && 
        !BGame::m_bRaceFinished) {
       DrawGhostCar(nNowFrame, &(pScene->m_raceRecordSlalomTime));
     }
-  } else if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+  } else if(BGame::m_gameMode == BGame::AIRTIME) {
     if(BGame::m_dAirTime >= pScene->m_dBestAirTime) {
       BGame::m_sRacePosition = "1/2";
     } else {
@@ -3710,9 +3642,9 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
 
     if(BGame::m_dRaceTime < 0) {
 
-      if(!(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::DISQUALIFIED_OUT_OF_TIME)) {
+      if(!(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_OUT_OF_TIME)) {
         BGame::m_bForceBreak = true;
-        BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::DISQUALIFIED_OUT_OF_TIME;
+        BGame::m_cOnScreenInfo |= BGame::DISQUALIFIED_OUT_OF_TIME;
         BGame::m_bRaceFinished = true;
         SoundModule::PlayDisqualifiedSound();
       }
@@ -3720,11 +3652,11 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
   }
 
   // Check for reference time
-  if(BGame::m_gameMode != BGame::TGameMode::AIRTIME) {
+  if(BGame::m_gameMode != BGame::AIRTIME) {
     int nRefK = BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dY / 1000.0;
     if(nRefK > BGame::m_nRefK) {
       BGame::m_nRefK = nRefK;
-      BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::REF_TIME;
+      BGame::m_cOnScreenInfo |= BGame::REF_TIME;
       m_clockTimerStart = clock();
       double dRefTime = BGame::m_dRaceTime - BGame::m_dRefTime[nRefK];
       char cSign = '+';
@@ -3734,14 +3666,16 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
       }
       int nSeconds = dRefTime / g_dPhysicsStepsInSecond;
       int n100Seconds = (100 * (dRefTime - nSeconds * g_dPhysicsStepsInSecond)) / g_dPhysicsStepsInSecond;
-      BGame::m_sRefTime.Format("%c%02d.%02d", cSign, nSeconds, n100Seconds);
+      stringstream val;
+      val << cSign << nSeconds << "." << n100Seconds;
+      BGame::m_sRefTime = val.str();
     }
   }
 
   // Draw goal indicator
   // First determine goal
   BVector vGoal = pScene->m_vGoal;
-  if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
+  if(BGame::m_gameMode == BGame::SLALOM) {
     if(!BGame::m_bRecordSlalom && 
        (pScene->m_slalom.m_nCurrentPole < pScene->m_slalom.m_nSlalomPoles)) {
       vGoal = pScene->m_slalom.m_slalomPole[pScene->m_slalom.m_nCurrentPole].m_vLocation;
@@ -3752,7 +3686,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
   
   // Draw slalom poles, if game mode is slalom.
   // Also check for correct pole passes
-  if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
+  if(BGame::m_gameMode == BGame::SLALOM) {
     DrawActiveSlalomPoles();
 
     if(!BGame::m_bRecordSlalom) {
@@ -3770,13 +3704,13 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
 
         if(!bPassed) {
 
-          if(!(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::DISQUALIFIED_WRONG_SIDE)) {
-            BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::DISQUALIFIED_WRONG_SIDE;
+          if(!(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_WRONG_SIDE)) {
+            BGame::m_cOnScreenInfo |= BGame::DISQUALIFIED_WRONG_SIDE;
 
             if(!BGame::m_bMultiplayOn) {
               BGame::m_bForceBreak = true;
             } else {
-              BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::MISSED_POLE;
+              BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::MISSED_POLE;
               BGame::BroadcastStateChange();
             }
             BGame::m_bRaceFinished = true;
@@ -3808,8 +3742,8 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
   DrawExtraScreenTexts();
 
   if(BGame::m_bNavSat) {
-    DrawNavSat(pDC);
-    Sleep(1);
+    DrawNavSat();
+    SDL_Delay(1);
   }
 
   // Scene editor stuff
@@ -3824,7 +3758,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
   }
 
   if(BGame::m_bShowQuickHelp) {
-    DrawQuickHelp(pDC);
+    DrawQuickHelp();
   } else if(m_game.m_bShowGameMenu) {
     DrawGameMenu();
   }
@@ -3836,7 +3770,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
 
   if(!m_game.m_bShowGameMenu && !m_game.m_bShowQuickHelp && !m_game.m_bShowCancelQuestion) {
     glPushMatrix();
-    glTranslated(m_rectWnd.Width() / 2.0, m_rectWnd.Height() * 0.35, 0);
+    glTranslated(m_rectWnd.w / 2.0, m_rectWnd.h * 0.35, 0);
     m_messages.Render();
     glPopMatrix();
   }
@@ -3852,9 +3786,9 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
     if((clock() - BGame::m_clockFadeStart) > CLOCKS_PER_SEC) {
       m_game.m_bFadingIn = false;
       if(BGame::m_bMultiplayOn) {
-        CString sMsg;
-        sMsg.Format("%c", char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1));
-        BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::I_AM_READY_TO_START_GAME, sMsg);
+        string sMsg = "0";
+        sMsg[0] = char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1);
+        BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::I_AM_READY_TO_START_GAME, sMsg);
         if(BGame::GetMultiplay()->m_params.m_bHost) {
 
           BGame::m_remotePlayer[BGame::GetMyPlace()].m_bReadyToStart = true;
@@ -3878,26 +3812,26 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
         // Draw countdown numbers
 
         OpenGLHelpers::SwitchToTexture(0);
-        BTextures::Use(BTextures::Texture::ONSCREEN_GAME_TEXTS);
+        BTextures::Use(BTextures::ONSCREEN_GAME_TEXTS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
-        CString sCountdown = _T("");
+        string sCountdown = "";
         if((clockNow - BGame::m_clockMultiRaceStarter) < (CLOCKS_PER_SEC * 1)) {
-          sCountdown = _T("3");
+          sCountdown = "3";
           OpenGLHelpers::SetColorFull(1, 0.25, 0.25, 1);
           if(nPrevCountdownID != 3) {
             nPrevCountdownID = 3;
             SoundModule::PlayCountdown123Sound();
           }
         } else if((clockNow - BGame::m_clockMultiRaceStarter) < (CLOCKS_PER_SEC * 2)) {
-          sCountdown = _T("2");
+          sCountdown = "2";
           OpenGLHelpers::SetColorFull(1, 0.75, 0.25, 1);
           if(nPrevCountdownID != 2) {
             nPrevCountdownID = 2;
             SoundModule::PlayCountdown123Sound();
           }
         } else {
-          sCountdown = _T("1");
+          sCountdown = "1";
           OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
           if(nPrevCountdownID != 1) {
             nPrevCountdownID = 1;
@@ -3906,7 +3840,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
         }
         glPushMatrix();
         glScalef(2.0, 2.0, 2.0);
-        DrawGameStringAt(sCountdown, m_rectWnd.Width() / 4 - 15, m_rectWnd.Height() / 2 - m_rectWnd.Height() / 8);
+        DrawGameStringAt(sCountdown, m_rectWnd.w / 4 - 15, m_rectWnd.h / 2 - m_rectWnd.h / 8);
         glPopMatrix();
         glDisable(GL_TEXTURE_2D);
         
@@ -3922,7 +3856,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
 
         BGame::m_nPlayersInGoal = 0;
 
-        BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::TRemoteState::RACING;
+        BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::RACING;
         BGame::BroadcastStateChange();
 
         BGame::m_bMultiplayRaceStarter = false;
@@ -3933,7 +3867,7 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
   }
 
   if(BGame::m_bMultiplayOn) {
-    if(BGame::m_remotePlayer[BGame::GetMyPlace()].m_state == BRemotePlayer::TRemoteState::FINISHED) {
+    if(BGame::m_remotePlayer[BGame::GetMyPlace()].m_state == BRemotePlayer::FINISHED) {
       DrawFinalPosition();
     }
   }
@@ -3965,14 +3899,15 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
                                                         m_game.GetSimulation()->m_nPhysicsStepsBetweenRender * 
                                                         3.6;
 
-    sRate.Format("FPS:%.1lf, Speed:%.0lf km/h (%.2lf), SimSteps:%d, CamLoc:(%.1lf, %.1lf, %.1lf)", 
-                 g_dRate, 
-                 m_game.GetSimulation()->GetVehicle()->m_dSpeedKmh,
-                 m_game.GetSimulation()->GetVehicle()->m_dSpeed,
-                 m_game.GetSimulation()->m_nPhysicsStepsBetweenRender,
-                 m_game.GetSimulation()->GetCamera()->m_vLocation.m_dX,
-                 m_game.GetSimulation()->GetCamera()->m_vLocation.m_dY,
-                 m_game.GetSimulation()->GetCamera()->m_vLocation.m_dZ);
+	stringstream format;
+	format << "FPS:" << g_dRate <<
+		", Speed:" << m_game.GetSimulation()->GetVehicle()->m_dSpeedKmh <<
+		" km/h (" << m_game.GetSimulation()->GetVehicle()->m_dSpeed <<
+		"), SimSteps:" << m_game.GetSimulation()->m_nPhysicsStepsBetweenRender <<
+		", CamLoc:(" << m_game.GetSimulation()->GetCamera()->m_vLocation.m_dX <<
+		", " << m_game.GetSimulation()->GetCamera()->m_vLocation.m_dY <<
+		", " << m_game.GetSimulation()->GetCamera()->m_vLocation.m_dZ << ")";
+	sRate = format.str();
 
     // Calculate the absolute time sync ratio (ATSR)
     m_game.GetSimulation()->m_dMaxGForce = 0.0;
@@ -4000,14 +3935,12 @@ void CPakoon1View::OnDrawGame(CDC* pDC) {
     m_game.GetSimulation()->m_nPhysicsStepsBetweenRender = 1;
   }
 
-  SwapBuffers(pDC->GetSafeHdc());
-
-  ::ReleaseDC(GetSafeHwnd(), hDC);
+  SDL_GL_SwapWindow(window);
 
   // glPopAttrib();
 
   if(!m_game.GetSimulation()->m_bPaused) {
-    Invalidate();
+    
   }
 }
 
@@ -4035,7 +3968,7 @@ void CPakoon1View::DrawRemoteCars() {
 
     double dTimePassed = 0;
 
-    DWORD dwNow = BGame::GetMultiplayClock();
+    int dwNow = BGame::GetMultiplayClock();
     if(dwNow > BGame::m_remotePlayer[i].m_clockLocationSent) {
       dTimePassed = double(dwNow - BGame::m_remotePlayer[i].m_clockLocationSent);
     } else {
@@ -4236,9 +4169,6 @@ void CPakoon1View::DrawRemoteCars() {
 
 //*************************************************************************************************
 void CPakoon1View::DrawOldTubeEffect() {
-  CRect rect;
-  GetClientRect(&rect);
-
   //glEnable(GL_BLEND);
   // glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
   glBlendFunc(GL_ZERO, GL_SRC_COLOR);
@@ -4252,11 +4182,11 @@ void CPakoon1View::DrawOldTubeEffect() {
   OpenGLHelpers::SetTexCoord(0, 0);
   glVertex3f(0, 0, 0);
   OpenGLHelpers::SetTexCoord(1, 0);
-  glVertex3f(rect.Width(), 0, 0);
+  glVertex3f(m_rectWnd.w, 0, 0);
   OpenGLHelpers::SetTexCoord(1, 1);
-  glVertex3f(rect.Width(), rect.Height(), 0);
+  glVertex3f(m_rectWnd.w, m_rectWnd.h, 0);
   OpenGLHelpers::SetTexCoord(0, 1);
-  glVertex3f(0, rect.Height(), 0);
+  glVertex3f(0, m_rectWnd.h, 0);
   glEnd();
 
   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -4280,7 +4210,7 @@ void CPakoon1View::DrawKeyboardHint() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     glPushMatrix();
-    glTranslated(m_rectWnd.Width() / 2.0, m_rectWnd.Height() / 2.0, 0);
+    glTranslated(m_rectWnd.w / 2.0, m_rectWnd.h / 2.0, 0);
 
     glBegin(GL_TRIANGLE_STRIP);
     OpenGLHelpers::SetTexCoord(0, 0);
@@ -4305,7 +4235,7 @@ void CPakoon1View::DrawGameMenu() {
   if(BGame::m_bMultiplayOn) {
     bool bDisableRestart = false;
     for(int i = 0; i < BGame::m_nRemotePlayers; ++i) {
-      if(BGame::m_remotePlayer[i].m_state == BRemotePlayer::TRemoteState::WANTS_TO_SELECT_NEW_RACE) {
+      if(BGame::m_remotePlayer[i].m_state == BRemotePlayer::WANTS_TO_SELECT_NEW_RACE) {
         bDisableRestart = true;
         break;
       }
@@ -4314,9 +4244,9 @@ void CPakoon1View::DrawGameMenu() {
   }
 
   // Main menu
-  BGame::m_menuGame.m_listMenu.DrawAt(m_rectWnd.Width() / 2, 
-                                      m_rectWnd.Height() / 2, 
-                                      BTextRenderer::TTextAlign::ALIGN_CENTER, 
+  BGame::m_menuGame.m_listMenu.DrawAt(m_rectWnd.w / 2, 
+                                      m_rectWnd.h / 2, 
+                                      BTextRenderer::ALIGN_CENTER, 
                                       1, 
                                       1, 
                                       1, 
@@ -4397,7 +4327,7 @@ void CPakoon1View::DrawGoalArrow(BVector vGoal) {
   dHeight = 1.0;
   dWidth  = 2.0;
 
-  if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
+  if(BGame::m_gameMode == BGame::SLALOM) {
     if(pScene->m_slalom.m_nCurrentPole >= pScene->m_slalom.m_nSlalomPoles) {
       OpenGLHelpers::SetColorFull(0, 0, 1, dAlpha);
     } else {
@@ -4539,8 +4469,8 @@ void CPakoon1View::DrawGoalArrow(BVector vGoal) {
 //*************************************************************************************************
 void CPakoon1View::DrawDisqualified() {
   OpenGLHelpers::SetColorFull(1, 0.2, 0.2, 1);
-  OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() / 2.0 - 249 / 2.0, 
-                                       m_rectWnd.Height() - m_rectWnd.Height() / 3.0, 
+  OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w / 2.0 - 249 / 2.0, 
+                                       m_rectWnd.h - m_rectWnd.h / 3.0, 
                                        0, 
                                        56, 
                                        249, 
@@ -4552,28 +4482,28 @@ void CPakoon1View::DrawDisqualified() {
 
 //*************************************************************************************************
 void CPakoon1View::DrawExtraScreenTexts() {
-  if(BGame::m_cOnScreenInfo & (~BGame::TOnScreenInfo::FPS)) {
+  if(BGame::m_cOnScreenInfo & (~BGame::FPS)) {
 
     OpenGLHelpers::SwitchToTexture(0);
-    if((BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::TIMER_STARTED) ||
-       (BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::REF_TIME)) {
-      BTextures::Use(BTextures::Texture::ONSCREEN_GAME_TEXTS);
+    if((BGame::m_cOnScreenInfo & BGame::TIMER_STARTED) ||
+       (BGame::m_cOnScreenInfo & BGame::REF_TIME)) {
+      BTextures::Use(BTextures::ONSCREEN_GAME_TEXTS);
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
-    if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::TIMER_STARTED) {
+    if(BGame::m_cOnScreenInfo & BGame::TIMER_STARTED) {
       // TIMER STARTED
       double dAlpha = 1.0;
       clock_t clockNow = clock();
       if((clockNow - m_clockTimerStart) > (CLOCKS_PER_SEC * 2)) {
-        BGame::m_cOnScreenInfo -= BGame::TOnScreenInfo::TIMER_STARTED;
+        BGame::m_cOnScreenInfo -= BGame::TIMER_STARTED;
         dAlpha = 0.0;
       } else {
         dAlpha = 1.0 - double(clockNow - m_clockTimerStart) / double(CLOCKS_PER_SEC * 2);
       }
       OpenGLHelpers::SetColorFull(0.5, 0.5, 1, dAlpha);
-      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() / 2.0 - 166 / 2.0, 
-                                           m_rectWnd.Height() - m_rectWnd.Height() / 3.0 - 40, 
+      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w / 2.0 - 166 / 2.0, 
+                                           m_rectWnd.h - m_rectWnd.h / 3.0 - 40, 
                                            346, 
                                            127, 
                                            166, 
@@ -4581,35 +4511,35 @@ void CPakoon1View::DrawExtraScreenTexts() {
                                            512, 
                                            128);
     } 
-    if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::REF_TIME) {
+    if(BGame::m_cOnScreenInfo & BGame::REF_TIME) {
       // REFERENCE TIME
       double dAlpha = 1.0;
       clock_t clockNow = clock();
       if((clockNow - m_clockTimerStart) > (CLOCKS_PER_SEC * 4)) {
-        BGame::m_cOnScreenInfo -= BGame::TOnScreenInfo::REF_TIME;
+        BGame::m_cOnScreenInfo -= BGame::REF_TIME;
         dAlpha = 0.0;
       } else {
         dAlpha = 1.0 - double(clockNow - m_clockTimerStart) / double(CLOCKS_PER_SEC * 4);
       }
-      if((BGame::m_sRefTime.GetLength() > 0) && (BGame::m_sRefTime.GetAt(0) == '-')) {
+      if((BGame::m_sRefTime.length() > 0) && (BGame::m_sRefTime.at(0) == '-')) {
         OpenGLHelpers::SetColorFull(0, 1, 0, dAlpha);
       } else {
         OpenGLHelpers::SetColorFull(1, 0, 0, dAlpha);
       }
-      DrawGameStringAt(BGame::m_sRefTime, m_rectWnd.Width() / 2.0 - 70, 
-                       m_rectWnd.Height() - m_rectWnd.Height() / 6.0 - 40);
+      DrawGameStringAt(BGame::m_sRefTime, m_rectWnd.w / 2.0 - 70, 
+                       m_rectWnd.h - m_rectWnd.h / 6.0 - 40);
     }
     
-    if(BGame::m_cOnScreenInfo & ~(BGame::TOnScreenInfo::TIMER_STARTED | BGame::TOnScreenInfo::REF_TIME)) {
-      BTextures::Use(BTextures::Texture::EXTRA_SCREEN_MESSAGES);
+    if(BGame::m_cOnScreenInfo & ~(BGame::TIMER_STARTED | BGame::REF_TIME)) {
+      BTextures::Use(BTextures::EXTRA_SCREEN_MESSAGES);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
     }
 
-    if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::DISQUALIFIED_WRONG_SIDE) {
+    if(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_WRONG_SIDE) {
       // DISQUALIFIED!: (you missed a pole)
       DrawDisqualified();
-      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() / 2.0 - 196 / 2.0, 
-                                           m_rectWnd.Height() - m_rectWnd.Height() / 3.0 - 40, 
+      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w / 2.0 - 196 / 2.0, 
+                                           m_rectWnd.h - m_rectWnd.h / 3.0 - 40, 
                                            0, 
                                            168, 
                                            196, 
@@ -4617,11 +4547,11 @@ void CPakoon1View::DrawExtraScreenTexts() {
                                            512, 
                                            256);
     } 
-    if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::DISQUALIFIED_OUT_OF_TIME) {
+    if(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_OUT_OF_TIME) {
       // DISQUALIFIED!: (out of time)
       DrawDisqualified();
-      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() / 2.0 - 135 / 2.0, 
-                                           m_rectWnd.Height() - m_rectWnd.Height() / 3.0 - 40, 
+      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w / 2.0 - 135 / 2.0, 
+                                           m_rectWnd.h - m_rectWnd.h / 3.0 - 40, 
                                            0, 
                                            211, 
                                            135, 
@@ -4629,11 +4559,11 @@ void CPakoon1View::DrawExtraScreenTexts() {
                                            512, 
                                            256);
     } 
-    if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::DISQUALIFIED_GOAL) {
+    if(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_GOAL) {
       // DISQUALIFIED!: (you missed the goal)
       DrawDisqualified();
-      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() / 2.0 - 218 / 2.0, 
-                                           m_rectWnd.Height() - m_rectWnd.Height() / 3.0 - 40, 
+      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w / 2.0 - 218 / 2.0, 
+                                           m_rectWnd.h - m_rectWnd.h / 3.0 - 40, 
                                            0, 
                                            255, 
                                            218, 
@@ -4642,8 +4572,8 @@ void CPakoon1View::DrawExtraScreenTexts() {
                                            256);
     } 
     
-    if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::NEW_RECORD) {
-      BTextures::Use(BTextures::Texture::EXTRA_SCREEN_MESSAGES);
+    if(BGame::m_cOnScreenInfo & BGame::NEW_RECORD) {
+      BTextures::Use(BTextures::EXTRA_SCREEN_MESSAGES);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
       // NEW TRACK RECORD!
       double dAlpha = 1.0;
@@ -4651,8 +4581,8 @@ void CPakoon1View::DrawExtraScreenTexts() {
         dAlpha = 0.25;
       }
       OpenGLHelpers::SetColorFull(0.2, 1, 0.2, dAlpha);
-      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() / 2.0 - 359 / 2.0, 
-                                           m_rectWnd.Height() - m_rectWnd.Height() / 3.0 + 20, 
+      OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w / 2.0 - 359 / 2.0, 
+                                           m_rectWnd.h - m_rectWnd.h / 3.0 + 20, 
                                            0, 
                                            123, 
                                            359, 
@@ -4671,14 +4601,14 @@ void CPakoon1View::DrawExtraScreenTexts() {
     // Find out race positions
     BGame::m_remotePlayer[BGame::GetMyPlace()].m_vLocation = BGame::GetSimulation()->GetVehicle()->m_vLocation;
     for(i = 0; i < BGame::m_nRemotePlayers; ++i) {
-      if(BGame::m_remotePlayer[i].m_state == BRemotePlayer::TRemoteState::RACING) {
+      if(BGame::m_remotePlayer[i].m_state == BRemotePlayer::RACING) {
         BGame::m_remotePlayer[i].m_nRacePosition = 0;
       }
     }
 
     for(i = 0; i < BGame::m_nRemotePlayers; ++i) {
 
-      if(BGame::m_remotePlayer[i].m_state != BRemotePlayer::TRemoteState::RACING) {
+      if(BGame::m_remotePlayer[i].m_state != BRemotePlayer::RACING) {
         continue;
       }
 
@@ -4687,7 +4617,7 @@ void CPakoon1View::DrawExtraScreenTexts() {
       for(j = 0; j < BGame::m_nRemotePlayers; ++j) {
         if((BGame::m_remotePlayer[j].m_nRacePosition == 0) && 
            (BGame::m_remotePlayer[j].m_vLocation.m_dY > dBestY) && 
-           (BGame::m_remotePlayer[j].m_state == BRemotePlayer::TRemoteState::RACING)) {
+           (BGame::m_remotePlayer[j].m_state == BRemotePlayer::RACING)) {
           nCandidate = j;
           dBestY = BGame::m_remotePlayer[j].m_vLocation.m_dY;
         }
@@ -4699,54 +4629,60 @@ void CPakoon1View::DrawExtraScreenTexts() {
     BUI::TextRenderer()->StartRenderingText();
     for(i = 0; i < BGame::m_nRemotePlayers; ++i) {
 
-      CString sExtra = _T("");
+      string sExtra = "";
 
       switch(BGame::m_remotePlayer[i].m_state) {
-        case BRemotePlayer::TRemoteState::WANTS_TO_SELECT_NEW_RACE:
-          sExtra = _T("Waiting in main menu");
+        case BRemotePlayer::WANTS_TO_SELECT_NEW_RACE:
+          sExtra = "Waiting in main menu";
           break;
-        case BRemotePlayer::TRemoteState::PREPARING_TO_RACE:
-          sExtra = _T("Preparing to race");
+        case BRemotePlayer::PREPARING_TO_RACE:
+          sExtra = "Preparing to race";
           break;
-        case BRemotePlayer::TRemoteState::WAITING_FOR_RACE:
-          sExtra = _T("Ready to start race");
+        case BRemotePlayer::WAITING_FOR_RACE:
+          sExtra = "Ready to start race";
           break;
-        case BRemotePlayer::TRemoteState::RACING:
+        case BRemotePlayer::RACING:
           if(BGame::m_remotePlayer[i].m_nRacePosition >= 4) {
-            sExtra.Format("%dth", BGame::m_remotePlayer[i].m_nRacePosition);
+			  stringstream val;
+			  val << BGame::m_remotePlayer[i].m_nRacePosition << "th";
+			  sExtra = val.str();
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 3) {
-            sExtra = _T("3rd");
+            sExtra = "3rd";
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 2) {
-            sExtra = _T("2nd");
+            sExtra = "2nd";
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 1) {
-            sExtra = _T("1st!");
+            sExtra = "1st!";
           }
           break;
-        case BRemotePlayer::TRemoteState::FINISHED:
+        case BRemotePlayer::FINISHED:
           if(BGame::m_remotePlayer[i].m_nRacePosition >= 4) {
-            sExtra.Format("Finished %dth", BGame::m_remotePlayer[i].m_nRacePosition);
+			  stringstream val;
+			  val << "Finished " << BGame::m_remotePlayer[i].m_nRacePosition << "th";
+			  sExtra = val.str();
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 3) {
-            sExtra = _T("Finished 3rd");
+            sExtra = "Finished 3rd";
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 2) {
-            sExtra = _T("Finished 2nd");
+            sExtra = "Finished 2nd";
           } else if(BGame::m_remotePlayer[i].m_nRacePosition == 1) {
-            sExtra = _T("Finished 1st!");
+            sExtra = "Finished 1st!";
           }
           break;
-        case BRemotePlayer::TRemoteState::MISSED_GOAL:
-          sExtra = _T("DISQUALIFIED! (Missed goal)");
+        case BRemotePlayer::MISSED_GOAL:
+          sExtra = "DISQUALIFIED! (Missed goal)";
           break;
-        case BRemotePlayer::TRemoteState::MISSED_POLE:
-          sExtra = _T("DISQUALIFIED! (Missed a pole)");
+        case BRemotePlayer::MISSED_POLE:
+          sExtra = "DISQUALIFIED! (Missed a pole)";
           break;
       }
 
       double dR, dG, dB;
       BGame::GetMultiplayerColor(i, dR, dG, dB);
-      CString sPlayer;
-      sPlayer.Format("%s: %s", BGame::m_remotePlayer[i].m_sName, sExtra);
+      string sPlayer;
+		sPlayer.assign(BGame::m_remotePlayer[i].m_sName);
+		sPlayer.append(": ");
+		sPlayer.append(sExtra);
 
-      BUI::TextRenderer()->DrawSmallTextAt(5, 10 + 20 * i, sPlayer, sPlayer.GetLength(), BTextRenderer::TTextAlign::ALIGN_LEFT, dR * 0.5, dG * 0.5, dB * 0.5, 1);
+      BUI::TextRenderer()->DrawSmallTextAt(5, 10 + 20 * i, sPlayer, sPlayer.length(), BTextRenderer::ALIGN_LEFT, dR * 0.5, dG * 0.5, dB * 0.5, 1);
     }
 
     BUI::TextRenderer()->StopRenderingText();
@@ -4759,7 +4695,7 @@ void CPakoon1View::DrawExtraScreenTexts() {
 void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   // Draw the stats 'n' stuff
   OpenGLHelpers::SwitchToTexture(0);
-  BTextures::Use(BTextures::Texture::ONSCREEN_GAME_TEXTS);
+  BTextures::Use(BTextures::ONSCREEN_GAME_TEXTS);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
   glPushMatrix();
@@ -4768,22 +4704,22 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   OpenGLHelpers::SetColorFull(0.65, 1, 0.65, 1);
 
   // Race time:
-  OpenGLHelpers::DrawTexturedRectangle(0, m_rectWnd.Height() - 36, 0, 92, 106, 36, 512, 128);
+  OpenGLHelpers::DrawTexturedRectangle(0, m_rectWnd.h - 36, 0, 92, 106, 36, 512, 128);
 
   // Air time:
-  OpenGLHelpers::DrawTexturedRectangle(0, m_rectWnd.Height() - 36 - 74 - 20, 109, 92, 93, 36, 512, 128);
+  OpenGLHelpers::DrawTexturedRectangle(0, m_rectWnd.h - 36 - 74 - 20, 109, 92, 93, 36, 512, 128);
 
   // Speed:
-  OpenGLHelpers::DrawTexturedRectangle(0, m_rectWnd.Height() - 36 - 74 - 20 - 74 - 20, 140, 0, 135, 36, 512, 128);
+  OpenGLHelpers::DrawTexturedRectangle(0, m_rectWnd.h - 36 - 74 - 20 - 74 - 20, 140, 0, 135, 36, 512, 128);
 
   glTranslatef(-10, 0, 0); // use a little margin for visual pleasense
 
   // Race position:
-  OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() - 144, m_rectWnd.Height() - 36, 207, 92, 141, 36, 512, 128);
+  OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w - 144, m_rectWnd.h - 36, 207, 92, 141, 36, 512, 128);
 
   // Poles passed:
-  if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
-    OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.Width() - 135, m_rectWnd.Height() - 36 - 74 - 20, 0, 0, 135, 36, 512, 128);
+  if(BGame::m_gameMode == BGame::SLALOM) {
+    OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w - 135, m_rectWnd.h - 36 - 74 - 20, 0, 0, 135, 36, 512, 128);
   }
 
   glTranslatef(10, 0, 0); // use a little margin for visual pleasense
@@ -4793,9 +4729,9 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   // *************************************
 
   BScene  *pScene  = BGame::GetSimulation()->GetScene();
-  CString sRaceTime;
-  CString sAirTime, sAirTime2;
-  CString sSpeed;
+  stringstream sRaceTime;
+  stringstream sAirTime, sAirTime2;
+  stringstream sSpeed;
   int nSecondsAir = (BGame::m_dAirTime) / g_dPhysicsStepsInSecond;
   int n100SecondsAir = (100 * (BGame::m_dAirTime - nSecondsAir * g_dPhysicsStepsInSecond)) / g_dPhysicsStepsInSecond;
 
@@ -4810,59 +4746,59 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
     n100SecondsTotal = -n100SecondsTotal;
   }
 
-  sRaceTime.Format("%02d:%02d.%02d", nMinutesTotal, nSecondsTotal, n100SecondsTotal);
-  sAirTime.Format("%02d.%02d", nSecondsAir, n100SecondsAir);
-  sAirTime2.Format("%02d.%02d", nSecAirBest, n100SecAirBest);
+  sRaceTime << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
+  sAirTime << nSecondsAir << "." << n100SecondsAir;
+  sAirTime2 << nSecAirBest << "." << n100SecAirBest;
 
-  sSpeed.Format("%.0lf", BGame::GetSimulation()->GetVehicle()->m_dSpeed * 
+  sSpeed << BGame::GetSimulation()->GetVehicle()->m_dSpeed * 
                          g_dPhysicsStepsInSecond * 
-                         3.6);
+                         3.6;
 
 
   // Race time, air time and speed
   double dAlpha = 1.0;
-  bool bHurryUp = ((BGame::m_gameMode == BGame::TGameMode::AIRTIME) && (BGame::m_dRaceTime < 15 * g_dPhysicsStepsInSecond));
-  if((BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::NEW_RECORD) || bHurryUp) {
+  bool bHurryUp = ((BGame::m_gameMode == BGame::AIRTIME) && (BGame::m_dRaceTime < 15 * g_dPhysicsStepsInSecond));
+  if((BGame::m_cOnScreenInfo & BGame::NEW_RECORD) || bHurryUp) {
     // NEW TRACK RECORD!
     if((clock() % (CLOCKS_PER_SEC / 2)) > (CLOCKS_PER_SEC / 4)) {
       dAlpha = 0.25;
     }
-    if((BGame::m_gameMode == BGame::TGameMode::SPEEDRACE) || 
-       (BGame::m_gameMode == BGame::TGameMode::SLALOM) || 
+    if((BGame::m_gameMode == BGame::SPEEDRACE) || 
+       (BGame::m_gameMode == BGame::SLALOM) || 
        bHurryUp) {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, dAlpha);
     } else {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
     }
-    DrawGameStringAt(sRaceTime, 0, m_rectWnd.Height() - 36 - 50);
-    if((BGame::m_gameMode == BGame::TGameMode::AIRTIME) && !bHurryUp) {
+    DrawGameStringAt(sRaceTime.str(), 0, m_rectWnd.h - 36 - 50);
+    if((BGame::m_gameMode == BGame::AIRTIME) && !bHurryUp) {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, dAlpha);
     } else {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
     }
-    DrawGameStringAt(sAirTime, 0, m_rectWnd.Height() - 36 - 74 - 20 - 50);
-    if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+    DrawGameStringAt(sAirTime.str(), 0, m_rectWnd.h - 36 - 74 - 20 - 50);
+    if(BGame::m_gameMode == BGame::AIRTIME) {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 0.15);
-      DrawGameStringAt(sAirTime2, 140, m_rectWnd.Height() - 36 - 74 - 20 - 50);
+      DrawGameStringAt(sAirTime2.str(), 140, m_rectWnd.h - 36 - 74 - 20 - 50);
     }
     OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
-    DrawGameStringAt(sSpeed, 0, m_rectWnd.Height() - 36 - 74 - 20 - 74 - 20 - 50);
+    DrawGameStringAt(sSpeed.str(), 0, m_rectWnd.h - 36 - 74 - 20 - 74 - 20 - 50);
   } else {
     OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
-    DrawGameStringAt(sRaceTime, 0, m_rectWnd.Height() - 36 - 50);
-    DrawGameStringAt(sAirTime, 0, m_rectWnd.Height() - 36 - 74 - 20 - 50);
-    DrawGameStringAt(sSpeed, 0, m_rectWnd.Height() - 36 - 74 - 20 - 74 - 20 - 50);
-    if(BGame::m_gameMode == BGame::TGameMode::AIRTIME) {
+    DrawGameStringAt(sRaceTime.str(), 0, m_rectWnd.h - 36 - 50);
+    DrawGameStringAt(sAirTime.str(), 0, m_rectWnd.h - 36 - 74 - 20 - 50);
+    DrawGameStringAt(sSpeed.str(), 0, m_rectWnd.h - 36 - 74 - 20 - 74 - 20 - 50);
+    if(BGame::m_gameMode == BGame::AIRTIME) {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 0.15);
-      DrawGameStringAt(sAirTime2, 140, m_rectWnd.Height() - 36 - 74 - 20 - 50);
+      DrawGameStringAt(sAirTime2.str(), 140, m_rectWnd.h - 36 - 74 - 20 - 50);
     }
   }
 
   // Race position and poles passed
   glTranslatef(-10, 0, 0); // use a little margin for visual pleasense
 
-  CString sPolesPassed;
-  CString sRacePosition = BGame::m_sRacePosition;
+  string sPolesPassed;
+  string sRacePosition = BGame::m_sRacePosition;
 
   if(BGame::m_bMultiplayOn) {
     /*
@@ -4877,50 +4813,55 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
     }
     */
     // sRacePosition.Format("%d/%d", nAhead + 1, BGame::m_nRemotePlayers);
-    sRacePosition.Format("%d/%d", BGame::m_remotePlayer[BGame::GetMyPlace()].m_nRacePosition, BGame::m_nRemotePlayers);
+    stringstream val;
+    val << BGame::m_remotePlayer[BGame::GetMyPlace()].m_nRacePosition << "/" << BGame::m_nRemotePlayers;
+    sRacePosition = val.str();
   }
 
-  if(BGame::m_gameMode == BGame::TGameMode::SLALOM) {
-    sPolesPassed.Format("%d/%d", pScene->m_slalom.m_nCurrentPole, pScene->m_slalom.m_nSlalomPoles);
-    DrawGameStringAt(sPolesPassed, m_rectWnd.Width() - sPolesPassed.GetLength() * 28, m_rectWnd.Height() - 36 - 74 - 20 - 50);
+  if(BGame::m_gameMode == BGame::SLALOM) {
+	  stringstream val;
+	  val << pScene->m_slalom.m_nCurrentPole << "/" << pScene->m_slalom.m_nSlalomPoles;
+	  sPolesPassed = val.str();
+    DrawGameStringAt(sPolesPassed, m_rectWnd.w - sPolesPassed.length() * 28, m_rectWnd.h - 36 - 74 - 20 - 50);
   }
 
   if(BGame::m_bMultiplayOn) {
-    if(!sRacePosition.IsEmpty() && sRacePosition.GetAt(0) == '1') {
+    if(!sRacePosition.empty() && sRacePosition.at(0) == '1') {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
-    } else if(!sRacePosition.IsEmpty() && sRacePosition.GetAt(0) == '2') {
+    } else if(!sRacePosition.empty() && sRacePosition.at(0) == '2') {
       OpenGLHelpers::SetColorFull(1, 1, 0.25, 1);
-    } else if(!sRacePosition.IsEmpty() && sRacePosition.GetAt(0) == '3') {
+    } else if(!sRacePosition.empty() && sRacePosition.at(0) == '3') {
       OpenGLHelpers::SetColorFull(1, 0.6, 0.25, 1);
-    } else if(!sRacePosition.IsEmpty() && sRacePosition.GetAt(0) == '4') {
+    } else if(!sRacePosition.empty() && sRacePosition.at(0) == '4') {
       OpenGLHelpers::SetColorFull(1, 0.25, 0.25, 1);
     }
   } else {
-    if(!sRacePosition.IsEmpty() && sRacePosition.GetAt(0) == '1') {
+    if(!sRacePosition.empty() && sRacePosition.at(0) == '1') {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
     } else {
       OpenGLHelpers::SetColorFull(1, 0.25, 0.25, 1);
     }
   }
-  DrawGameStringAt(sRacePosition, m_rectWnd.Width() - sRacePosition.GetLength() * 28, m_rectWnd.Height() - 36 - 50);
+  DrawGameStringAt(sRacePosition, m_rectWnd.w - sRacePosition.length() * 28, m_rectWnd.h - 36 - 50);
 
   glTranslatef(5, 0, 0); // center
 
   // Draw offset from goal
-  if(BGame::m_gameMode != BGame::TGameMode::SLALOM) {
-    CString sGoal;
-    sGoal.Format("%.0lfm", vGoal.m_dX - BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dX);
-    if(sGoal.GetAt(0) != '-') {
-      sGoal = "+" + sGoal;
+  if(BGame::m_gameMode != BGame::SLALOM) {
+    stringstream sGoal;
+    sGoal << vGoal.m_dX - BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dX << "m";
+    if(sGoal.str().at(0) != '-') {
+      sGoal.str("+");
+      sGoal << sGoal;
       glTranslatef(100, 0, 0); // on right
     } else {
       glTranslatef(-100, 0, 0); // on left
     }
 
     OpenGLHelpers::SetColorFull(0.25, 0.25, 1, 0.5);
-    DrawGameStringAt(sGoal, m_rectWnd.Width() / 2 -sGoal.GetLength() * 30 / 2.0, m_rectWnd.Height() - 55);
+    DrawGameStringAt(sGoal.str(), m_rectWnd.w / 2 - sGoal.str().length() * 30 / 2.0, m_rectWnd.h - 55);
 
-    if(sGoal.GetAt(0) != '-') {
+    if(sGoal.str().at(0) != '-') {
       glTranslatef(-100, 0, 0); // back to center
     } else {
       glTranslatef(100, 0, 0); // back to center
@@ -4928,13 +4869,13 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   }
 
   // Draw faint fps
-  if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::FPS) {
-    CString sFPS;
-    sFPS.Format("%.1lf", g_dRate);
+  if(BGame::m_cOnScreenInfo & BGame::FPS) {
+    stringstream sFPS;
+    sFPS << g_dRate;
     glScalef(0.5, 0.5, 0.5);
-    glTranslatef(m_rectWnd.Width() * 2 -sFPS.GetLength() * 25 - 5, 10, 0); // use a little margin for visual pleasense
+    glTranslatef(m_rectWnd.w * 2 - sFPS.str().length() * 25 - 5, 10, 0); // use a little margin for visual pleasense
     OpenGLHelpers::SetColorFull(0.25, 0.25, 1.0, 0.5);
-    DrawGameStringAt(sFPS, 0, 0);
+    DrawGameStringAt(sFPS.str(), 0, 0);
   }
   
   glPopMatrix();
@@ -4952,8 +4893,8 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
       BGame::GetMultiplayerColor(i, dR, dG, dB);
 
       double dDist = BGame::m_remotePlayer[i].m_vLocation.m_dY - BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dY;
-      CString sPos;
-      sPos.Format("(%s %.0lf)", (dDist > 0) ? "ahead" : "behind", (dDist > 0) ? dDist : -dDist);
+      stringstream sPos;
+      sPos << "(" << ((dDist > 0) ? "ahead" : "behind") << " " << ((dDist > 0) ? dDist : -dDist) << ")";
 
       double dAlpha = 1.0 - (fabs(dDist) / 1000.0);
       if(dAlpha < 0.2) {
@@ -4966,13 +4907,13 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
                                            BGame::m_remotePlayer[i].m_vOnScreen.m_dY + 18,
                                            BGame::m_remotePlayer[i].m_sName,
                                            strlen(BGame::m_remotePlayer[i].m_sName),
-                                           BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                           BTextRenderer::ALIGN_CENTER,
                                            dR, dG, dB, dAlpha);
       BUI::TextRenderer()->DrawSmallTextAt(dX,
                                            BGame::m_remotePlayer[i].m_vOnScreen.m_dY,
-                                           sPos,
-                                           sPos.GetLength(),
-                                           BTextRenderer::TTextAlign::ALIGN_CENTER,
+                                           sPos.str(),
+                                           sPos.str().length(),
+                                           BTextRenderer::ALIGN_CENTER,
                                            dR, dG, dB, 0.6 * dAlpha);
     }
     BUI::TextRenderer()->StopRenderingText();
@@ -4981,14 +4922,14 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
 
 
 //*************************************************************************************************
-void CPakoon1View::DrawGameStringAt(CString sTxt, double dX, double dY) {
+void CPakoon1View::DrawGameStringAt(string sTxt, double dX, double dY) {
   static int nNumberStart[10] = {0, 34, 62, 95, 129, 163, 195, 227, 261, 295};
   static int nNumberWidth[10] = {34, 26, 32, 32, 33, 31, 31, 33, 33, 33};
   int n;
   double dXPos = dX;
-  for(int i = 0; i < sTxt.GetLength(); ++i) {
+  for(int i = 0; i < sTxt.length(); ++i) {
     // Render one character
-    char c = sTxt.GetAt(i);
+    char c = sTxt.at(i);
     switch(c) {
       case ':':
         OpenGLHelpers::DrawTexturedRectangle(dXPos, dY, 351, 55, 21, 55, 512, 128);
@@ -5296,17 +5237,17 @@ void CPakoon1View::Setup2DRendering() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-  GetClientRect(&m_rectWnd);
+  //GetClientRect(&m_rectWnd); //FIXME
 
   // Set up projection geometry so that we can use screen coordinates
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(0, (GLfloat) m_rectWnd.Width(), 0, (GLfloat) m_rectWnd.Height());
+  gluOrtho2D(0, (GLfloat) m_rectWnd.w, 0, (GLfloat) m_rectWnd.h);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  glViewport(0, 0, (GLint) m_rectWnd.Width(), (GLint) m_rectWnd.Height());
+  glViewport(0, 0, (GLint) m_rectWnd.w, (GLint) m_rectWnd.h);
 
   OpenGLHelpers::SetColorFull(1, 1, 1, 1);
   
@@ -5363,7 +5304,7 @@ void CPakoon1View::End2DRendering() {
 
 
 //*************************************************************************************************
-void CPakoon1View::DrawQuickHelp(CDC* pDC) {
+void CPakoon1View::DrawQuickHelp() {
   // Draw quick help as a texture
   OpenGLHelpers::SetColorFull(1, 1, 1, 1);
 
@@ -5377,13 +5318,13 @@ void CPakoon1View::DrawQuickHelp(CDC* pDC) {
 
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(0, 1);
-  glVertex3f((m_rectWnd.Width() - 512) / 2, m_rectWnd.Height() - (m_rectWnd.Height() - 512) / 2, 0);
+  glVertex3f((m_rectWnd.w - 512) / 2, m_rectWnd.h - (m_rectWnd.h - 512) / 2, 0);
   OpenGLHelpers::SetTexCoord(0, 0);
-  glVertex3f((m_rectWnd.Width() - 512) / 2, (m_rectWnd.Height() - 512) / 2, 0);
+  glVertex3f((m_rectWnd.w - 512) / 2, (m_rectWnd.h - 512) / 2, 0);
   OpenGLHelpers::SetTexCoord(1, 1);
-  glVertex3f((m_rectWnd.Width() - 512) / 2 + 512, m_rectWnd.Height() - (m_rectWnd.Height() - 512) / 2, 0);
+  glVertex3f((m_rectWnd.w - 512) / 2 + 512, m_rectWnd.h - (m_rectWnd.h - 512) / 2, 0);
   OpenGLHelpers::SetTexCoord(1, 0);
-  glVertex3f((m_rectWnd.Width() - 512) / 2 + 512, (m_rectWnd.Height() - 512) / 2, 0);
+  glVertex3f((m_rectWnd.w - 512) / 2 + 512, (m_rectWnd.h - 512) / 2, 0);
   glEnd();
 
 }
@@ -5391,7 +5332,7 @@ void CPakoon1View::DrawQuickHelp(CDC* pDC) {
 
 
 //*************************************************************************************************
-void CPakoon1View::DrawNavSat(CDC* pDC) {
+void CPakoon1View::DrawNavSat() {
   // Draw navsat as a texture
   OpenGLHelpers::SetColorFull(1, 1, 1, 1);
   
@@ -5545,17 +5486,17 @@ void CPakoon1View::DrawNavSat(CDC* pDC) {
 
 
 //*************************************************************************************************
-void CPakoon1View::DrawServiceWnd(CDC* pDC) {
+void CPakoon1View::DrawServiceWnd() {
   // Draw service window
   // Draw background and texts
   glDisable(GL_TEXTURE_2D);
   double dAlpha = (-BGame::m_dServiceHandleAngle + 20.0) / 40.0;
   OpenGLHelpers::SetColorFull(0, 0, 0, dAlpha);
   glBegin(GL_TRIANGLE_STRIP);
-  glVertex3f(m_rectWnd.Width() - 7 - 256 - 100, m_rectWnd.Height() - 256 - 7, 0);
-  glVertex3f(m_rectWnd.Width() - 7, m_rectWnd.Height() - 256 - 7, 0);
-  glVertex3f(m_rectWnd.Width() - 7 - 256 - 100, m_rectWnd.Height() - 7, 0);
-  glVertex3f(m_rectWnd.Width() - 7, m_rectWnd.Height() - 7, 0);
+  glVertex3f(m_rectWnd.w - 7 - 256 - 100, m_rectWnd.h - 256 - 7, 0);
+  glVertex3f(m_rectWnd.w - 7, m_rectWnd.h - 256 - 7, 0);
+  glVertex3f(m_rectWnd.w - 7 - 256 - 100, m_rectWnd.h - 7, 0);
+  glVertex3f(m_rectWnd.w - 7, m_rectWnd.h - 7, 0);
   glEnd();
 
   OpenGLHelpers::SwitchToTexture(0);
@@ -5571,51 +5512,51 @@ void CPakoon1View::DrawServiceWnd(CDC* pDC) {
 
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(392.0/512.0, (511.0-(391.0-27.0))/512.0);
-  glVertex3f(m_rectWnd.Width() - 27, m_rectWnd.Height() - 272, 0);
+  glVertex3f(m_rectWnd.w - 27, m_rectWnd.h - 272, 0);
   OpenGLHelpers::SetTexCoord(392.0/512.0, (511.0-391.0)/512.0);
-  glVertex3f(m_rectWnd.Width(), m_rectWnd.Height() - 272, 0);
+  glVertex3f(m_rectWnd.w, m_rectWnd.h - 272, 0);
   OpenGLHelpers::SetTexCoord(120.0/512.0, (511.0-(391.0-27.0))/512.0);
-  glVertex3f(m_rectWnd.Width() - 27, m_rectWnd.Height(), 0);
+  glVertex3f(m_rectWnd.w - 27, m_rectWnd.h, 0);
   OpenGLHelpers::SetTexCoord(120.0/512.0, (511.0-391.0)/512.0);
-  glVertex3f(m_rectWnd.Width(), m_rectWnd.Height(), 0);
+  glVertex3f(m_rectWnd.w, m_rectWnd.h, 0);
   glEnd();
 
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(392.0/512.0, (511.0-144.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 347, m_rectWnd.Height() - 272, 0);
+  glVertex3f(m_rectWnd.w - 347, m_rectWnd.h - 272, 0);
   OpenGLHelpers::SetTexCoord(392.0/512.0, (511.0-(391.0-27.0))/512.0);
-  glVertex3f(m_rectWnd.Width() - 27, m_rectWnd.Height() - 272, 0);
+  glVertex3f(m_rectWnd.w - 27, m_rectWnd.h - 272, 0);
   OpenGLHelpers::SetTexCoord((392.0 - 20.0)/512.0, (511.0-144.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 347, m_rectWnd.Height() - 272 + 20.0, 0);
+  glVertex3f(m_rectWnd.w - 347, m_rectWnd.h - 272 + 20.0, 0);
   OpenGLHelpers::SetTexCoord((392.0 - 20.0)/512.0, (511.0-(391.0-27.0))/512.0);
-  glVertex3f(m_rectWnd.Width() - 27, m_rectWnd.Height() - 272 + 20.0, 0);
+  glVertex3f(m_rectWnd.w - 27, m_rectWnd.h - 272 + 20.0, 0);
   glEnd();
 
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(120.0/512.0, (511.0-144.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 347, m_rectWnd.Height(), 0);
+  glVertex3f(m_rectWnd.w - 347, m_rectWnd.h, 0);
   OpenGLHelpers::SetTexCoord(120.0/512.0, (511.0-(391.0-27.0))/512.0);
-  glVertex3f(m_rectWnd.Width() - 27, m_rectWnd.Height(), 0);
+  glVertex3f(m_rectWnd.w - 27, m_rectWnd.h, 0);
   OpenGLHelpers::SetTexCoord((120.0 + 20.0)/512.0, (511.0-144.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 347, m_rectWnd.Height() - 20.0, 0);
+  glVertex3f(m_rectWnd.w - 347, m_rectWnd.h - 20.0, 0);
   OpenGLHelpers::SetTexCoord((120.0 + 20.0)/512.0, (511.0-(391.0-27.0))/512.0);
-  glVertex3f(m_rectWnd.Width() - 27, m_rectWnd.Height() - 20.0, 0);
+  glVertex3f(m_rectWnd.w - 27, m_rectWnd.h - 20.0, 0);
   glEnd();
 
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(392.0/512.0, (511.0-94.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 397, m_rectWnd.Height() - 272, 0);
+  glVertex3f(m_rectWnd.w - 397, m_rectWnd.h - 272, 0);
   OpenGLHelpers::SetTexCoord(392.0/512.0, (511.0-144.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 347, m_rectWnd.Height() - 272, 0);
+  glVertex3f(m_rectWnd.w - 347, m_rectWnd.h - 272, 0);
   OpenGLHelpers::SetTexCoord(120.0/512.0, (511.0-94.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 397, m_rectWnd.Height(), 0);
+  glVertex3f(m_rectWnd.w - 397, m_rectWnd.h, 0);
   OpenGLHelpers::SetTexCoord(120.0/512.0, (511.0-144.0)/512.0);
-  glVertex3f(m_rectWnd.Width() - 347, m_rectWnd.Height(), 0);
+  glVertex3f(m_rectWnd.w - 347, m_rectWnd.h, 0);
   glEnd();
 
   // Draw overlay to overwrite Near/Far texts with Clear/Black
   glPushMatrix();
-  glTranslated(m_rectWnd.Width() - 394, m_rectWnd.Height() - 246, 0);
+  glTranslated(m_rectWnd.w - 394, m_rectWnd.h - 246, 0);
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(366.0/512.0, (511.0-404.0)/512.0);
   glVertex3f(0, 0, 0);
@@ -5630,7 +5571,7 @@ void CPakoon1View::DrawServiceWnd(CDC* pDC) {
 
   // Draw handle
   glPushMatrix();
-  glTranslated(m_rectWnd.Width() - 287, m_rectWnd.Height() - 137, 0);
+  glTranslated(m_rectWnd.w - 287, m_rectWnd.h - 137, 0);
   glRotated(90 + BGame::m_dServiceHandleAngle, 0, 0, 1);
   glTranslated(0, 90.5, 0);
   glBegin(GL_TRIANGLE_STRIP);
@@ -5652,9 +5593,9 @@ void CPakoon1View::DrawServiceWnd(CDC* pDC) {
 
 
 //*************************************************************************************************
-void CPakoon1View::DrawServiceWndTexts(CRect &rectWnd) {
+void CPakoon1View::DrawServiceWndTexts(SDL_Rect &rectWnd) {
   glPushMatrix();
-  glTranslated(rectWnd.Width() - 256 - 100, rectWnd.Height() - 14 - 18, 0);
+  glTranslated(m_rectWnd.w - 256 - 100, m_rectWnd.h - 14 - 18, 0);
   BGame::GetServiceWnd()->DrawTexts();
   glPopMatrix();
 }
@@ -5686,7 +5627,7 @@ void CPakoon1View::DrawPanel(double dWidth,
   // OpenGLHelpers::SetColorFull(1, 0.8, 0.6, 1);
   OpenGLHelpers::SetColorFull(1, 1, 1, 1);
   OpenGLHelpers::SwitchToTexture(0);
-  BTextures::Use(BTextures::Texture::PANEL);
+  BTextures::Use(BTextures::PANEL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
   glBegin(GL_QUADS);
@@ -5796,44 +5737,22 @@ void CPakoon1View::DrawPanel(double dWidth,
 // CPakoon1View drawing
 
 //*************************************************************************************************
-void CPakoon1View::OnDraw(CDC* pDC) {
+void CPakoon1View::OnDraw() {
   if(m_pDrawFunction) {
     // Call active draw function
-    (this->*m_pDrawFunction)(pDC);
+    (this->*m_pDrawFunction)();
   }
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// CPakoon1View diagnostics
-
-//*************************************************************************************************
-#ifdef _DEBUG
-void CPakoon1View::AssertValid() const
-{
-CView::AssertValid();
-}
-
-void CPakoon1View::Dump(CDumpContext& dc) const
-{
-CView::Dump(dc);
-}
-
-CPakoon1Doc* CPakoon1View::GetDocument() // non-debug version is inline
-{
-ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CPakoon1Doc)));
-return (CPakoon1Doc*)m_pDocument;
-}
-#endif //_DEBUG
 
 /////////////////////////////////////////////////////////////////////////////
 // CPakoon1View message handlers
 
 //*************************************************************************************************
-void CPakoon1View::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnChar(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
 
   if(BGame::m_bMultiplayOn && BGame::m_bTABChatting) {
     this->OnKeyDownTABChatting(nChar);
-    Invalidate();
+    
     return;
   }
 
@@ -5848,20 +5767,20 @@ void CPakoon1View::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
 
   // Check if Scene Editor processes key input
   switch(m_game.GetSceneEditor()->m_phase) {
-    case BSceneEditor::TPhase::ASKING_OBJECT_NAME:
-    case BSceneEditor::TPhase::ASKING_SCENE_DISPLAY_NAME:
-    case BSceneEditor::TPhase::ASKING_SCENE_FILENAME:
+    case BSceneEditor::ASKING_OBJECT_NAME:
+    case BSceneEditor::ASKING_SCENE_DISPLAY_NAME:
+    case BSceneEditor::ASKING_SCENE_FILENAME:
       {
-        Invalidate();
+        
         m_game.GetSceneEditor()->m_edit.ProcessChar(nChar);
         BUIEdit::TStatus statusEdit;
-        CString sObjectName = m_game.GetSceneEditor()->m_edit.GetValue(statusEdit);
-        if(statusEdit == BUIEdit::TStatus::READY) {
+        string sObjectName = m_game.GetSceneEditor()->m_edit.GetValue(statusEdit);
+        if(statusEdit == BUIEdit::READY) {
           m_game.GetSceneEditor()->AdvancePhase();
-          if(m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::SELECTING_OBJECT_TYPE) {
+          if(m_game.GetSceneEditor()->m_phase == BSceneEditor::SELECTING_OBJECT_TYPE) {
             BUI::StartUsingSelectionList(&(m_game.GetSceneEditor()->m_sellistObjectType), &CPakoon1View::OnKeyDownSceneEditor);
           }
-        } else if(statusEdit == BUIEdit::TStatus::CANCELED) {
+        } else if(statusEdit == BUIEdit::CANCELED) {
           m_game.GetSceneEditor()->CancelPhase();
         }
         return;
@@ -5873,8 +5792,8 @@ void CPakoon1View::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
   if((BGame::m_bService) && 
      ((toupper(nChar) >= 32) && 
       (toupper(nChar) <= 96) || 
-      nChar == VK_BACK ||
-      nChar == VK_RETURN)) {
+      nChar == SDLK_BACKSPACE ||
+      nChar == SDLK_RETURN)) {
     BGame::GetServiceWnd()->AddChar(toupper(nChar));
     return;
   }
@@ -5883,24 +5802,23 @@ void CPakoon1View::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags) {
 
 
 //*************************************************************************************************
-void CPakoon1View::OnKeyDownIntro(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDownIntro(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   SoundModule::StopIntroSound();
   m_pDrawFunction = &CPakoon1View::OnDrawCurrentMenu;
   m_pKeyDownFunction = &CPakoon1View::OnKeyDownCurrentMenu;
-  Invalidate();
+  
 }
 
 
 
 //*************************************************************************************************
-void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDownGame(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   if(m_pDrawFunction != &CPakoon1View::OnDrawGame) {
     return;
   }
 
   if(BGame::m_bTABChatting) {
-    Invalidate();
-    CView::OnKeyDown(nChar, nRepCnt, nFlags);
+
     return;
   }
 
@@ -5918,19 +5836,19 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
 
   // Process non-writing key commands always
   switch(nChar) {
-    case VK_TAB: 
+    case SDLK_TAB: 
       if(BGame::m_bMultiplayOn) {
         BGame::m_bTABChatting = true;
       }
       bProcessed = true;
       break;
-    case VK_CONTROL:
+    case SDLK_LCTRL:
       g_bControl = true;
       break;
-    case VK_SHIFT:
+    case SDLK_LSHIFT:
       g_bShift = true;
       break;
-    case VK_ESCAPE:
+    case SDLK_ESCAPE:
       bProcessed = true;
 
       if(m_game.m_bShowQuickHelp) {
@@ -5947,7 +5865,7 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
         m_game.m_bShowGameMenu = !m_game.m_bShowGameMenu;
       }
       break;
-    case VK_F1:
+    case SDLK_F1:
       bProcessed = true;
       if(!m_game.m_bShowQuickHelp) {
         BGame::FreezeSimulation(false);
@@ -5955,26 +5873,26 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
         m_game.m_bShowQuickHelp = true;
       }
       break;
-    //case VK_HOME:
+    //case SDLK_HOME:
     //  bProcessed = true;
     //  m_game.GetSimulation()->GetCamera()->m_dFollowHeight = -3.0;
     //  vToHome = m_game.GetSimulation()->GetVehicle()->GetHomeLocation() - m_game.GetSimulation()->GetVehicle()->m_vLocation + BVector(35, 0, -20);
     //  m_game.GetSimulation()->GetVehicle()->Move(vToHome);
     //  m_game.GetSimulation()->UpdateCar();
     //  break;
-    //case VK_DELETE:
+    //case SDLK_DELETE:
     //  bProcessed = true;
     //  m_game.GetSimulation()->GetVehicle()->Move(BVector(0, 0, -1000.0));
     //  m_game.GetSimulation()->UpdateCar();
     //  break;
-    case VK_F2:
+    case SDLK_F2:
       bProcessed = true;
       m_game.GetSimulation()->GetCamera()->m_locMode = BCamera::FOLLOW;
       m_game.GetSimulation()->GetCamera()->m_dAngleOfView = 80.0;
       m_messages.Remove("camera");
       m_messages.Show(60, "camera", "camera: chase", 1);
       break;
-    case VK_F3:
+    case SDLK_F3:
       bProcessed = true;
       m_game.GetSimulation()->GetCamera()->m_locMode = BCamera::OVERVIEW;
       m_game.GetSimulation()->GetCamera()->m_bInitLoc = true;
@@ -5982,14 +5900,14 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
       m_messages.Remove("camera");
       m_messages.Show(60, "camera", "camera: overview", 1);
       break;
-    case VK_F4:
+    case SDLK_F4:
       bProcessed = true;
       m_game.GetSimulation()->GetCamera()->m_locMode = BCamera::INCAR;
       m_game.GetSimulation()->GetCamera()->m_dAngleOfView = 75.0;
       m_messages.Remove("camera");
       m_messages.Show(60, "camera", "camera: 1st person", 1);
       break;
-    case VK_F5:
+    case SDLK_F5:
       bProcessed = true;
       m_game.GetSimulation()->GetCamera()->m_locMode = BCamera::FIXED;
       m_game.GetSimulation()->GetCamera()->m_vFixLocation = m_game.GetSimulation()->GetCamera()->m_vLocation;
@@ -5997,13 +5915,13 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
       m_messages.Remove("camera");
       m_messages.Show(60, "camera", "camera: stationary", 1);
       break;
-    case VK_F8:
+    case SDLK_F8:
       m_game.Command()->Run("toggle navsat");
       break;
-    //case VK_F9:
+    //case SDLK_F9:
     //  m_game.Command()->Run("toggle service");
     //  break;
-    case VK_F11:
+    case SDLK_F11:
       bProcessed = true;
       m_game.GetSimulation()->m_bSteeringAidOn = !m_game.GetSimulation()->m_bSteeringAidOn;
       if(m_game.GetSimulation()->m_bSteeringAidOn) {
@@ -6014,19 +5932,19 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
         m_messages.Show(60, "steeringaid", "Steering aid off", 1);
       }
       break;
-    //case VK_ADD:
+    //case SDLK_ADD:
     //  bProcessed = true;
     //  m_game.GetSimulation()->m_dAccelerationFactor *= 2.0;
     //  break;
-    //case VK_SUBTRACT:
+    //case SDLK_SUBTRACT:
     //  bProcessed = true;
     //  m_game.GetSimulation()->m_dAccelerationFactor /= 2.0;
     //  break;
-    case VK_PRIOR:
+    case SDLK_PAGEUP:
       bProcessed = true;
       m_game.GetSimulation()->GetCamera()->m_dFollowHeight -= 1.0;
       break;
-    case VK_NEXT:
+    case SDLK_PAGEDOWN:
       bProcessed = true;
       m_game.GetSimulation()->GetCamera()->m_dFollowHeight += 1.0;
       if(m_game.GetSimulation()->GetCamera()->m_dFollowHeight > 0.0) {
@@ -6283,7 +6201,7 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
                 BGame::MyAfxMessageBox("--------------------------");
                 BGame::MyAfxMessageBox("ANALYZER STARTED!");
                 BGame::MyAfxMessageBox("--------------------------");
-                CString sLogInfo;
+                string sLogInfo;
                 sLogInfo.Format("Vehicle: %s", BGame::GetSimulation()->GetVehicle()->m_sName);
                 BGame::MyAfxMessageBox(sLogInfo);
                 sLogInfo.Format("Scene: %s", BGame::GetSimulation()->GetScene()->m_sName);
@@ -6334,10 +6252,10 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
         case 'i':
         case 'I':
           bProcessed = true;
-          if(BGame::m_cOnScreenInfo & BGame::TOnScreenInfo::FPS) {
-            BGame::m_cOnScreenInfo -= BGame::TOnScreenInfo::FPS;
+          if(BGame::m_cOnScreenInfo & BGame::FPS) {
+            BGame::m_cOnScreenInfo -= BGame::FPS;
           } else {
-            BGame::m_cOnScreenInfo |= BGame::TOnScreenInfo::FPS;
+            BGame::m_cOnScreenInfo |= BGame::FPS;
           }
           break;
         case 'b':
@@ -6368,7 +6286,7 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
       }
 
       switch(nChar) {
-        case VK_SPACE:
+        case SDLK_SPACE:
           bProcessed = true;
           m_game.GetSimulation()->GetVehicle()->m_bHandBreaking = true;
           break;
@@ -6380,7 +6298,6 @@ void CPakoon1View::OnKeyDownGame(UINT nChar, UINT nRepCnt, UINT nFlags) {
     m_game.m_bShowHint = true;
     m_game.m_clockHintStart = clock();
   }
-  CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 
@@ -6400,14 +6317,13 @@ void CPakoon1View::FixCarToBasicOrientation(double dSpeedFactor) {
 
 
 //*************************************************************************************************
-void CPakoon1View::OnKeyDownCurrentMenu(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDownCurrentMenu(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   switch(nChar) {
-    case VK_TAB: 
+    case SDLK_TAB: 
       if(BGame::m_bMultiplayOn) {
         BGame::m_bTABChatting = true;
       }
   }
-  CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 
@@ -6418,16 +6334,14 @@ void CPakoon1View::OnKeyDownCurrentMenu(UINT nChar, UINT nRepCnt, UINT nFlags) {
 
 
 //*************************************************************************************************
-void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDownSceneEditor(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   BCamera *pCamera = m_game.GetSimulation()->GetCamera();
   BScene  *pScene  = m_game.GetSimulation()->GetScene();
 
   switch(m_game.GetSceneEditor()->m_phase) {
-    case BSceneEditor::TPhase::ASKING_OBJECT_NAME:
-    case BSceneEditor::TPhase::ASKING_SCENE_DISPLAY_NAME:
-    case BSceneEditor::TPhase::ASKING_SCENE_FILENAME:
-      // OnChar() processes these
-      CView::OnKeyDown(nChar, nRepCnt, nFlags);
+    case BSceneEditor::ASKING_OBJECT_NAME:
+    case BSceneEditor::ASKING_SCENE_DISPLAY_NAME:
+    case BSceneEditor::ASKING_SCENE_FILENAME:
       return;
       break;
   }
@@ -6436,21 +6350,21 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
   if(g_bShift) {
     dModeScaler = 1.0;
   }
-  if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::BASIC) &&
+  if((m_game.GetSceneEditor()->m_phase == BSceneEditor::BASIC) &&
       g_bControl) {
     dModeScaler = 150.0;
   }
 
   switch(nChar) {
-    case VK_CONTROL:
+    case SDLK_LCTRL:
       g_bControl = true;
       break;
-    case VK_SHIFT:
+    case SDLK_LSHIFT:
       g_bShift = true;
       break;
-    case VK_RETURN:
+    case SDLK_RETURN:
       // If moving object, return to camera mode
-      if(BGame::GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) {
+      if(BGame::GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) {
         BGame::GetSceneEditor()->AdvancePhase();
       }
       break;
@@ -6463,8 +6377,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
       m_messages.Show(50, "sceneeditor", "game mode", 1);
       m_nMenuTime += BGame::ContinueSimulation();
       break;
-    case VK_RIGHT: 
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_RIGHT: 
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Move object to right
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6483,8 +6397,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         pCamera->m_orientation.m_vRight = pCamera->m_orientation.m_vUp.CrossProduct(pCamera->m_orientation.m_vForward);
       }
       break;
-    case VK_LEFT:
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_LEFT:
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Move object to west
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6503,8 +6417,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         pCamera->m_orientation.m_vRight = pCamera->m_orientation.m_vUp.CrossProduct(pCamera->m_orientation.m_vForward);
       }
       break;
-    case VK_DOWN: 
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_DOWN: 
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Move object to south
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6517,8 +6431,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         pCamera->m_vLocation = pCamera->m_vLocation + pCamera->m_orientation.m_vForward * -dModeScaler;
       }
       break;
-    case VK_UP: 
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_UP: 
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Move object to north
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6531,8 +6445,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         pCamera->m_vLocation = pCamera->m_vLocation + pCamera->m_orientation.m_vForward * dModeScaler;
       }
       break;
-    case VK_NEXT:
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_PAGEDOWN:
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Move object down
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6545,8 +6459,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         pCamera->m_vLocation = pCamera->m_vLocation + pCamera->m_orientation.m_vUp * -dModeScaler;
       }
       break;
-    case VK_PRIOR:
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_PAGEUP:
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Move object up
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6559,8 +6473,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         pCamera->m_vLocation = pCamera->m_vLocation + pCamera->m_orientation.m_vUp * dModeScaler;
       }
       break;
-    case VK_HOME:
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_HOME:
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Rotate clockwise
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6570,8 +6484,8 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         }
       }
       break;
-    case VK_END:
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+    case SDLK_END:
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Rotate counter clockwise
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6583,7 +6497,7 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
       break;
     case 'o':
     case 'O':
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Scale object's active radius
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6598,7 +6512,7 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
       break;
     case 'i':
     case 'I':
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Shrink object's active radius
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6613,7 +6527,7 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
       break;
     case 'l':
     case 'L':
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Scale object bigger
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6630,7 +6544,7 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
       break;
     case 'k':
     case 'K':
-      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::TPhase::MOVING_OBJECT) &&
+      if((m_game.GetSceneEditor()->m_phase == BSceneEditor::MOVING_OBJECT) &&
          (!g_bControl)) {
         // Scale object bigger
         BObject *pObject = m_game.GetSceneEditor()->GetActiveObject();
@@ -6650,12 +6564,12 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
       BUI::StartUsingSelectionList(&(m_game.GetSimulation()->GetScene()->m_sellistSceneObjects), 
                                    &CPakoon1View::OnKeyDownSceneEditor);
       m_game.GetSimulation()->GetScene()->m_sellistSceneObjects.SelectItem(BGame::GetSceneEditor()->m_sActiveObject);
-      m_game.GetSceneEditor()->m_phase = BSceneEditor::TPhase::SELECTING_SCENE_OBJECT;
+      m_game.GetSceneEditor()->m_phase = BSceneEditor::SELECTING_SCENE_OBJECT;
       break;
     case 'a':
     case 'A':
       m_game.GetSceneEditor()->m_edit.Setup("Object name:", "", 32);
-      m_game.GetSceneEditor()->m_phase = BSceneEditor::TPhase::ASKING_OBJECT_NAME;
+      m_game.GetSceneEditor()->m_phase = BSceneEditor::ASKING_OBJECT_NAME;
       m_bIgnoreNextChar = true;
       break;
     case 'd':
@@ -6663,19 +6577,19 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
       BUI::StartUsingSelectionList(&(m_game.GetSimulation()->GetScene()->m_sellistSceneObjects), 
                                    &CPakoon1View::OnKeyDownSceneEditor);
       m_game.GetSimulation()->GetScene()->m_sellistSceneObjects.SelectItem(BGame::GetSceneEditor()->m_sActiveObject);
-      m_game.GetSceneEditor()->m_phase = BSceneEditor::TPhase::SELECTING_SCENE_OBJECT_TO_DELETE;
+      m_game.GetSceneEditor()->m_phase = BSceneEditor::SELECTING_SCENE_OBJECT_TO_DELETE;
       break;
     case 's':
     case 'S':
       m_game.GetSceneEditor()->m_edit.Setup("Scene display name:", pScene->m_sName, 32);
-      m_game.GetSceneEditor()->m_phase = BSceneEditor::TPhase::ASKING_SCENE_DISPLAY_NAME;
+      m_game.GetSceneEditor()->m_phase = BSceneEditor::ASKING_SCENE_DISPLAY_NAME;
       m_bIgnoreNextChar = true;
       break;
-    case VK_F1:
+    case SDLK_F1:
       // show quick help
       m_game.m_bShowQuickHelp = true;
       break;
-    case VK_ESCAPE:
+    case SDLK_ESCAPE:
       if(m_game.m_bShowQuickHelp) {
         m_game.m_bShowQuickHelp = false;        
       }
@@ -6729,61 +6643,61 @@ void CPakoon1View::OnKeyDownSceneEditor(UINT nChar, UINT nRepCnt, UINT nFlags) {
         BGame::UpdateSettings();
       }
       break;
-    case VK_F8:
+    case SDLK_F8:
       m_game.Command()->Run("toggle navsat");
       break;
-    //case VK_F9:
+    //case SDLK_F9:
     //  m_game.Command()->Run("toggle service");
     //  break;
   }
-  Invalidate();
-  CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 
 
 
 //*************************************************************************************************
-void CPakoon1View::OnKeyDownTABChatting(UINT nChar) {
+void CPakoon1View::OnKeyDownTABChatting(unsigned nChar) {
   unsigned char c = nChar;
   if(!((toupper(c) >= 32) && 
        (toupper(c) <= 96) || 
        (c == '.') ||
        (c == '/') ||
-       (c == VK_BACK) ||
-       (c == VK_RETURN) || 
-       (c == VK_ESCAPE))) {
+       (c == SDLK_BACKSPACE) ||
+       (c == SDLK_RETURN) || 
+       (c == SDLK_ESCAPE))) {
     // Bad character, no go
     return;
   }
 
-  if(c == VK_BACK) {
+  if(c == SDLK_BACKSPACE) {
     // Eat one character
-    if(BGame::m_sChatMsg.GetLength() > 0) {
-      BGame::m_sChatMsg.Delete(BGame::m_sChatMsg.GetLength() - 1, 1);
+    if(BGame::m_sChatMsg.length() > 0) {
+      BGame::m_sChatMsg.erase(BGame::m_sChatMsg.length() - 1, 1);
     }
     return;
   }
 
-  if(c == VK_RETURN) {
+  if(c == SDLK_RETURN) {
     // Send Chat message
-    CString sChat;
-    sChat.Format("%s` %s", BGame::m_remotePlayer[BGame::GetMyPlace()].m_sName, BGame::m_sChatMsg);
-    BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::TTinyMessages::CHAT_MESSAGE, sChat);
+    string sChat;
+    sChat.assign(BGame::m_remotePlayer[BGame::GetMyPlace()].m_sName);
+    sChat.append("` ");
+    sChat.append(BGame::m_sChatMsg);
+    BGame::GetMultiplay()->SendBroadcastMsg(BMultiPlay::CHAT_MESSAGE, sChat);
     BGame::ShowMultiplayMessage(sChat, true);
     BGame::m_bTABChatting = false;
-    BGame::m_sChatMsg.Empty();
+    BGame::m_sChatMsg.clear();
     return;
   }
 
-  if(c == VK_ESCAPE) {
+  if(c == SDLK_ESCAPE) {
     // Just end chat mode
     BGame::m_bTABChatting = false;
     return;
   }
 
   // Add writable character
-  if(BGame::m_sChatMsg.GetLength() < 128) {
+  if(BGame::m_sChatMsg.length() < 128) {
     BGame::m_sChatMsg += c;
   }
 }
@@ -6794,45 +6708,41 @@ void CPakoon1View::OnKeyDownTABChatting(UINT nChar) {
 
 //*************************************************************************************************
 // This is a general purpose keyboard handler for active selection list
-void CPakoon1View::OnKeyDownSelectionList(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDownSelectionList(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   BUISelectionList *pList = BUI::GetActiveSelectionList();
   if(!pList) {
     m_pKeyDownFunction = BUI::StopUsingSelectionList();
-    Invalidate();
-    CView::OnKeyDown(nChar, nRepCnt, nFlags);
   }
 
   if(BGame::m_bTABChatting) {
-    Invalidate();
-    CView::OnKeyDown(nChar, nRepCnt, nFlags);
     return;
   }
 
   bool bAdvancePhase = false;
 
   switch(nChar) {
-    case VK_TAB: 
+    case SDLK_TAB: 
       if(BGame::m_bMultiplayOn) {
         BGame::m_bTABChatting = true;
       }
       break;
-    case VK_DOWN: 
+    case SDLK_DOWN: 
       pList->AdvanceSelection(1);
       SoundModule::PlayMenuBrowseSound();
       break;
-    case VK_UP: 
+    case SDLK_UP: 
       pList->AdvanceSelection(-1);
       SoundModule::PlayMenuBrowseSound();
       break;
-    case VK_HOME:
+    case SDLK_HOME:
       pList->AdvanceSelection(-1000); // to get to the beginning
       SoundModule::PlayMenuBrowseSound();
       break;
-    case VK_END:
+    case SDLK_END:
       pList->AdvanceSelection(1000); // to get to the end
       SoundModule::PlayMenuBrowseSound();
       break;
-    case VK_RETURN:
+    case SDLK_RETURN:
       m_pKeyDownFunction = BUI::StopUsingSelectionList();
       bAdvancePhase = true;
 
@@ -6844,7 +6754,7 @@ void CPakoon1View::OnKeyDownSelectionList(UINT nChar, UINT nRepCnt, UINT nFlags)
       SoundModule::PlayMenuScrollSound();
 
       break;
-    case VK_ESCAPE:
+    case SDLK_ESCAPE:
       pList->Cancel();
       m_pKeyDownFunction = BUI::StopUsingSelectionList();      
       if(BGame::m_bSceneEditorMode) {
@@ -6870,42 +6780,37 @@ void CPakoon1View::OnKeyDownSelectionList(UINT nChar, UINT nRepCnt, UINT nFlags)
   if(bAdvancePhase && BGame::m_bSceneEditorMode) {
     BGame::GetSceneEditor()->AdvancePhase();
   }
-
-  Invalidate();
-  CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 
 //*************************************************************************************************
 // This is a general purpose keyboard handler for active slider
-void CPakoon1View::OnKeyDownSlider(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDownSlider(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   int *pnSliderValue = BUI::m_pnSliderValue;
   if(!pnSliderValue) {
     m_pKeyDownFunction = BUI::StopUsingSlider();
-    Invalidate();
-    CView::OnKeyDown(nChar, nRepCnt, nFlags);
   }
 
   switch(nChar) {
-    case VK_DOWN: 
+    case SDLK_DOWN: 
       *pnSliderValue -= 10;
       break;
-    case VK_UP: 
+    case SDLK_UP: 
       *pnSliderValue += 10;
       break;
-    case VK_LEFT: 
+    case SDLK_LEFT: 
       *pnSliderValue -= 1;
       break;
-    case VK_RIGHT: 
+    case SDLK_RIGHT: 
       *pnSliderValue += 1;
       break;
-    case VK_HOME:
+    case SDLK_HOME:
       *pnSliderValue = 0;
       break;
-    case VK_END:
+    case SDLK_END:
       *pnSliderValue = 100;
       break;
-    case VK_RETURN:
+    case SDLK_RETURN:
       m_pKeyDownFunction = BUI::StopUsingSlider();
 
       if(BGame::m_bMenuMode) {
@@ -6913,7 +6818,7 @@ void CPakoon1View::OnKeyDownSlider(UINT nChar, UINT nRepCnt, UINT nFlags) {
       }
 
       break;
-    case VK_ESCAPE:
+    case SDLK_ESCAPE:
       *pnSliderValue = BUI::m_nPrevSliderValue;
       m_pKeyDownFunction = BUI::StopUsingSlider();      
 
@@ -6930,15 +6835,12 @@ void CPakoon1View::OnKeyDownSlider(UINT nChar, UINT nRepCnt, UINT nFlags) {
   if(*pnSliderValue > 100) {
     *pnSliderValue = 100;
   }
-
-  Invalidate();
-  CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 
 //*************************************************************************************************
 // This is a general purpose keyboard handler for active Editbox
-void CPakoon1View::OnKeyDownEditbox(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDownEditbox(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
 
   // Find active edit box
 
@@ -6946,9 +6848,9 @@ void CPakoon1View::OnKeyDownEditbox(UINT nChar, UINT nRepCnt, UINT nFlags) {
     if(BGame::m_pMenuCurrent) {
       int nSel = BGame::m_pMenuCurrent->m_listMenu.m_nSelected;
       BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.ProcessChar(nChar);
-      if((BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.status == BUIEdit::TStatus::READY) || 
-         (BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.status == BUIEdit::TStatus::CANCELED)) {
-        if(BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.status == BUIEdit::TStatus::CANCELED) {
+      if((BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.status == BUIEdit::READY) || 
+         (BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.status == BUIEdit::CANCELED)) {
+        if(BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.status == BUIEdit::CANCELED) {
           // Restore original value
           BGame::m_pMenuCurrent->m_items[nSel].m_ebAssocEditBox.m_sValue = BUI::m_sPrevSValue;
         }        
@@ -6959,16 +6861,13 @@ void CPakoon1View::OnKeyDownEditbox(UINT nChar, UINT nRepCnt, UINT nFlags) {
       }
     }
   }
-
-  Invalidate();
-  CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 
 
 
 //*************************************************************************************************
-void CPakoon1View::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyDown(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   if(m_pKeyDownFunction) {
     // Call active draw function
     (this->*m_pKeyDownFunction)(nChar, nRepCnt, nFlags);
@@ -6977,13 +6876,13 @@ void CPakoon1View::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags) {
 }
 
 //*************************************************************************************************
-void CPakoon1View::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags) {
+void CPakoon1View::OnKeyUp(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
 
   // don't even ask about these...
-  if(nChar == VK_CONTROL) {
+  if(nChar == SDLK_LCTRL) {
     g_bControl = false;
   }
-  if(nChar == VK_SHIFT) {
+  if(nChar == SDLK_LSHIFT) {
     g_bShift = false;
   }
 
@@ -7020,12 +6919,11 @@ void CPakoon1View::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags) {
     m_game.GetSimulation()->m_bLiftingUp = false;
   } else {
     switch(nChar) {
-      case VK_SPACE:
+      case SDLK_SPACE:
         m_game.GetSimulation()->GetVehicle()->m_bHandBreaking = false;
         break;
     }
   }
-  CView::OnKeyUp(nChar, nRepCnt, nFlags);
 }
 
 
@@ -7033,11 +6931,10 @@ void CPakoon1View::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags) {
 
 
 //*************************************************************************************************
-void CPakoon1View::ProcessMouseInput(UINT nFlags, CPoint point) {
-  if(nFlags & MK_LBUTTON) {
-    CRect rectWnd;
-    GetClientRect(&rectWnd);
-    point.y = rectWnd.Height() - point.y;
+void CPakoon1View::ProcessMouseInput(unsigned nFlags, SDL_Point point) {
+	//FIXME
+  /*if(nFlags & MK_LBUTTON) {
+    point.y = m_rectWnd.h - point.y;
     if(BGame::m_bNavSat) {
       // See if navsat resolution is to be changed
       if((point.x > (135 - 60)) && 
@@ -7086,16 +6983,16 @@ void CPakoon1View::ProcessMouseInput(UINT nFlags, CPoint point) {
     }
     if(BGame::m_bService) {
       // See if navsat resolution is to be changed
-      if((point.y > rectWnd.Height() - (135 + 60)) && 
-         (point.y < rectWnd.Height() - (135 - 60)) && 
-         (point.x > rectWnd.Width() - (360 + 100)) && 
-         (point.x < rectWnd.Width() - (360))) {
+      if((point.y > m_rectWnd.h - (135 + 60)) && 
+         (point.y < m_rectWnd.h - (135 - 60)) && 
+         (point.x > m_rectWnd.w - (360 + 100)) && 
+         (point.x < m_rectWnd.w - (360))) {
         double dCurAngle = BGame::m_dServiceHandleAngle;
         double dNewAngle;
         // possibly change resolution
         BVector vUp(-1, 0, 0);
         BVector vRight(0, 1, 0);
-        BVector vToMouse(point.x - (rectWnd.Width() - 287), point.y - (rectWnd.Height() - 135.0), 0);
+        BVector vToMouse(point.x - (m_rectWnd.w - 287), point.y - (m_rectWnd.h - 135.0), 0);
         vToMouse.ToUnitLength();
         double dCos = vUp.ScalarProduct(vToMouse);
         double dTmp = vRight.ScalarProduct(vToMouse);
@@ -7111,13 +7008,13 @@ void CPakoon1View::ProcessMouseInput(UINT nFlags, CPoint point) {
         BGame::m_dServiceHandleAngle = dNewAngle;
       }
     }
-  }
+  }*/
 }
 
 
 
 //*************************************************************************************************
-void CPakoon1View::OnMouseMove(UINT nFlags, CPoint point) {
+void CPakoon1View::OnMouseMove(unsigned nFlags, SDL_Point point) {
   if((m_pDrawFunction == &CPakoon1View::OnDrawGame) && 
      (BGame::m_bNavSat || BGame::m_bService)) {
     ProcessMouseInput(nFlags, point);
@@ -7130,7 +7027,7 @@ bool g_bMouseButtonDown = false;
 
 
 //*************************************************************************************************
-void CPakoon1View::OnLButtonDown(UINT nFlags, CPoint point) {
+void CPakoon1View::OnLButtonDown(unsigned nFlags, SDL_Point point) {
   g_bMouseButtonDown = true;
   if((m_pDrawFunction == &CPakoon1View::OnDrawGame) && 
      (BGame::m_bNavSat || BGame::m_bService)) {
@@ -7140,17 +7037,18 @@ void CPakoon1View::OnLButtonDown(UINT nFlags, CPoint point) {
 }
 
 //*************************************************************************************************
-void CPakoon1View::OnLButtonUp(UINT nFlags, CPoint point) {
+void CPakoon1View::OnLButtonUp(unsigned nFlags, SDL_Point point) {
   g_bMouseButtonDown = false;
 }
 
 
 
 //*************************************************************************************************
-void CPakoon1View::DrawMouseCursor(CRect &rectWnd) {
-  POINT pntMouse;
+void CPakoon1View::DrawMouseCursor(SDL_Rect &rectWnd) {
+	//FIXME
+  /*SDL_Point pntMouse;
   GetCursorPos(&pntMouse);
-  pntMouse.y = rectWnd.Height() - pntMouse.y;
+  pntMouse.y = rectWnd.h - pntMouse.y;
 
   double dX = 458.0 / 512.0;
   if(g_bMouseButtonDown) {
@@ -7161,7 +7059,7 @@ void CPakoon1View::DrawMouseCursor(CRect &rectWnd) {
   glTranslatef(pntMouse.x -10, pntMouse.y + 10, 0);
   OpenGLHelpers::SetColor(1, 1, 1, 1);
   OpenGLHelpers::SwitchToTexture(0);
-  BTextures::Use(BTextures::Texture::PANEL);
+  BTextures::Use(BTextures::PANEL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
   glBegin(GL_TRIANGLE_STRIP);
   OpenGLHelpers::SetTexCoord(dX, 54.0 / 512);
@@ -7173,7 +7071,7 @@ void CPakoon1View::DrawMouseCursor(CRect &rectWnd) {
   OpenGLHelpers::SetTexCoord(dX + (54.0 / 512.0), 0.0 / 512);
   glVertex3f(54, -54, 0);
   glEnd();
-  glPopMatrix();
+  glPopMatrix();*/
 }
 
 
@@ -7196,7 +7094,7 @@ void CPakoon1View::DrawMouseCursor(CRect &rectWnd) {
           {
             char sCurDir[1024];
             GetCurrentDirectory(1024, sCurDir);
-            CString sHelpPath = sCurDir;
+            string sHelpPath = sCurDir;
             sHelpPath += "\\Help\\help.html";
             HINSTANCE hi;
             hi = ShellExecute(::GetDesktopWindow(), 

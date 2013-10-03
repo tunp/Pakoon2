@@ -1,8 +1,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-
-#include "stdafx.h"
 #include "BNavSatWnd.h"
 #include "OpenGLHelpers.h"
 #include "OpenGLExtFunctions.h"
@@ -14,7 +12,7 @@
 
 // Just use global variables for inter-thread communication. 
 // C'mon man, this is a game, not a mission critical medical application.
-CRITICAL_SECTION g_csComm; // semafore to global data
+SDL_mutex *g_csComm; // semafore to global data
 BVector          g_vPos = BVector(0, 0, 0);
 bool             g_bExit = false;
 bool             g_bDoNewImage = true;
@@ -34,7 +32,7 @@ int              g_nStartStepSize = 256;
 
 
 // Thread prototype
-DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam);
+int DrawLandscapeGIFStyle(void *data);
 
 
 
@@ -42,18 +40,18 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam);
 BNavSatWnd::BNavSatWnd() {
   m_bTracking = false;
   m_hThread = 0;
-  InitializeCriticalSection(&g_csComm);
+  g_csComm = SDL_CreateMutex();
 }
 
 //*****************************************************************************
 BNavSatWnd::~BNavSatWnd() {
-  DeleteCriticalSection(&g_csComm);
+  SDL_DestroyMutex(g_csComm);
 }
 
 //*****************************************************************************
 void BNavSatWnd::StartTracking(BVector vPos) {
   // First make sure the thread nows which area to calculate
-  EnterCriticalSection(&g_csComm);
+  SDL_LockMutex(g_csComm);
 
   // Check if we need new image
   BVector vRelLoc(0, 0, 0);
@@ -76,19 +74,14 @@ void BNavSatWnd::StartTracking(BVector vPos) {
   } else {
     g_bContinueImage = true;
   }
-  LeaveCriticalSection(&g_csComm);
+  SDL_UnlockMutex(g_csComm);
 
   // Then start the worker thread
   if(!m_bTracking) {
     // Start a new thread to calculate the map texture
-    DWORD dwThreadId;
     g_bExit = false;    
-    m_hThread = CreateThread(NULL,                  // pointer to security attributes
-                             0,                     // initial thread stack size
-                             DrawLandscapeGIFStyle, // pointer to thread function
-                             0,                     // argument for new thread
-                             0,                     // creation flags
-                             &dwThreadId);          // pointer to receive thread ID
+
+	m_hThread = SDL_CreateThread(DrawLandscapeGIFStyle, "DrawLandscapeGIFStyle", (void *) this);
     if(m_hThread) {
       m_bTracking = true;
     }
@@ -99,7 +92,7 @@ void BNavSatWnd::StartTracking(BVector vPos) {
 //*****************************************************************************
 BVector BNavSatWnd::Track(BVector vPos) {
   BVector vRelLoc(0, 0, 0);
-  EnterCriticalSection(&g_csComm);
+  SDL_LockMutex(g_csComm);
   g_vPos = vPos;
   vRelLoc.m_dX = (vPos.m_dX - g_dXOffset) / g_dScale;
   vRelLoc.m_dY = (vPos.m_dY - g_dYOffset) / g_dScale;
@@ -119,17 +112,17 @@ BVector BNavSatWnd::Track(BVector vPos) {
     memset(g_dHeightMap, 0, 256 * 256);
   }
 
-  LeaveCriticalSection(&g_csComm);
+  SDL_UnlockMutex(g_csComm);
   return vRelLoc;
 }
 
 //*****************************************************************************
 BVector BNavSatWnd::GetRelLoc(BVector vPos) {
   BVector vRelLoc(0, 0, 0);
-  EnterCriticalSection(&g_csComm);
+  SDL_LockMutex(g_csComm);
   vRelLoc.m_dX = (vPos.m_dX - g_dXOffset) / g_dScale;
   vRelLoc.m_dY = (vPos.m_dY - g_dYOffset) / g_dScale;
-  LeaveCriticalSection(&g_csComm);
+  SDL_UnlockMutex(g_csComm);
   return vRelLoc;
 }
 
@@ -138,14 +131,15 @@ BVector BNavSatWnd::GetRelLoc(BVector vPos) {
 void BNavSatWnd::EndTracking() {
   if(m_bTracking) {
     if(m_hThread) {
-      EnterCriticalSection(&g_csComm);
+      SDL_LockMutex(g_csComm);
       g_bExit = true;
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
       // Give thread max 2 seconds to exit. If not, kill it
-      if(WaitForSingleObject(m_hThread, 2000) != WAIT_OBJECT_0) {
+      //FIXME
+      /*if(WaitForSingleObject(m_hThread, 2000) != WAIT_OBJECT_0) {
         // Thread did not respond, kill it (not recommended)
         TerminateThread(m_hThread, 0);
-      }
+      }*/
     }
     m_bTracking = false;
   }
@@ -154,9 +148,9 @@ void BNavSatWnd::EndTracking() {
 
 //*****************************************************************************
 int BNavSatWnd::ActivateCurrentMapTexture() {
-  static nOldSize = -1;
+  static int nOldSize = -1;
   int nRet = 1;
-  EnterCriticalSection(&g_csComm);
+  SDL_LockMutex(g_csComm);
   if(g_bNewImageAvailable) {
     // Create texture object
     OpenGLHelpers::BindTexture(g_nImageSize, 
@@ -164,8 +158,8 @@ int BNavSatWnd::ActivateCurrentMapTexture() {
                                3, 
                                GL_RGB, 
                                g_ubMapImage, 
-                               BTextures::Texture::SATELLITEIMAGE, 
-                               BTextures::m_textures[BTextures::Texture::SATELLITEIMAGE].m_nGLTexName,
+                               BTextures::SATELLITEIMAGE, 
+                               BTextures::m_textures[BTextures::SATELLITEIMAGE].m_nGLTexName,
                                true);
     nOldSize = g_nImageSize;
     g_bNewImageAvailable = false;
@@ -176,13 +170,13 @@ int BNavSatWnd::ActivateCurrentMapTexture() {
                                3, 
                                GL_RGB, 
                                g_ubMapImage, 
-                               BTextures::Texture::SATELLITEIMAGE, 
-                               BTextures::m_textures[BTextures::Texture::SATELLITEIMAGE].m_nGLTexName,
+                               BTextures::SATELLITEIMAGE, 
+                               BTextures::m_textures[BTextures::SATELLITEIMAGE].m_nGLTexName,
                                false);
   }
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   nRet = g_nImageSize;
-  LeaveCriticalSection(&g_csComm);
+  SDL_UnlockMutex(g_csComm);
   return nRet;
 }
 
@@ -192,7 +186,7 @@ int BNavSatWnd::ActivateCurrentMapTexture() {
 //*****************************************************************************
 void BNavSatWnd::SetResolution(double dRes) {
   double dNewScale = dRes / 256.0;
-  EnterCriticalSection(&g_csComm);
+  SDL_LockMutex(g_csComm);
   if(dNewScale != g_dScale) {
     // We need a new image
     g_dXOffset = (g_dXOffset + g_dScale * 128.0) - dNewScale * 128.0;
@@ -209,7 +203,7 @@ void BNavSatWnd::SetResolution(double dRes) {
     memset(g_ubMapImage, 0, 256 * 256 * 3);
     memset(g_dHeightMap, 0, 256 * 256);
   }
-  LeaveCriticalSection(&g_csComm);
+  SDL_UnlockMutex(g_csComm);
 }
 
 
@@ -220,7 +214,7 @@ void BNavSatWnd::SetResolution(double dRes) {
 
 
 //*****************************************************************************
-DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
+int DrawLandscapeGIFStyle(void *data) {
   BVector vInternalOffset = BGame::GetSimulation()->GetTerrain()->m_vOffset;
 
   int nSkipper = 0;
@@ -240,7 +234,6 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
 
   double dBase = 64.0;
   double dColor = 0.7 * (255.0 - 64.0);
-  CBrush *pBrush = 0;
   if(g_dHeightMap[0] > 0.0) {
     BGame::GetSimulation()->GetTerrain()->GetColorForHeight(g_dHeightMap[0], dR, dG, dB);
     dR = dBase + dR;
@@ -259,27 +252,27 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
   g_ubMapImageTemp[1] = GLubyte(dG);
   g_ubMapImageTemp[2] = GLubyte(dB);
 
-  EnterCriticalSection(&g_csComm);
+  SDL_LockMutex(g_csComm);
   g_ubMapImage[0] = GLubyte(dR);
   g_ubMapImage[1] = GLubyte(dG);
   g_ubMapImage[2] = GLubyte(dB);
-  LeaveCriticalSection(&g_csComm);
+  SDL_UnlockMutex(g_csComm);
 
   while(true) {
 
     // Check if new image is needed
     while(true) {
-      EnterCriticalSection(&g_csComm);
+      SDL_LockMutex(g_csComm);
       if(!g_bDoNewImage && !g_bContinueImage) {
         // Check if time to exit
         if(g_bExit) {
-          LeaveCriticalSection(&g_csComm);
+          SDL_UnlockMutex(g_csComm);
           break;
         }
-        LeaveCriticalSection(&g_csComm);
-        Sleep(100);
+        SDL_UnlockMutex(g_csComm);
+        SDL_Delay(100);
       } else {
-        LeaveCriticalSection(&g_csComm);
+        SDL_UnlockMutex(g_csComm);
         break;
       }
     }
@@ -287,27 +280,27 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
     // Update internal offset since we might have switched to a new area
     vInternalOffset = BGame::GetSimulation()->GetTerrain()->m_vOffset;
 
-    EnterCriticalSection(&g_csComm);
+    SDL_LockMutex(g_csComm);
     g_bDoNewImage = false;
     g_bContinueImage = false;
-    LeaveCriticalSection(&g_csComm);
+    SDL_UnlockMutex(g_csComm);
 
     // Check if time to exit
-    EnterCriticalSection(&g_csComm);
+    SDL_LockMutex(g_csComm);
     if(g_bExit) {
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
       break;
     }
-    LeaveCriticalSection(&g_csComm);
+    SDL_UnlockMutex(g_csComm);
 
     // Start computing images at increasing resolution
     int nStepSize = g_nStartStepSize;
     int nOffset = nStepSize / 2;
     int nFlipFlop = 1;
     while(nStepSize >= 2) {
-      EnterCriticalSection(&g_csComm);
+      SDL_LockMutex(g_csComm);
       g_bFinal = false;
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
 
       int x, y;
       // Calculate level
@@ -316,12 +309,12 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
       for(y = 0; y < 256; y += nStepSize / 2) {
 
         // Check if time to exit
-        EnterCriticalSection(&g_csComm);
+        SDL_LockMutex(g_csComm);
         if(g_bExit || g_bDoNewImage) {
-          LeaveCriticalSection(&g_csComm);
+          SDL_UnlockMutex(g_csComm);
           break;
         }
-        LeaveCriticalSection(&g_csComm);
+        SDL_UnlockMutex(g_csComm);
 
         int nXStepSize;
         if(nFlipFlop < 0) {
@@ -349,7 +342,7 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
         for(x = nOffset + nHelper; x < 256; x += nXStepSize) {
 
           if(!(++nSkipper % 20) && !BGame::m_bMultiProcessor) {
-            Sleep(1);
+            SDL_Delay(1);
           }
 
           g_dHeightMap[y * 256 + x] = HeightMap::CalcHeightAt(vInternalOffset.m_dX + g_dScale * double(x) + g_dXOffset, 
@@ -408,15 +401,15 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
       }
 
       // Check if time to exit
-      EnterCriticalSection(&g_csComm);
+      SDL_LockMutex(g_csComm);
       if(g_bExit || g_bDoNewImage) {
-        LeaveCriticalSection(&g_csComm);
+        SDL_UnlockMutex(g_csComm);
         break;
       }
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
 
       // Copy this level image for nav sat window
-      EnterCriticalSection(&g_csComm);
+      SDL_LockMutex(g_csComm);
 
       // Find out resolution
       int nRes = 256 / (nStepSize / 2);
@@ -447,15 +440,15 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
       g_nImageSize = nRes;
       g_bNewImageAvailable = true;
 
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
 
       // Check if time to exit
-      EnterCriticalSection(&g_csComm);
+      SDL_LockMutex(g_csComm);
       if(g_bExit || g_bDoNewImage) {
-        LeaveCriticalSection(&g_csComm);
+        SDL_UnlockMutex(g_csComm);
         break;
       }
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
 
       // Go to next detail level
       nStepSize /= 2;
@@ -463,9 +456,9 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
     }
 
     // Check if time to exit
-    EnterCriticalSection(&g_csComm);
+    SDL_LockMutex(g_csComm);
     if(!g_bExit && !g_bDoNewImage) {
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
       // Shadowing
       int x, y;
       for(y = 0; y < 256; ++y) {
@@ -518,7 +511,7 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
         }
       }
       // Copy final image
-      EnterCriticalSection(&g_csComm);
+      SDL_LockMutex(g_csComm);
       for(y = 0; y < 256; ++y) {
         for(x = 0; x < 256; ++x) {
           g_ubMapImage[y * 3 * 256 + x * 3 + 0] = g_ubMapImageTemp[y * 3 * 256 + x * 3 + 0];
@@ -529,13 +522,12 @@ DWORD WINAPI DrawLandscapeGIFStyle(LPVOID pParam) {
       g_nImageSize = 256;
       g_bNewImageAvailable = true;
       g_bFinal = true;
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
     } else {
-      LeaveCriticalSection(&g_csComm);
+      SDL_UnlockMutex(g_csComm);
     }
   }
 
-  ExitThread(0);
   return 0;
 }
 

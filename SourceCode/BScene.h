@@ -6,15 +6,21 @@
 
 #pragma once
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "BaseClasses.h"
 #include "BObject.h"
 #include "BTerrain.h" 
 #include "HeightMap.h"
 #include "BUI.h"
-#include "gl\gl.h"
-#include "gl\glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
 
+#include <string>
 
+using namespace std;
 
 
 class BRecordFrame {
@@ -63,16 +69,16 @@ public:
 
   // General properties
 
-  CString       m_sFilename;
-  CString       m_sName;
-  CString       m_sImageFilename;
+  string       m_sFilename;
+  string       m_sName;
+  string       m_sImageFilename;
   double        m_dFriction;
   double        m_dGroundTextureScaler1;
   double        m_dGroundTextureScaler2;
-  CString       m_sSkyTexture;
-  CString       m_sGround1Texture;
-  CString       m_sGround2Texture;
-  CString       m_sEnvMapTexture;
+  string       m_sSkyTexture;
+  string       m_sGround1Texture;
+  string       m_sGround2Texture;
+  string       m_sEnvMapTexture;
   bool          m_bSceneInUse;  
   BVector       m_vMapPosition;
   HeightMap::TTerrain m_terrainStyle;
@@ -100,21 +106,21 @@ public:
   BSlalom     m_slalom;
   double      m_dBestAirTime;
 
-  CString          m_sSceneObjectNames[100];
+  string          m_sSceneObjectNames[100];
   BUISelectionList m_sellistSceneObjects;
 
   BScene();
   ~BScene();
   void CleanUp();
   void Save();
-  void LoadSceneFromFile(CString sFilename);
+  void LoadSceneFromFile(string sFilename);
   void PlaceTerrainObjects(BTerrainBlock *pBlockSingle = 0);
   void PlaceObjectsOnTerrain(BTerrainBlock *pBlockSingle = 0);
   void UpdateObjectList();
   void ValidateChecksum();
 
-  void LoadTimeRecord(CString sFileExt, BRaceRecord &raceRecord);
-  void SaveTimeRecord(CString sFileExt, BRaceRecord &raceRecord);
+  void LoadTimeRecord(string sFileExt, BRaceRecord &raceRecord);
+  void SaveTimeRecord(string sFileExt, BRaceRecord &raceRecord);
 
   void SaveBestTimeRecord();
   void SaveSlalomTimeRecord();

@@ -4,9 +4,9 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BMessages.h"
 #include "OpenGLHelpers.h"
+#include "StringTools.h"
 
 
 BLetter   BMessages::m_letters[65];
@@ -16,7 +16,7 @@ BMessage *BMessages::m_pMessages = 0;
 BMessages::BMessages() {
   // Load letters from the file
   FILE *fp;
-  fp = fopen(".\\Textures\\MessageLetters.txt", "r");
+  fp = fopen("./Textures/MessageLetters.txt", "r");
   if(fp) {
     for(char c = 32; c < 97; ++c) {
       int nPart = 0;
@@ -36,7 +36,7 @@ BMessages::BMessages() {
     }
     fclose(fp);
   } else {
-    BGame::MyAfxMessageBox("Cannot open .\\Textures\\MessageLetters.txt!");
+    BGame::MyAfxMessageBox("Cannot open ./Textures/MessageLetters.txt!");
   }
 }
 
@@ -48,8 +48,8 @@ BMessages::~BMessages() {
 
 //*****************************************************************************
 void BMessages::Show(int nCharsPerLine, 
-                     CString sId, 
-                     CString sText, 
+                     string sId, 
+                     string sText, 
                      int nSeconds, 
                      bool blink, 
                      double dR, 
@@ -57,8 +57,8 @@ void BMessages::Show(int nCharsPerLine,
                      double dB,
                      bool bFaint,
                      bool bSecondary) {
-  sId.MakeUpper();
-  sText.MakeUpper();
+  StringTools::makeUpper(sId);
+  StringTools::makeUpper(sText);
   // Add message to message list
 
   if(!Find(sId)) {
@@ -97,13 +97,13 @@ void BMessages::Show(int nCharsPerLine,
     pNew->m_nCharWidth   = pNew->m_nCharPartWidth * 3 + pNew->m_nCharPartGap * 2;
     pNew->m_nCharHeight  = pNew->m_nCharPartWidth * 5 + pNew->m_nCharPartGap * 4;
     pNew->m_nCharGap     = pNew->m_nCharPartGap * 4;
-    pNew->m_nTotalWidth  = sText.GetLength() * pNew->m_nCharWidth + abs(sText.GetLength() - 1) * pNew->m_nCharGap;
+    pNew->m_nTotalWidth  = sText.length() * pNew->m_nCharWidth + abs(sText.length() - 1) * pNew->m_nCharGap;
   }
 }
 
 //*****************************************************************************
-bool BMessages::Find(CString sId) {
-  sId.MakeUpper();
+bool BMessages::Find(string sId) {
+  StringTools::makeUpper(sId);
   BMessage *p = m_pMessages;
   while(p) {
     if(p->m_sId == sId) {
@@ -116,8 +116,8 @@ bool BMessages::Find(CString sId) {
 
 
 //*****************************************************************************
-void BMessages::Remove(CString sId) {
-  sId.MakeUpper();
+void BMessages::Remove(string sId) {
+  StringTools::makeUpper(sId);
   if(m_pMessages) {
     BMessage *p = m_pMessages;
     if(p->m_sId == sId) {
@@ -179,8 +179,8 @@ BMessage *BMessages::RenderMessage(BMessage *pMsg) {
         glTranslated(0, -double(pMsg->m_nCharHeight * 2.0), 0);
       }
       int i = 0;
-      while(i < pMsg->m_sText.GetLength()) {
-        RenderLetter(pMsg, pMsg->m_sText.GetAt(i), false);
+      while(i < pMsg->m_sText.length()) {
+        RenderLetter(pMsg, pMsg->m_sText.at(i), false);
         glTranslated(pMsg->m_nCharWidth + pMsg->m_nCharGap, 0, 0);
         ++i;
       }
@@ -192,8 +192,8 @@ BMessage *BMessages::RenderMessage(BMessage *pMsg) {
         glTranslated(0, -double(pMsg->m_nCharHeight * 2.0), 0);
       }
       i = 0;
-      while(i < pMsg->m_sText.GetLength()) {
-        RenderLetter(pMsg, pMsg->m_sText.GetAt(i), true);
+      while(i < pMsg->m_sText.length()) {
+        RenderLetter(pMsg, pMsg->m_sText.at(i), true);
         glTranslated(pMsg->m_nCharWidth + pMsg->m_nCharGap, 0, 0);
         ++i;
       }

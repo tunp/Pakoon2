@@ -8,31 +8,38 @@
 
 #include "BaseClasses.h"
 
+#include <string>
+#include <map>
+
+using namespace std;
+
 namespace FileHelpers {
-  int WriteKeyStringToINIFile(CString  sSection,        // section name
-                              CString  sKeyName,        // key name
-                              CString  sValue,          // value to write
-                              CString  sFilename);      // initialization file name
-  int GetKeyStringFromINIFile(CString  sSection,        // section name
-                              CString  sKeyName,        // key name
-                              CString  sDefault,        // default string
-                              CString &sReturnedString, // destination buffer
-                              CString  sFilename);      // initialization file name
-  int GetKeyDoubleFromINIFile(CString  sSection,        // section name
-                              CString  sKeyName,        // key name
+	map<string, map<string, string> > readMapFromFile(string filename);
+	bool WriteMapToFile(map<string, map<string, string> > filemap, string filename);
+  int WriteKeyStringToINIFile(string  sSection,        // section name
+                              string  sKeyName,        // key name
+                              string  sValue,          // value to write
+                              string  sFilename);      // initialization file name
+  int GetKeyStringFromINIFile(string  sSection,        // section name
+                              string  sKeyName,        // key name
+                              string  sDefault,        // default string
+                              string &sReturnedString, // destination buffer
+                              string  sFilename);      // initialization file name
+  int GetKeyDoubleFromINIFile(string  sSection,        // section name
+                              string  sKeyName,        // key name
                               double   dDefault,        // default
                               double  &dReturnedDouble, // destination buffer
-                              CString  sFilename);      // initialization file name
-  int GetKeyIntFromINIFile(   CString  sSection,        // section name
-                              CString  sKeyName,        // key name
+                              string  sFilename);      // initialization file name
+  int GetKeyIntFromINIFile(   string  sSection,        // section name
+                              string  sKeyName,        // key name
                               int      nDefault,        // default
                               int &nReturnedInt,        // destination buffer
-                              CString  sFilename);      // initialization file name
-  int GetKeyVectorFromINIFile(CString  sSection,        // section name
-                              CString  sKeyName,        // key name
+                              string  sFilename);      // initialization file name
+  int GetKeyVectorFromINIFile(string  sSection,        // section name
+                              string  sKeyName,        // key name
                               BVector  vDefault,        // default
                               BVector &vReturnedVector, // destination buffer
-                              CString  sFilename);      // initialization file name
+                              string  sFilename);      // initialization file name
 };
 
 

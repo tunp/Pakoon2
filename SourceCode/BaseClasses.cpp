@@ -4,7 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BaseClasses.h"
 #include "FileIOHelpers.h"
 #include "BTextures.h"
@@ -167,37 +166,37 @@ BPart::BPart() {
 
 
 //**********************************************************************
-void BPart::LoadPartFromFile(CString sFilename, 
-                             CString sSection,
+void BPart::LoadPartFromFile(string sFilename, 
+                             string sSection,
                              bool bOnlyShape,
                              bool bUseMassCenter) {
   m_nVertexStart = m_pOBJData->m_nOBJPoints;
   m_nFaceStart = m_pOBJData->m_nOBJFaces;
 
   // Texture
-  CString sTmp;
+  string sTmp;
   FileHelpers::GetKeyStringFromINIFile(sSection, "Texture", "INT_PREV", sTmp, sFilename);
   m_nTexture = BTextures::LoadTexture(sTmp);
-  m_bTextured = (m_nTexture != BTextures::Texture::NONE);
+  m_bTextured = (m_nTexture != BTextures::NONE);
   FileHelpers::GetKeyStringFromINIFile(sSection, "TextureMapping", "WrapAround, 1", sTmp, sFilename);
   m_dWrapFactor = 1.0;
-  if(sTmp.CompareNoCase("FromFile") == 0) {
-    m_tmTextureMapping = BPart::TTexMapping::FROMFILE;
-  } else if(sTmp.CompareNoCase("EnvMap") == 0) {
-    m_tmTextureMapping = BPart::TTexMapping::ENVMAP;
+  if(sTmp.compare("FromFile") == 0) {
+    m_tmTextureMapping = BPart::FROMFILE;
+  } else if(sTmp.compare("EnvMap") == 0) {
+    m_tmTextureMapping = BPart::ENVMAP;
   } else {
-    m_tmTextureMapping = BPart::TTexMapping::WRAPAROUND;
-    sscanf(LPCTSTR(sTmp) + 10, ", %lf", &m_dWrapFactor);
+    m_tmTextureMapping = BPart::WRAPAROUND;
+    sscanf(sTmp.substr(10).c_str(), ", %lf", &m_dWrapFactor);
   }
 
   // Shape
-  CString sShapeFilename;
+  string sShapeFilename;
   FileHelpers::GetKeyStringFromINIFile(sSection, "Shape", "", sShapeFilename, sFilename);
   AppendWaveFrontOBJShape(sShapeFilename, 
                           m_nVertices, 
                           m_nFaces, 
                           bUseMassCenter, 
-                          m_tmTextureMapping == BPart::TTexMapping::FROMFILE,
+                          m_tmTextureMapping == BPart::FROMFILE,
                           true);
 
   if(bOnlyShape) {
@@ -206,15 +205,15 @@ void BPart::LoadPartFromFile(CString sFilename,
 
   // Color and lighting
   FileHelpers::GetKeyStringFromINIFile(sSection, "Color", "1, 1, 1", sTmp, sFilename);
-  sscanf(sTmp, "%lf, %lf, %lf", &(m_dRed), &(m_dGreen), &(m_dBlue));
+  sscanf(sTmp.c_str(), "%lf, %lf, %lf", &(m_dRed), &(m_dGreen), &(m_dBlue));
   FileHelpers::GetKeyDoubleFromINIFile(sSection, "Ambient", 1.0, m_dAmbient, sFilename);
   FileHelpers::GetKeyDoubleFromINIFile(sSection, "Diffuse", 1.0, m_dDiffuse, sFilename);
   FileHelpers::GetKeyDoubleFromINIFile(sSection, "Specular", 1.0, m_dSpecular, sFilename);
   FileHelpers::GetKeyDoubleFromINIFile(sSection, "Brilliance", 1.0, m_dBrilliance, sFilename);
   FileHelpers::GetKeyStringFromINIFile(sSection, "Shiny", "false", sTmp, sFilename);
-  m_bShiny = (sTmp.CompareNoCase("true") == 0);
+  m_bShiny = (sTmp.compare("true") == 0);
   FileHelpers::GetKeyStringFromINIFile(sSection, "Shading", "Smooth", sTmp, sFilename);
-  m_shading = (sTmp.CompareNoCase("Smooth") == 0) ? SMOOTH : FLAT; 
+  m_shading = (sTmp.compare("Smooth") == 0) ? SMOOTH : FLAT; 
 }
 
 
@@ -231,7 +230,7 @@ static char *myfgets(char *string, int n, FILE *stream, bool bPakoon3D) {
 
 
 //**********************************************************************
-void BPart::AppendWaveFrontOBJShape(CString sShapeFilename, 
+void BPart::AppendWaveFrontOBJShape(string sShapeFilename, 
                                     int &rnVertices,
                                     int &rnFaces,
                                     bool bUseMassCenter,
@@ -269,7 +268,7 @@ void BPart::AppendWaveFrontOBJShape(CString sShapeFilename,
   }
 
   FILE *fp;
-  fp = fopen(LPCTSTR(sShapeFilename), "r");
+  fp = fopen(sShapeFilename.c_str(), "r");
   if(fp) {
     char sLine[1024];
     sLine[0] = sLine[1] = '-'; // just something that's not a tag
@@ -284,38 +283,38 @@ void BPart::AppendWaveFrontOBJShape(CString sShapeFilename,
         // Respect the geometry transformations given in the vehicle file 
         // (and the new origin calculated from the body points)
         double dMirror = 1.0;
-        if(m_pOBJData->m_sRightDir.Find("-") != -1) {
+        if(m_pOBJData->m_sRightDir.find("-") != -1) {
           dMirror = -1.0;
         }
-        if(m_pOBJData->m_sRightDir.Find("X") != -1) {
+        if(m_pOBJData->m_sRightDir.find("X") != -1) {
           pOBJPoints[nOBJPoints].m_dX = -dX * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dX;
-        } else if(m_pOBJData->m_sRightDir.Find("Y") != -1) {
+        } else if(m_pOBJData->m_sRightDir.find("Y") != -1) {
           pOBJPoints[nOBJPoints].m_dX = -dY * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dX;
-        } else if(m_pOBJData->m_sRightDir.Find("Z") != -1) {
+        } else if(m_pOBJData->m_sRightDir.find("Z") != -1) {
           pOBJPoints[nOBJPoints].m_dX = -dZ * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dX;
         }
 
         dMirror = 1.0;
-        if(m_pOBJData->m_sForwardDir.Find("-") != -1) {
+        if(m_pOBJData->m_sForwardDir.find("-") != -1) {
           dMirror = -1.0;
         }
-        if(m_pOBJData->m_sForwardDir.Find("X") != -1) {
+        if(m_pOBJData->m_sForwardDir.find("X") != -1) {
           pOBJPoints[nOBJPoints].m_dY = dX * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dY;
-        } else if(m_pOBJData->m_sForwardDir.Find("Y") != -1) {
+        } else if(m_pOBJData->m_sForwardDir.find("Y") != -1) {
           pOBJPoints[nOBJPoints].m_dY = dY * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dY;
-        } else if(m_pOBJData->m_sForwardDir.Find("Z") != -1) {
+        } else if(m_pOBJData->m_sForwardDir.find("Z") != -1) {
           pOBJPoints[nOBJPoints].m_dY = dZ * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dY;
         }
 
         dMirror = 1.0;
-        if(m_pOBJData->m_sDownDir.Find("-") != -1) {
+        if(m_pOBJData->m_sDownDir.find("-") != -1) {
           dMirror = -1.0;
         }
-        if(m_pOBJData->m_sDownDir.Find("X") != -1) {
+        if(m_pOBJData->m_sDownDir.find("X") != -1) {
           pOBJPoints[nOBJPoints].m_dZ = dX * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dZ;
-        } else if(m_pOBJData->m_sDownDir.Find("Y") != -1) {
+        } else if(m_pOBJData->m_sDownDir.find("Y") != -1) {
           pOBJPoints[nOBJPoints].m_dZ = dY * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dZ;
-        } else if(m_pOBJData->m_sDownDir.Find("Z") != -1) {
+        } else if(m_pOBJData->m_sDownDir.find("Z") != -1) {
           pOBJPoints[nOBJPoints].m_dZ = dZ * m_pOBJData->m_dScale * dMirror - vMassCenter.m_dZ;
         }
         ++nOBJPoints;
@@ -336,7 +335,7 @@ void BPart::AppendWaveFrontOBJShape(CString sShapeFilename,
           // (divide them into two triangles)
 
           char *p = sLine + 2;
-          if(CString(p).Find("/") != -1) {
+          if(string(p).find("/") != -1) {
             sscanf(p, "%d/%d", &n1, &nT1);
           } else {
             sscanf(p, "%d", &n1);
@@ -346,7 +345,7 @@ void BPart::AppendWaveFrontOBJShape(CString sShapeFilename,
           }
           if(*p) {
             ++p; // Skip space
-            if(CString(p).Find("/") != -1) {
+            if(string(p).find("/") != -1) {
               sscanf(p, "%d/%d", &n2, &nT2);
             } else {
               sscanf(p, "%d", &n1);
@@ -356,7 +355,7 @@ void BPart::AppendWaveFrontOBJShape(CString sShapeFilename,
             }
             if(*p) {
               ++p; // Skip space
-              if(CString(p).Find("/") != -1) {
+              if(string(p).find("/") != -1) {
                 sscanf(p, "%d/%d", &n3, &nT3);
               } else {
                 sscanf(p, "%d", &n1);
@@ -366,7 +365,7 @@ void BPart::AppendWaveFrontOBJShape(CString sShapeFilename,
               }
               if(*p) {
                 ++p; // Skip space
-                if(CString(p).Find("/") != -1) {
+                if(string(p).find("/") != -1) {
                   sscanf(p, "%d/%d", &n4, &nT4);
                 } else {
                   sscanf(p, "%d", &n1);
@@ -429,8 +428,7 @@ void BPart::AppendWaveFrontOBJShape(CString sShapeFilename,
     }
     fclose(fp);
   } else {
-    CString sErr;
-    sErr.Format("Cannot open file %s for reading", sShapeFilename);
+    string sErr = "Cannot open file " + sShapeFilename + " for reading";
     BGame::MyAfxMessageBox(sErr);
   }
 
@@ -501,7 +499,7 @@ void BPart::RenderPart(int nReset) {
   if(m_bShiny) {
     nTextureUnit = 1;
     OpenGLHelpers::SwitchToTexture(1);
-    BTextures::Use(BTextures::Texture::ENVMAP_SHINY);
+    BTextures::Use(BTextures::ENVMAP_SHINY);
     glEnable(GL_TEXTURE_GEN_S);
 	  glEnable(GL_TEXTURE_GEN_T);
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -520,7 +518,7 @@ void BPart::RenderPart(int nReset) {
     BTextures::Use(m_nTexture);
     nTexture = m_nTexture;
   }
-  if(m_bTextured && ((m_tmTextureMapping == TTexMapping::ENVMAP) && (tmMapping != m_tmTextureMapping))) {
+  if(m_bTextured && ((m_tmTextureMapping == ENVMAP) && (tmMapping != m_tmTextureMapping))) {
     glEnable(GL_TEXTURE_GEN_S);
 	  glEnable(GL_TEXTURE_GEN_T);
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -654,9 +652,9 @@ BOBJData::BOBJData() {
   m_nOBJFaces = 0;
   m_pvOBJPoints = 0;
   m_pOBJFaces = 0;
-  m_sRightDir = _T("+X");
-  m_sForwardDir = _T("+Y");
-  m_sDownDir = _T("+Z");
+  m_sRightDir = "+X";
+  m_sForwardDir = "+Y";
+  m_sDownDir = "+Z";
   m_dScale = 1.0;
   m_vMassCenter.Set(0, 0, 0);
 }

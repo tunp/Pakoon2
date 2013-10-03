@@ -4,7 +4,11 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "..\SourceCode\stdafx.h"
+#include <ctime>
+#include <algorithm>
+
+using namespace std;
+
 #include "PakoonPhysicsEngine.h"
 
 // const double g_cdBrakesFriction = 0.5;

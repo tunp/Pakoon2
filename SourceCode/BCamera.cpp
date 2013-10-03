@@ -4,7 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BCamera.h"
 
 BCamera::BCamera() {

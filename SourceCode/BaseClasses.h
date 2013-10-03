@@ -6,10 +6,18 @@
 
 #pragma once
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "CoreClasses.h"
 #include <math.h>
-#include "gl\gl.h"
-#include "gl\glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+
+#include <string>
+
+using namespace std;
 
 const int g_cnMaxTrailPoints = 100;
 
@@ -87,9 +95,9 @@ public:
   BOBJVertex   *m_pvOBJPoints;
   BOBJFace     *m_pOBJFaces;
 
-  CString       m_sRightDir;
-  CString       m_sForwardDir;
-  CString       m_sDownDir;
+  string       m_sRightDir;
+  string       m_sForwardDir;
+  string       m_sDownDir;
   double        m_dScale;
 
   BVector       m_vMassCenter;
@@ -108,15 +116,15 @@ public:
 
   BPart();
 
-  void AppendWaveFrontOBJShape(CString sShapeFilename, 
+  void AppendWaveFrontOBJShape(string sShapeFilename, 
                                int &rnVertices,
                                int &rnFaces,
                                bool bUseMassCenter,
                                bool bReadTexCoords,
                                bool bSplitQuads);
 
-  void LoadPartFromFile(CString sFilename, 
-                        CString sSection,
+  void LoadPartFromFile(string sFilename, 
+                        string sSection,
                         bool bOnlyShape,
                         bool bUseMassCenter);
 
@@ -128,7 +136,7 @@ public:
   enum TTexMapping {FROMFILE, ENVMAP, WRAPAROUND};
   enum TShading {SMOOTH, FLAT, NONE};
 
-  CString     m_sShapeFilename;
+  string     m_sShapeFilename;
   int         m_nVertices;
   int         m_nVertexStart;
   int         m_nFaces;

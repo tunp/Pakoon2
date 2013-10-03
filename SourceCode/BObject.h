@@ -6,9 +6,17 @@
 
 #pragma once
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "BaseClasses.h"
-#include "gl\gl.h"
-#include "gl\glu.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+
+#include <string>
+
+using namespace std;
 
 class BFace {
 public:
@@ -52,9 +60,9 @@ public:
   int          m_nCollDetParts; // collision detection parts
   BObjectPart *m_pCollDetPart;  // collision detection parts
 
-  CString   m_sObjectFilename;
+  string   m_sObjectFilename;
 
-  CString   m_sName;
+  string   m_sName;
   TType     m_type;
   TCollDet  m_collisionDetection;
 
@@ -82,8 +90,8 @@ public:
 
   void SetOBJData(BOBJData *pOBJData) {m_pOBJData = pOBJData;}
 
-  void LoadObjectFromFile(CString sFilename, CString sSection, bool bOnlyShape = false);
-  void LoadCollisionPartFromFile(CString sFilename, CString sSection, BPart &rVisPart, BObjectPart &rPart);
+  void LoadObjectFromFile(string sFilename, string sSection, bool bOnlyShape = false);
+  void LoadCollisionPartFromFile(string sFilename, string sSection, BPart &rVisPart, BObjectPart &rPart);
 
   void   Setup();
   double PointIsInsideObject(BVector& rvPoint, 

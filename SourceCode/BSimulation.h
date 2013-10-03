@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "stdafx.h"
 #include "BaseClasses.h"
 #include "BVehicle.h"
 #include "BCamera.h"
@@ -15,14 +14,18 @@
 #include "ControllerModule.h"
 #include "OpenGLHelpers.h"
 
-#include "..\PakoonPhysicsEngine\PakoonPhysicsEngine.h"
+#include "../PakoonPhysicsEngine/PakoonPhysicsEngine.h"
 
+#include <SDL2/SDL.h>
+#include <string>
+
+using namespace std;
 
 
 class BTrackingTarget {
 public:
   BTrackingTarget *m_pNext;
-  CString          m_sId;
+  string          m_sId;
   BVector          m_vLoc;
   BVector          m_vScreenPos;
   double           m_dRed;
@@ -89,7 +92,7 @@ private:
 
 public:
 
-  CRect  m_rectWnd;
+  SDL_Rect  m_rectWnd;
 
   long   m_nSimulationTimeStep;
 
@@ -131,17 +134,17 @@ public:
   void StartRecording();
   void StopRecording();
 
-  void PrePaint(CDC *pDC);
+  void PrePaint();
   void PreProcessVisualization();
   void PaintSceneObjects();
   void PaintSky(float fBrightness, bool bFog);
-  int  Paint(CDC *pDC, bool bCreateDLs, bool bWireframe, bool bNormals, CRect &rectWnd);
+  int  Paint(bool bCreateDLs, bool bWireframe, bool bNormals, SDL_Rect &rectWnd);
   void DrawShadowAndTrails();
   void DrawTrails();
   void DrawDustClouds();
   void DrawSmokeTrails();
 
-  void SetUpCamera(CRect *pRect = 0);
+  void SetUpCamera(SDL_Rect *pRect = 0);
   void UpdateCar();
   void UpdateCarLocation();
   void EnsureVehicleIsOverGround();
@@ -166,8 +169,8 @@ public:
   double Friction(BVector& rPoint);
   double GroundHardnessAt(BVector& rvLocation);
 
-  void   AddTrackingTarget(CString sId, BVector vLoc, double dRed, double dGreen, double dBlue);
-  void   RemoveTrackingTarget(CString sId);
+  void   AddTrackingTarget(string sId, BVector vLoc, double dRed, double dGreen, double dBlue);
+  void   RemoveTrackingTarget(string sId);
 };
 
 

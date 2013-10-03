@@ -9,6 +9,11 @@
 #include "BaseClasses.h"
 #include "BUI.h"
 
+#include <SDL2/SDL.h>
+#include <string>
+
+using namespace std;
+
 class BObject;
 
 //*****************************************************************************
@@ -16,20 +21,20 @@ class BSceneEditor {
 
   bool m_bSceneModified;
 
-  CString m_sAllObjects[1000];
+  string m_sAllObjects[1000];
   int     m_nAllObjects;
-  CString m_sObjectTypes[1];
-  CString m_sObjectShadows[2];
-  CString m_sOverwrite[2];
+  string m_sObjectTypes[1];
+  string m_sObjectShadows[2];
+  string m_sOverwrite[2];
 
-  void RecurseObjectFiles(CString sPath, CString sSubDir);
+  void RecurseObjectFiles(string sPath, string sSubDir);
   void FetchAllObjects();
 
 public:
 
-  CString          m_sActiveObject;
-  CString          m_sObjectType;
-  CString          m_sObjectShadow;
+  string          m_sActiveObject;
+  string          m_sObjectType;
+  string          m_sObjectShadow;
   BUIEdit          m_edit;
   BUISelectionList m_sellistAllObjects;
   BUISelectionList m_sellistObjectType;
@@ -54,7 +59,7 @@ public:
   void Activate();
   void Deactivate();
   bool IsActive();
-  void Draw(CRect &rectWnd);
+  void Draw(SDL_Rect &rectWnd);
   void HighlightActiveObject();
   void AdvancePhase();
   void CancelPhase();

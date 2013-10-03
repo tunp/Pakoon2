@@ -4,12 +4,15 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BScene.h"
 #include "BTextures.h"
 #include "BGame.h"
 #include "FileIOHelpers.h"
 #include "HeightMap.h"
+
+#include <sstream>
+
+using namespace std;
 
 //*************************************************************************************************
 BScene::BScene() {
@@ -20,10 +23,10 @@ BScene::BScene() {
   m_bSceneInUse = false;
   m_dGroundTextureScaler1 = 0.1;
   m_dGroundTextureScaler2 = 0.01;
-  m_sSkyTexture = _T("");
-  m_sGround1Texture = _T("");
-  m_sGround2Texture = _T("");
-  m_sEnvMapTexture = _T("");
+  m_sSkyTexture = "";
+  m_sGround1Texture = "";
+  m_sGround2Texture = "";
+  m_sEnvMapTexture = "";
   m_nObjects = 0;
   m_OBJData.Init();
   m_sName = "";
@@ -58,7 +61,7 @@ extern double Random(double);
 extern double g_dPhysicsStepsInSecond;
 
 //*************************************************************************************************
-void BScene::LoadSceneFromFile(CString sFilename) {
+void BScene::LoadSceneFromFile(string sFilename) {
 
   m_sFilename = sFilename;
 
@@ -84,39 +87,39 @@ void BScene::LoadSceneFromFile(CString sFilename) {
   FileHelpers::GetKeyDoubleFromINIFile("Properties", "AirTimeMaxSec", 120.0, m_dAirTimeMaxSec, sFilename);
   m_dAirTimeMaxSec *= g_dPhysicsStepsInSecond;
 
-  CString sTmp;
+  string sTmp;
 
   FileHelpers::GetKeyStringFromINIFile("Properties", "TerrainStyle", "Basic", sTmp, sFilename);
   m_terrainStyle = HeightMap::BASIC;
-  if(sTmp.CompareNoCase("Basic") == 0) {
+  if(sTmp.compare("Basic") == 0) {
     m_terrainStyle = HeightMap::BASIC;
-  } else if(sTmp.CompareNoCase("GrandValley") == 0) {
+  } else if(sTmp.compare("GrandValley") == 0) {
     m_terrainStyle = HeightMap::GRAND_VALLEY;
-  } else if(sTmp.CompareNoCase("JumpLand") == 0) {
+  } else if(sTmp.compare("JumpLand") == 0) {
     m_terrainStyle = HeightMap::JUMP_LAND;
-  } else if(sTmp.CompareNoCase("ValleyAlley") == 0) {
+  } else if(sTmp.compare("ValleyAlley") == 0) {
     m_terrainStyle = HeightMap::VALLEY_ALLEY;
-  } else if(sTmp.CompareNoCase("TheBigDrop") == 0) {
+  } else if(sTmp.compare("TheBigDrop") == 0) {
     m_terrainStyle = HeightMap::THE_BIG_DROP;
-  } else if(sTmp.CompareNoCase("AlleyLand") == 0) {
+  } else if(sTmp.compare("AlleyLand") == 0) {
     m_terrainStyle = HeightMap::ALLEY_LAND;
-  } else if(sTmp.CompareNoCase("HolesInTheCrust") == 0) {
+  } else if(sTmp.compare("HolesInTheCrust") == 0) {
     m_terrainStyle = HeightMap::HOLES_IN_THE_CRUST;
   }
   
   FileHelpers::GetKeyVectorFromINIFile("Properties", "MapPosition", BVector(580, 85, 0), m_vMapPosition, sFilename);
 
-  if(!m_sSkyTexture.IsEmpty()) {
-    BTextures::ReloadTexture(BTextures::Texture::SKY, m_sSkyTexture);
+  if(!m_sSkyTexture.empty()) {
+    BTextures::ReloadTexture(BTextures::SKY, m_sSkyTexture);
   }
-  if(!m_sGround1Texture.IsEmpty()) {
-    BTextures::ReloadTexture(BTextures::Texture::GROUND_BASE, m_sGround1Texture);
+  if(!m_sGround1Texture.empty()) {
+    BTextures::ReloadTexture(BTextures::GROUND_BASE, m_sGround1Texture);
   }
-  if(!m_sGround2Texture.IsEmpty()) {
-    BTextures::ReloadTexture(BTextures::Texture::GROUND_COLOR_MAP, m_sGround2Texture);
+  if(!m_sGround2Texture.empty()) {
+    BTextures::ReloadTexture(BTextures::GROUND_COLOR_MAP, m_sGround2Texture);
   }
-  if(!m_sEnvMapTexture.IsEmpty()) {
-    BTextures::ReloadTexture(BTextures::Texture::ENVMAP, m_sEnvMapTexture);
+  if(!m_sEnvMapTexture.empty()) {
+    BTextures::ReloadTexture(BTextures::ENVMAP, m_sEnvMapTexture);
   }
 
   // Shape/Geometry related properties
@@ -130,11 +133,11 @@ void BScene::LoadSceneFromFile(CString sFilename) {
 
   m_nObjects = 0;
   do {
-    CString sHasSection;
-    CString sSection;
-    sSection.Format("Object%d", m_nObjects + 1);
-    FileHelpers::GetKeyStringFromINIFile(sSection, "", "default", sHasSection, sFilename);
-    if(sHasSection.CompareNoCase("default") != 0) {
+    string sHasSection;
+    stringstream sSection;
+    sSection << "Object" << m_nObjects + 1;
+    FileHelpers::GetKeyStringFromINIFile(sSection.str(), "", "default", sHasSection, sFilename);
+    if(sHasSection.compare("default") != 0) {
       ++m_nObjects;
     } else {
       break;
@@ -144,10 +147,10 @@ void BScene::LoadSceneFromFile(CString sFilename) {
   // Read objects
   int nObject = 0;
   for(nObject = 0; nObject < m_nObjects; ++nObject) {
-    CString sSection;
-    sSection.Format("Object%d", nObject + 1);
+    stringstream sSection;
+    sSection << "Object" << nObject + 1;
     m_pObjects[nObject].SetOBJData(&m_OBJData);
-    m_pObjects[nObject].LoadObjectFromFile(sFilename, sSection);
+    m_pObjects[nObject].LoadObjectFromFile(sFilename, sSection.str());
   }
 
   // Prepare objects
@@ -163,64 +166,56 @@ void BScene::LoadSceneFromFile(CString sFilename) {
   LoadSlalom();
 
 
-  CString sChecksum;
+  string sChecksum;
   FileHelpers::GetKeyStringFromINIFile("Properties", "Checksum", "<no checksum>", sChecksum, sFilename);
 
-  CString sVerifyData;
-  sVerifyData.Format("%.5lf%d%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf", 
-                     m_dFriction, 
-                     (int) m_terrainStyle,
-                     m_vGoal.m_dX,
-                     m_vGoal.m_dY,
-                     m_vGoal.m_dZ,
-                     m_vOrigin.m_dX,
-                     m_vOrigin.m_dY,
-                     m_vOrigin.m_dZ,
-                     m_vStartLocation.m_dX,
-                     m_vStartLocation.m_dY,
-                     m_vStartLocation.m_dZ,
-                     m_dBestAirTime);
+  stringstream sVerifyData;
+  sVerifyData << m_dFriction <<
+				 (int) m_terrainStyle <<
+				 m_vGoal.m_dX <<
+				 m_vGoal.m_dY <<
+				 m_vGoal.m_dZ <<
+				 m_vOrigin.m_dX <<
+				 m_vOrigin.m_dY <<
+				 m_vOrigin.m_dZ <<
+				 m_vStartLocation.m_dX <<
+				 m_vStartLocation.m_dY <<
+				 m_vStartLocation.m_dZ <<
+				 m_dBestAirTime;
 
   for(int i = 0; i < m_slalom.m_nSlalomPoles; ++i) {
-    CString sTmp;
-    sTmp.Format("%.5lf%.5lf%.5lf",
-                m_slalom.m_slalomPole[i].m_vLocation.m_dX,
-                m_slalom.m_slalomPole[i].m_vLocation.m_dY,
-                m_slalom.m_slalomPole[i].m_vLocation.m_dZ);
-    sVerifyData += sTmp;
+    sVerifyData << m_slalom.m_slalomPole[i].m_vLocation.m_dX <<
+                m_slalom.m_slalomPole[i].m_vLocation.m_dY <<
+                m_slalom.m_slalomPole[i].m_vLocation.m_dZ;
   }
 
-  m_bVerified = (BGame::GetVerifyChecksum(sVerifyData).Compare(sChecksum) == 0);
+  m_bVerified = (BGame::GetVerifyChecksum(sVerifyData.str()).compare(sChecksum) == 0);
 }
 
 //*************************************************************************************************
 void BScene::ValidateChecksum() {
   if(m_bVerified) {
-    CString sVerifyData;
-    sVerifyData.Format("%.5lf%d%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf%.5lf", 
-                       m_dFriction, 
-                       (int) m_terrainStyle,
-                       m_vGoal.m_dX,
-                       m_vGoal.m_dY,
-                       m_vGoal.m_dZ,
-                       m_vOrigin.m_dX,
-                       m_vOrigin.m_dY,
-                       m_vOrigin.m_dZ,
-                       m_vStartLocation.m_dX,
-                       m_vStartLocation.m_dY,
-                       m_vStartLocation.m_dZ,
-                       m_dBestAirTime);
+	  stringstream sVerifyData;
+	  sVerifyData << m_dFriction <<
+					 (int) m_terrainStyle <<
+					 m_vGoal.m_dX <<
+					 m_vGoal.m_dY <<
+					 m_vGoal.m_dZ <<
+					 m_vOrigin.m_dX <<
+					 m_vOrigin.m_dY <<
+					 m_vOrigin.m_dZ <<
+					 m_vStartLocation.m_dX <<
+					 m_vStartLocation.m_dY <<
+					 m_vStartLocation.m_dZ <<
+					 m_dBestAirTime;
 
     for(int i = 0; i < m_slalom.m_nSlalomPoles; ++i) {
-      CString sTmp;
-      sTmp.Format("%.5lf%.5lf%.5lf",
-                  m_slalom.m_slalomPole[i].m_vLocation.m_dX,
-                  m_slalom.m_slalomPole[i].m_vLocation.m_dY,
-                  m_slalom.m_slalomPole[i].m_vLocation.m_dZ);
-      sVerifyData += sTmp;
+    sVerifyData << m_slalom.m_slalomPole[i].m_vLocation.m_dX <<
+                m_slalom.m_slalomPole[i].m_vLocation.m_dY <<
+                m_slalom.m_slalomPole[i].m_vLocation.m_dZ;
     }
 
-    FileHelpers::WriteKeyStringToINIFile("Properties", "Checksum", BGame::GetVerifyChecksum(sVerifyData), m_sFilename);
+    FileHelpers::WriteKeyStringToINIFile("Properties", "Checksum", BGame::GetVerifyChecksum(sVerifyData.str()), m_sFilename);
   }
 }
 
@@ -289,23 +284,23 @@ void BScene::Save() {
 
   // Save Scene file
   FILE *fp;
-  fp = fopen(m_sFilename, "w");
+  fp = fopen(m_sFilename.c_str(), "w");
   if(fp) {
     fprintf(fp, "; Scene file saved by Pakoon Scene Editor v1.ONE\n\n");
 
     fprintf(fp, "[Properties]\n");
     fprintf(fp, "\n");
-    fprintf(fp, " Name = %s\n", m_sName);
-    fprintf(fp, " Image = %s\n", m_sImageFilename);
+    fprintf(fp, " Name = %s\n", m_sName.c_str());
+    fprintf(fp, " Image = %s\n", m_sImageFilename.c_str());
     fprintf(fp, " GroundFriction = %g\n", m_dFriction);
     fprintf(fp, " Ground1Scaler = %g\n", m_dGroundTextureScaler1);
     fprintf(fp, " Ground2Scaler = %g\n", m_dGroundTextureScaler2);
-    fprintf(fp, " SkyTexture = %s\n", m_sSkyTexture);
-    fprintf(fp, " Ground1Texture = %s\n", m_sGround1Texture);
-    fprintf(fp, " Ground2Texture = %s\n", m_sGround2Texture);
-    fprintf(fp, " EnvMapTexture = %s\n", m_sEnvMapTexture);
+    fprintf(fp, " SkyTexture = %s\n", m_sSkyTexture.c_str());
+    fprintf(fp, " Ground1Texture = %s\n", m_sGround1Texture.c_str());
+    fprintf(fp, " Ground2Texture = %s\n", m_sGround2Texture.c_str());
+    fprintf(fp, " EnvMapTexture = %s\n", m_sEnvMapTexture.c_str());
     fprintf(fp, " BestAirTime = %.5lf\n", m_dBestAirTime);
-    CString sTmp;
+    string sTmp;
     if(m_terrainStyle == HeightMap::BASIC) {
       sTmp = "Basic";
     } else if(m_terrainStyle == HeightMap::GRAND_VALLEY) {
@@ -323,7 +318,7 @@ void BScene::Save() {
     } else if(m_terrainStyle == HeightMap::HOLES_IN_THE_CRUST) {
       sTmp = "HolesInTheCrust";
     }
-    fprintf(fp, " TerrainStyle = %s\n", sTmp);
+    fprintf(fp, " TerrainStyle = %s\n", sTmp.c_str());
     fprintf(fp, " MapPosition = %.0lf, %.0lf, %.0lf\n", m_vMapPosition.m_dX, m_vMapPosition.m_dY, m_vMapPosition.m_dZ);
 
     fprintf(fp, "\n");
@@ -336,12 +331,14 @@ void BScene::Save() {
     fprintf(fp, "\n");
 
     for(int i = 0; i < m_nObjects; ++i) {
-      sTmp.Format("[Object%d]\n", i + 1);
-      fprintf(fp, sTmp);
+      stringstream val;
+      val << "[Object" << i + 1 << "]\n";
+      sTmp = val.str();
+      fprintf(fp, sTmp.c_str());
       fprintf(fp, "\n");
-      fprintf(fp, " Name = %s\n", m_pObjects[i].m_sName);
+      fprintf(fp, " Name = %s\n", m_pObjects[i].m_sName.c_str());
       fprintf(fp, " Type = Other\n");
-      fprintf(fp, " ObjectFile = %s\n", m_pObjects[i].m_sObjectFilename);
+      fprintf(fp, " ObjectFile = %s\n", m_pObjects[i].m_sObjectFilename.c_str());
       fprintf(fp, " Location = %g, %g, %g\n", m_pObjects[i].m_vLocation.m_dX, m_pObjects[i].m_vLocation.m_dY, m_pObjects[i].m_vLocation.m_dZ);
       fprintf(fp, " ZRotation = %g\n", m_pObjects[i].m_dZRotation);
       fprintf(fp, " Scale = %g\n", m_pObjects[i].m_dScale2);
@@ -353,11 +350,10 @@ void BScene::Save() {
   }
 }
 
-void BScene::LoadTimeRecord(CString sFileExt, BRaceRecord &raceRecord) {
-  CString sFilename;
-  sFilename.Format(".\\Player\\%s%s", m_sName, sFileExt);
+void BScene::LoadTimeRecord(string sFileExt, BRaceRecord &raceRecord) {
+  string sFilename = "Player/" + m_sName + sFileExt;
   FILE *fp;
-  fp = fopen(LPCTSTR(sFilename), "r");
+  fp = fopen(sFilename.c_str(), "r");
   if(fp) {
     raceRecord.m_bValid = true;
     fscanf(fp, "%lf", &(raceRecord.m_dTotalTime));
@@ -385,11 +381,10 @@ void BScene::LoadTimeRecord(CString sFileExt, BRaceRecord &raceRecord) {
   }
 }
 
-void BScene::SaveTimeRecord(CString sFileExt, BRaceRecord &raceRecord) {
-  CString sFilename;
-  sFilename.Format(".\\Player\\%s%s", m_sName, sFileExt);
+void BScene::SaveTimeRecord(string sFileExt, BRaceRecord &raceRecord) {
+  string sFilename = "Player/" + m_sName + sFileExt;
   FILE *fp;
-  fp = fopen(LPCTSTR(sFilename), "w");
+  fp = fopen(sFilename.c_str(), "w");
   if(fp) {
     fprintf(fp, "%g\n", raceRecord.m_dTotalTime);
     fprintf(fp, "%g\n", raceRecord.m_dCarHeight);
@@ -416,27 +411,26 @@ void BScene::SaveTimeRecord(CString sFileExt, BRaceRecord &raceRecord) {
 }
 
 void BScene::LoadBestTimeRecord() {
-  LoadTimeRecord(_T("BestTime.dat"), m_raceRecordBestTime);
+  LoadTimeRecord("BestTime.dat", m_raceRecordBestTime);
 }
 
 void BScene::LoadSlalomTimeRecord() {
-  LoadTimeRecord(_T("SlalomTime.dat"), m_raceRecordSlalomTime);
+  LoadTimeRecord("SlalomTime.dat", m_raceRecordSlalomTime);
 }
 
 void BScene::SaveBestTimeRecord() {
-  SaveTimeRecord(_T("BestTime.dat"), m_raceRecordBestTime);
+  SaveTimeRecord("BestTime.dat", m_raceRecordBestTime);
 }
 
 void BScene::SaveSlalomTimeRecord() {
-  SaveTimeRecord(_T("SlalomTime.dat"), m_raceRecordSlalomTime);
+  SaveTimeRecord("SlalomTime.dat", m_raceRecordSlalomTime);
 }
 
 
 void BScene::LoadSlalom() {
-  CString sFilename;
-  sFilename.Format(".\\Player\\%sSlalom.dat", m_sName);
+  string sFilename = "Player/" + m_sName + "Slalom.dat";
   FILE *fp;
-  fp = fopen(LPCTSTR(sFilename), "r");
+  fp = fopen(sFilename.c_str(), "r");
   m_slalom.m_bValid = false;
   m_slalom.m_nSlalomPoles = 0;
   m_slalom.m_nCurrentPole = 0;
@@ -460,10 +454,9 @@ void BScene::LoadSlalom() {
 
 
 void BScene::SaveSlalom() {
-  CString sFilename;
-  sFilename.Format(".\\Player\\%sSlalom.dat", m_sName);
+  string sFilename = "Player/" + m_sName + "Slalom.dat";
   FILE *fp;
-  fp = fopen(LPCTSTR(sFilename), "w");
+  fp = fopen(sFilename.c_str(), "w");
   if(fp) {
     fprintf(fp, "%d\n", m_slalom.m_nSlalomPoles);
     for(int i = 0; i < m_slalom.m_nSlalomPoles; ++i) {

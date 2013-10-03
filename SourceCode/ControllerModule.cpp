@@ -4,18 +4,22 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "ControllerModule.h"
 
+#include <SDL2/SDL.h>
+#include <sstream>
+
+using namespace std;
+
 bool                  ControllerModule::m_bInitialized = false;
-LPDIRECTINPUT         ControllerModule::m_lpDirectInput = 0;
+//LPDIRECTINPUT         ControllerModule::m_lpDirectInput = 0;
 int                   ControllerModule::m_nControllers = 0;
 int                   ControllerModule::m_nCurrent = -1;
 bool                  ControllerModule::m_bCurrentInitialized = false;
-CString               ControllerModule::m_sControllers[];
-GUID                  ControllerModule::m_guids[];
-HWND                  ControllerModule::m_hwnd = 0;
-LPDIRECTINPUTDEVICE2  ControllerModule::m_pDIJoystick = 0;
+string               ControllerModule::m_sControllers[];
+//GUID                  ControllerModule::m_guids[];
+//HWND                  ControllerModule::m_hwnd = 0;
+//LPDIRECTINPUTDEVICE2  ControllerModule::m_pDIJoystick = 0;
 BKeyMap               ControllerModule::m_keymap;
 BControllerMap        ControllerModule::m_controllermap;
 
@@ -23,20 +27,20 @@ ControllerModule::ControllerModule() {
 }
 
 
-static BOOL CALLBACK DIEnumDevicesProc(const struct DIDEVICEINSTANCEA *lpddi, LPVOID pvRef) {
+/*static BOOL CALLBACK DIEnumDevicesProc(const struct DIDEVICEINSTANCEA *lpddi, LPVOID pvRef) {
   if(ControllerModule::m_nControllers >= 20) {
     return FALSE;
   }
-  CString sName;
+  string sName;
   sName.Format("%s - %s", lpddi->tszInstanceName, lpddi->tszProductName);
   ControllerModule::m_sControllers[ControllerModule::m_nControllers] = sName;
   ControllerModule::m_guids[ControllerModule::m_nControllers] = lpddi->guidInstance;
   ++ControllerModule::m_nControllers;
   return TRUE;
-}
+}*/
 
 
-void ControllerModule::Initialize(HWND hwndFrameWnd) {
+/*void ControllerModule::Initialize(HWND hwndFrameWnd) {
   m_hwnd = hwndFrameWnd;
 
   // Fetch all controllers to the arrays
@@ -59,10 +63,10 @@ void ControllerModule::Initialize(HWND hwndFrameWnd) {
     m_nCurrent = 0;
     m_bCurrentInitialized = false;
   }
-}
+}*/
 
 
-bool ControllerModule::SwitchToController(int nIndex) {
+/*bool ControllerModule::SwitchToController(int nIndex) {
 
   if((m_nCurrent >= 0) && m_bCurrentInitialized) {
     // Stop using previous controller
@@ -125,10 +129,10 @@ bool ControllerModule::SwitchToController(int nIndex) {
     return true;
   }
   return false;
-}
+}*/
 
 
-double ControllerModule::GetValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState) {
+/*double ControllerModule::GetValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState) {
   if(pcmi->m_bButton) {
     return pRawState->rgbButtons[pcmi->m_nButton] ? 1.0 : 0.0;
   } else {
@@ -180,9 +184,9 @@ double ControllerModule::GetValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *p
 
     return dValue;
   }
-}
+}*/
 
-bool ControllerModule::GetButtonEventFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState) {
+/*bool ControllerModule::GetButtonEventFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState) {
   bool bRet = false;
   if(pcmi->m_bButton) {
     if((!m_controllermap.m_bButtonState[pcmi->m_nButton]) &&
@@ -192,20 +196,20 @@ bool ControllerModule::GetButtonEventFromRaw(BControllerMapItem* pcmi, DIJOYSTAT
   }
   m_controllermap.m_bButtonState[pcmi->m_nButton] = (pRawState->rgbButtons[pcmi->m_nButton] != 0);
   return bRet;
-}
+}*/
 
-bool ControllerModule::GetButtonValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState) {
+/*bool ControllerModule::GetButtonValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState) {
   if(pcmi->m_bButton) {
     return pRawState->rgbButtons[pcmi->m_nButton] != 0;
   } else {
     return false;
   }
-}
+}*/
 
 
 
 
-bool ControllerModule::GetControllerState(BControllerState& rcs, DIJOYSTATE *pRawState) {
+/*bool ControllerModule::GetControllerState(BControllerState& rcs, DIJOYSTATE *pRawState) {
   if(m_bCurrentInitialized) {
     HRESULT hr;
     hr = m_pDIJoystick->Poll();
@@ -225,21 +229,21 @@ bool ControllerModule::GetControllerState(BControllerState& rcs, DIJOYSTATE *pRa
     return true;
   }
   return false;
-}
+}*/
 
 
 
 BKeyMap::BKeyMap() {
-  m_unLeft = VK_LEFT;
-  m_unRight = VK_RIGHT;
-  m_unAccelerate = VK_UP;
-  m_unReverse = VK_DOWN;
-  m_unBreak = VK_CONTROL;
-  m_unPropeller = VK_RETURN;
-  m_unPropellerReverse = VK_SHIFT;
+  m_unLeft = SDLK_LEFT;
+  m_unRight = SDLK_RIGHT;
+  m_unAccelerate = SDLK_UP;
+  m_unReverse = SDLK_DOWN;
+  m_unBreak = SDLK_LCTRL;
+  m_unPropeller = SDLK_RETURN;
+  m_unPropellerReverse = SDLK_LSHIFT;
   m_unJet = 'J';
   m_unHeli = 'H';
-  m_unLift = VK_SPACE;
+  m_unLift = SDLK_SPACE;
   m_unCamera = 'C';
 }
 
@@ -296,8 +300,8 @@ BControllerMapItem::BControllerMapItem() {
   m_jiPart = X;
 }
 
-CString BControllerMapItem::ToString(bool& rbFlipped) {
-  CString sRet;
+/*string BControllerMapItem::ToString(bool& rbFlipped) {
+  string sRet;
   if(m_bButton) {
     sRet.Format("%d (button)", m_nButton + 1);
   } else {
@@ -340,9 +344,9 @@ CString BControllerMapItem::ToString(bool& rbFlipped) {
   rbFlipped = m_bFlipped;
 
   return sRet;
-}
+}*/
 
-bool BControllerMapItem::FromString(CString sItem) {
+/*bool BControllerMapItem::FromString(string sItem) {
   if(sItem.IsEmpty()) {
     return false;
   }
@@ -392,7 +396,7 @@ bool BControllerMapItem::FromString(CString sItem) {
   }
 
   return true;
-}
+}*/
 
 
 

@@ -16,24 +16,40 @@
 #include "BMenu.h"
 #include "BUI.h"
 
-// DirectPlay stuff
-#include <dplay8.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_net.h>
+#include <string>
+#include <vector>
+
+using namespace std;
 
 class CPakoon1View;
 
-
+class BMultiPlay;
+class BClientConnection {
+private:
+	bool thread_exit;
+	SDL_Thread *listen_thread;
+	TCPsocket socket;
+	BMultiPlay *bmp;
+public:
+	BClientConnection(TCPsocket socket, BMultiPlay *bmp);
+	~BClientConnection();
+	static int receiveThread(void *ptr);
+	TCPsocket *getSocket() {return &socket;}
+};
 
 //*****************************************************************************
 class BMultiplayParams {
 public:
   bool    m_bHost;
-  CString m_sHostIPAddress;
-  CString m_sPlayerName;
+  string m_sHostIPAddress;
+  string m_sPlayerName;
   int     m_nMyPlace;
   clock_t m_clockPosLastSent;
 
   BMultiplayParams() {m_bHost = true; 
-                      m_sHostIPAddress = m_sPlayerName = _T(""); 
+                      m_sHostIPAddress = m_sPlayerName = ""; 
                       m_nMyPlace = 0;
                       m_clockPosLastSent = 0;}
 };
@@ -41,7 +57,10 @@ public:
 //*****************************************************************************
 class BMultiPlay {
 
-  IDirectPlay8Peer *m_pDP;
+  //IDirectPlay8Peer *m_pDP;
+  TCPsocket own_tcpsock;
+  SDL_Thread *listen_thread;
+  SDL_Thread *incoming_connection_thread;
   bool              m_bDPInitialized;
 
 public:
@@ -76,13 +95,22 @@ public:
   bool InitMultiplaySession();
   bool StartMultiplaySession(BMultiplayParams *pParams);
   bool EndMultiplaySession();
-  int  GetServiceProviders(CString *psServiceProviders, GUID *pGuids, int nMax);
+  //int  GetServiceProviders(string *psServiceProviders, GUID *pGuids, int nMax);
 
-  bool SendPeerMsg(BYTE bMsg, DPNID id, CString sMsgText);
-  bool SendBroadcastMsg(BYTE bTinyMsg, CString sMsgText);
-  bool SendBinaryBroadcastMsg(BYTE *pbMsg, int nSize);
+  bool SendPeerMsg(char bMsg, int id, string sMsgText);
+  bool SendBroadcastMsg(char bTinyMsg, string sMsgText);
+  bool SendBinaryBroadcastMsg(char *pbMsg, int nSize);
 
-  void ProcessMultiplayMessage(PDPNMSG_RECEIVE pReceiveMsg);
+  void ProcessMultiplayMessage(char *data, int data_size, BClientConnection *client_connection = NULL);
+  
+  // New socket stuff
+private:
+  vector<BClientConnection *> client_connections;
+public:
+  bool send(char to_id, char *buffer, char len, int ignore_place = -1);
+  bool receive(TCPsocket socket, char *to_id, char **buffer, char *len);
+  static int receiveThread(void *ptr);
+  static int listenIncomingConnections(void *ptr);
 };
 
 
@@ -106,7 +134,7 @@ public:
                    m_vVelo1stDeriv.Set(0, 0, 0);
                    m_vVelo2ndDeriv.Set(0, 0, 0);
                    m_pVehicle = 0;
-                   m_sVehicleFilename = _T("");
+                   m_sVehicleFilename = "";
                    m_bVehicleReused = false;
                    m_state = WANTS_TO_SELECT_NEW_RACE;}
 
@@ -115,18 +143,18 @@ public:
   // ID stuff
 
   bool         m_bSelf;
-  DPNID        m_id;
+  int        m_id;
   char         m_sName[100];     // Remote Player name
 
   // Position stuff
 
-  DWORD        m_clockLocationReceived;
-  DWORD        m_clockLocationSent;
+  int        m_clockLocationReceived;
+  int        m_clockLocationSent;
   long         m_nLocationSent;
   long         m_nPrevLocationSent;
   BVector      m_vLocation;
   BOrientation m_orientation;
-  DWORD        m_clockPrevLocationSent;
+  int        m_clockPrevLocationSent;
   BVector      m_vLocationPrev;
   BOrientation m_orientationPrev;
   BVector      m_vVelocity; // A vector that tells where car travels in one clock tick
@@ -137,7 +165,7 @@ public:
   // Vehicle stuff
 
   BVehicle    *m_pVehicle;  // pointer to a vehicle (for visualization purposes only)
-  CString      m_sVehicleFilename; // Filename where the m_pVehicle was loaded from
+  string      m_sVehicleFilename; // Filename where the m_pVehicle was loaded from
   bool         m_bVehicleReused;
 
   double       m_dWidth;    // Actually, half width
@@ -152,9 +180,13 @@ public:
   TRemoteState m_state;
   int          m_nRacePosition;
 
-  CString      m_sCurrentMenuSel; 
+  string      m_sCurrentMenuSel; 
   bool         m_bSelectionMade;
   bool         m_bReadyToStart;
+  
+  // New socket stuff
+  
+  BClientConnection *client_connection;
 };
 
 
@@ -175,7 +207,7 @@ class BGame {
 
   static bool    CheckHighscoresValidity();
   static void    ValidateHighscores();
-  static CString GetHighscoresChecksum();
+  static string GetHighscoresChecksum();
 
 public:
 
@@ -235,8 +267,8 @@ public:
   static bool   m_bMenusCreated;
   static bool   m_bMenuMode;
 
-  static CString m_sScene;
-  static CString m_sVehicle;
+  static string m_sScene;
+  static string m_sVehicle;
 
   static BMenu m_menuMain;
   static BMenu m_menuMultiplay;
@@ -256,7 +288,7 @@ public:
   static bool m_bGameReadyToStart;
   static bool m_bQuitPending;
 
-  static CRITICAL_SECTION m_csMutex;
+  static SDL_mutex *m_csMutex;
   static double m_dProgressMax;
   static double m_dProgressPos;
 
@@ -285,7 +317,7 @@ public:
 
   static bool    m_bRecordSlalom;
   static bool    m_bPassFromRightSlalom;
-  static CString m_sRacePosition;
+  static string m_sRacePosition;
 
   static bool    m_bSlalomPolesVisualOK;
 
@@ -299,25 +331,25 @@ public:
 
   static double     m_dRefTime[7];
   static int        m_nRefK;
-  static CString    m_sRefTime;
+  static string    m_sRefTime;
 
   static bool       m_bMultiplayOn;
   static bool       m_bExitingMultiplay;
   static bool       m_bOKToProceedInMultiplayMenu;
   static bool       m_bMultiplayRaceStarter;
   static clock_t    m_clockMultiRaceStarter;
-  static DWORD      m_clockOffsetFromZeroTime;
+  static int      m_clockOffsetFromZeroTime;
   static int        m_nPlayersInGoal;
-  static DWORD      m_nMultiplayPort;
+  static int      m_nMultiplayPort;
 
   static int        m_nMultiplayMessages;
-  static CString    m_sMultiplayMessages[5];
+  static string    m_sMultiplayMessages[5];
   static bool       m_bChatMessage[5];
   static clock_t    m_clockMultiplayMessages[5];
   static bool       m_bTABChatting;
-  static CString    m_sChatMsg;
+  static string    m_sChatMsg;
 
-  static GUID       m_guidServiceProviders[10];
+  //static GUID       m_guidServiceProviders[10];
 
   // static BUISelectionList m_sellistGameMenu;
 
@@ -328,10 +360,10 @@ public:
   ~BGame();
 
   // Multiplay stuff
-  static int            AddRemotePlayer(DPNID id, BYTE *pPlayerName);
-  static void           HandlePlayerExit(BYTE *pPlayerInfo);
-  static void           HandlePlayerAbnormalExit(DPNID id);
-  static void           UpdatePlayerInfo(BYTE *pPlayerInfo);
+  static int            AddRemotePlayer(int id, char *pPlayerName, BClientConnection *client_connection);
+  static void           HandlePlayerExit(char *pPlayerInfo);
+  static void           HandlePlayerAbnormalExit(int id);
+  static void           UpdatePlayerInfo(char *pPlayerInfo);
   static void           CheckForGameStart();
   static void           GetMultiplayerColor(int nIndex, double &dR, double &dG, double &dB);
   static void           BroadcastCarPosition();
@@ -339,7 +371,7 @@ public:
   static void           BroadcastStateChange();
   static void           BroadcastInGoal();
   static void           BroadcastFinalPosition(int nIndex);
-  static void           ShowMultiplayMessage(CString sMsg, bool bChat = false);
+  static void           ShowMultiplayMessage(string sMsg, bool bChat = false);
   static void           RemoveOldestMultiplayMessage(bool bForce = false);
   static int            GetMyPlace() {return GetMultiplay()->GetParams()->m_nMyPlace;}
 
@@ -360,10 +392,10 @@ public:
   static void           SetProgressPos(double dPos);
   static double         GetRelativeProgress();
 
-  static CString        GetScrambleChecksum();
-  static CString        GetVerifyChecksum(CString sSource);
+  static string        GetScrambleChecksum();
+  static string        GetVerifyChecksum(string sSource);
 
-  static void           UpdateHighScores(CString sSceneName, TGameMode gameMode, double dTime);
+  static void           UpdateHighScores(string sSceneName, TGameMode gameMode, double dTime);
   static void           UpdateHighScoreMenu();
 
   static void           FreezeSimulation(bool bPause = false);
@@ -372,9 +404,9 @@ public:
   static void           SetupMultiplayMenu();
   static void           UpdateSettings();
   static void           EnumerateScreenResolutions();
-  static bool           FindStringFromArray(CString s, CString *psArray, int nItems, int &rnIndex);
+  static bool           FindStringFromArray(string s, string *psArray, int nItems, int &rnIndex);
 
-  static DWORD          GetMultiplayClock() {return ::GetTickCount() - m_clockOffsetFromZeroTime;}
+  static int          GetMultiplayClock() {return SDL_GetTicks() - m_clockOffsetFromZeroTime;}
 
   static double         GetSmoothAlpha();
 
@@ -391,7 +423,7 @@ public:
 
   static void           UpdateAnalyzer();
 
-  static void           MyAfxMessageBox(CString sText, int nTmp = 0);
+  static void           MyAfxMessageBox(string sText, int nTmp = 0);
 };
 
 

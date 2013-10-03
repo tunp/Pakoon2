@@ -4,12 +4,12 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BCmdModule.h"
 #include "BVehicle.h"
 #include "BGame.h"
 #include "BNavSatWnd.h"
 #include "BServiceWnd.h"
+#include "StringTools.h"
 
 
 //*****************************************************************************
@@ -17,7 +17,7 @@
 //*****************************************************************************
 
 //*****************************************************************************
-void PureHelp(BSimulation *pSim, CString sParams, bool bHelp) {
+void PureHelp(BSimulation *pSim, string sParams, bool bHelp) {
   if(bHelp) {
     BGame::GetServiceWnd()->Output("YOU DON'T NEED HELP FOR HELP.            ");
     BGame::GetServiceWnd()->Output("JUST TYPE HELP.                          ");
@@ -26,7 +26,7 @@ void PureHelp(BSimulation *pSim, CString sParams, bool bHelp) {
 }
 
 //*****************************************************************************
-void ListCommands(BSimulation *pSim, CString sParams, bool bHelp) {
+void ListCommands(BSimulation *pSim, string sParams, bool bHelp) {
   if(bHelp) {
     BGame::GetServiceWnd()->Output("LISTS ALL AVAILABLE COMMANDS.            ");
     return;
@@ -43,7 +43,7 @@ void ListCommands(BSimulation *pSim, CString sParams, bool bHelp) {
 
 
 //*****************************************************************************
-void ToggleJet(BSimulation *pSim, CString sParams, bool bHelp) {
+void ToggleJet(BSimulation *pSim, string sParams, bool bHelp) {
   if(bHelp) {
     BGame::GetServiceWnd()->Output("ACTIVATES/DEACTIVATES THE AUXILIARY      ");
     BGame::GetServiceWnd()->Output("JET BOOST. USE CAUTION WITH THE POWERFUL ");
@@ -66,7 +66,7 @@ void ToggleJet(BSimulation *pSim, CString sParams, bool bHelp) {
 
 
 //*****************************************************************************
-void ToggleNavSat(BSimulation *pSim, CString sParams, bool bHelp) {
+void ToggleNavSat(BSimulation *pSim, string sParams, bool bHelp) {
   if(bHelp) {
     BGame::GetServiceWnd()->Output("DISPLAYES/HIDES THE NAVIGATION SATELLITE ");
     BGame::GetServiceWnd()->Output("(NAVSAT) PANEL. USE THE HANDLE TO SET    ");
@@ -85,7 +85,7 @@ void ToggleNavSat(BSimulation *pSim, CString sParams, bool bHelp) {
 }
 
 //*****************************************************************************
-void ToggleService(BSimulation *pSim, CString sParams, bool bHelp) {
+void ToggleService(BSimulation *pSim, string sParams, bool bHelp) {
   if(bHelp) {
     BGame::GetServiceWnd()->Output("DISPLAYES/HIDES THIS PANEL.              ");
     return;
@@ -95,7 +95,7 @@ void ToggleService(BSimulation *pSim, CString sParams, bool bHelp) {
 
 
 //*****************************************************************************
-void Exit(BSimulation *pSim, CString sParams, bool bHelp) {
+void Exit(BSimulation *pSim, string sParams, bool bHelp) {
   if(bHelp) {
     BGame::GetServiceWnd()->Output("HIDES THIS PANEL.");
     return;
@@ -105,7 +105,7 @@ void Exit(BSimulation *pSim, CString sParams, bool bHelp) {
 
 
 //*****************************************************************************
-void SetNavSatResolution(BSimulation *pSim, CString sParams, bool bHelp) {
+void SetNavSatResolution(BSimulation *pSim, string sParams, bool bHelp) {
   if(bHelp) {
     BGame::GetServiceWnd()->Output("\"SET NAVSAT RESOLUTION <RES>\"            ", 0, 1, 0);
     BGame::GetServiceWnd()->Output("SETS THE SIZE OF THE AREA SHOWN IN THE   ");
@@ -114,7 +114,7 @@ void SetNavSatResolution(BSimulation *pSim, CString sParams, bool bHelp) {
     return;
   }
   double dRes;
-  if(sscanf(LPCTSTR(sParams), "%lf", &dRes) == 1) {
+  if(sscanf(sParams.c_str(), "%lf", &dRes) == 1) {
     BGame::GetNavSat()->SetResolution(dRes);
     BGame::GetServiceWnd()->Output("NAVSAT TRACKING RESOLUTION CHANGED");
   } else {
@@ -151,9 +151,9 @@ BCmdModule::BCmdModule() {
 
 
 //*****************************************************************************
-void BCmdModule::RegisterCmdFunction(CString sCommand, 
+void BCmdModule::RegisterCmdFunction(string sCommand, 
                                      int nParams, 
-                                     void (*pfnHandler)(BSimulation *pSim, CString sParams, bool bHelp)) {
+                                     void (*pfnHandler)(BSimulation *pSim, string sParams, bool bHelp)) {
   // Add a new command handler
   BCmdHandler *p = m_pHandlers;
   if(!p) {
@@ -175,12 +175,12 @@ void BCmdModule::RegisterCmdFunction(CString sCommand,
 }
 
 //*****************************************************************************
-bool BCmdModule::StringsExactlySame(CString s1, CString sGiven) {
-  return(s1.CompareNoCase(sGiven) == 0);
+bool BCmdModule::StringsExactlySame(string s1, string sGiven) {
+  return(s1.compare(sGiven) == 0);
 }
 
 //*****************************************************************************
-bool BCmdModule::StringsPartiallySame(CString s1, CString sGiven, int &rnParamStart) {
+bool BCmdModule::StringsPartiallySame(string s1, string sGiven, int &rnParamStart) {
   // Check if identical
   if(StringsExactlySame(s1, sGiven)) {
     return true;
@@ -189,28 +189,28 @@ bool BCmdModule::StringsPartiallySame(CString s1, CString sGiven, int &rnParamSt
   int i1 = 0, i2 = 0;
 
   // Eat away leading spaces
-  while((i2 < sGiven.GetLength()) && 
-        (sGiven.GetAt(i2) == ' ')) {
+  while((i2 < sGiven.length()) && 
+        (sGiven.at(i2) == ' ')) {
     ++i2;
   }
-  if(i2 >= sGiven.GetLength()) {
+  if(i2 >= sGiven.length()) {
     return false;
   }
-  while((i1 < s1.GetLength()) && 
-    (i2 < sGiven.GetLength())) {
-    if(sGiven.GetAt(i2) != s1.GetAt(i1)) {
-      if(sGiven.GetAt(i2) == ' ') {
+  while((i1 < s1.length()) && 
+    (i2 < sGiven.length())) {
+    if(sGiven.at(i2) != s1.at(i1)) {
+      if(sGiven.at(i2) == ' ') {
         // Skip to next words
-        while((i2 < sGiven.GetLength()) && 
-              (sGiven.GetAt(i2) == ' ')) {
+        while((i2 < sGiven.length()) && 
+              (sGiven.at(i2) == ' ')) {
           ++i2;
         }
-        while((i1 < s1.GetLength()) && 
-          (s1.GetAt(i1) != ' ')) {
+        while((i1 < s1.length()) && 
+          (s1.at(i1) != ' ')) {
           ++i1;
         }
-        while((i1 < s1.GetLength()) && 
-          (s1.GetAt(i1) == ' ')) {
+        while((i1 < s1.length()) && 
+          (s1.at(i1) == ' ')) {
           ++i1;
         }
       } else {
@@ -221,8 +221,8 @@ bool BCmdModule::StringsPartiallySame(CString s1, CString sGiven, int &rnParamSt
       ++i1;
     }
   }
-  while((i2 < sGiven.GetLength()) && 
-        (sGiven.GetAt(i2) == ' ')) {
+  while((i2 < sGiven.length()) && 
+        (sGiven.at(i2) == ' ')) {
     ++i2;
   }
   rnParamStart = i2;
@@ -231,7 +231,7 @@ bool BCmdModule::StringsPartiallySame(CString s1, CString sGiven, int &rnParamSt
 
 
 //*****************************************************************************
-BCmdHandler *BCmdModule::FindCommand(CString sCommand, int &rnParamStart) {
+BCmdHandler *BCmdModule::FindCommand(string sCommand, int &rnParamStart) {
   BCmdHandler *p = m_pHandlers;
   // First look for an exact match
   while(p && !StringsExactlySame(p->m_sCommand, sCommand)) {
@@ -244,7 +244,7 @@ BCmdHandler *BCmdModule::FindCommand(CString sCommand, int &rnParamStart) {
       p = p->m_pNext;
     }    
   } else {
-    rnParamStart = p->m_sCommand.GetLength() + 1;
+    rnParamStart = p->m_sCommand.length() + 1;
   }
   return p;
 }
@@ -252,17 +252,16 @@ BCmdHandler *BCmdModule::FindCommand(CString sCommand, int &rnParamStart) {
 
 
 //*****************************************************************************
-void BCmdModule::Help(BSimulation *pSim, CString sParams) {
+void BCmdModule::Help(BSimulation *pSim, string sParams) {
   // BGame::GetServiceWnd()->Output("12345678901234567890123456789012345678901");
   int nTmp;
-  if(!sParams.IsEmpty()) {
+  if(!sParams.empty()) {
     BCmdHandler *pCommand = FindCommand(sParams, nTmp);
     if(pCommand) {
       (*(pCommand->m_pfnHandler))(m_pSim, sParams, true);
       return;
     } else {
-      CString sError;
-      sError.Format("THERE'S NO COMMAND \"%s\". TO SEE ALL COMMANDS, TYPE \"LIST COMMANDS\"", sParams);
+      string sError = "THERE'S NO COMMAND \"" + sParams + "\". TO SEE ALL COMMANDS, TYPE \"LIST COMMANDS\"";
       BGame::GetServiceWnd()->Output(sError, 0.75, 0, 0);
       return;
     }
@@ -277,28 +276,27 @@ void BCmdModule::Help(BSimulation *pSim, CString sParams) {
 
 
 //*****************************************************************************
-void BCmdModule::Run(CString sCommand) {
-  sCommand.MakeUpper();
+void BCmdModule::Run(string sCommand) {
+  StringTools::makeUpper(sCommand);
   int nParamStart = 0;
   BCmdHandler *pCommand = FindCommand(sCommand, nParamStart);
   if(pCommand) {
     // Run command
-    CString sParams = "";
-    if(nParamStart < sCommand.GetLength()) {
-      sParams = LPCTSTR(sCommand) + nParamStart;
+    string sParams = "";
+    if(nParamStart < sCommand.length()) {
+      sParams = sCommand.substr(nParamStart);
     }
-    if(pCommand->m_sCommand.Compare("HELP") == 0) {
+    if(pCommand->m_sCommand.compare("HELP") == 0) {
       // Help is special command that needs access to other commands.
       // That's why it's handled within the class
       Help(m_pSim, sParams);
     } else {
-      (*(pCommand->m_pfnHandler))(m_pSim, sParams);
+      (*(pCommand->m_pfnHandler))(m_pSim, sParams, false);
     }
   } else {
     // Report command not found
-    if(!sCommand.IsEmpty()) {
-      CString sError;
-      sError.Format("UNKNOWN COMMAND: <%s>", sCommand);
+    if(!sCommand.empty()) {
+      string sError = "UNKNOWN COMMAND: <" + sCommand + ">";
       BGame::GetServiceWnd()->Output(sError, 0.75, 0, 0);
     }
   }

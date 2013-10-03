@@ -6,16 +6,24 @@
 
 #pragma once
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "BaseClasses.h"
-#include "gl\gl.h"
-#include "gl\glu.h"
-#include "gl\glext.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
 #include "Settings.h"
+
+#include <string>
+
+using namespace std;
 
 class BTexture {
 public:
   bool     m_bValid;
-  CString  m_sFilename;
+  string  m_sFilename;
   GLuint   m_nGLTexName;
   int      m_nXSize;
   int      m_nYSize;
@@ -28,7 +36,7 @@ public:
 
 class BTextures {
 
-  static bool LoadTextureFromTGA(const CString sFilename, int nTextureIndex, bool bMipmapped);
+  static bool LoadTextureFromTGA(const string sFilename, int nTextureIndex, bool bMipmapped);
   static void LoadAllInternalTextures();
 
 public:
@@ -71,8 +79,8 @@ public:
   static void Init();
   static void Exit();
   static void Use(int nTextureIndex);
-  static int  LoadTexture(CString sTextureName, bool bMipmapped = true);
-  static int  ReloadTexture(int nTextureIndex, CString sTextureName);
+  static int  LoadTexture(string sTextureName, bool bMipmapped = true);
+  static int  ReloadTexture(int nTextureIndex, string sTextureName);
   static void StopUsingTexture(int nTextureIndex);
 
   static void GetRGBFromTexture(int nTextureIndex, 

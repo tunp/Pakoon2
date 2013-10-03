@@ -8,16 +8,20 @@
 
 #include "BaseClasses.h"
 
+#include <string>
+
+using namespace std;
+
 class BSimulation;
 
 class Settings {
-  static CString m_sFilename;
+  static string m_sFilename;
 public:
-  static CString m_sBrowserPath;
+  static string m_sBrowserPath;
 
   Settings() {};
 
-  static void SetFilename(CString sFilename) {m_sFilename = sFilename;}
+  static void SetFilename(string sFilename) {m_sFilename = sFilename;}
   static void ReadSettings(BSimulation *pSimulation);
   static void WriteSettings(BSimulation *pSimulation);
 };

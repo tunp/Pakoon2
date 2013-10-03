@@ -6,11 +6,16 @@
 
 #pragma once
 
-#include "BaseClasses.h"
-#include "gl\gl.h"
-#include "gl\glu.h"
-#include "gl\glext.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
+#include "BaseClasses.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+
+#include <SDL2/SDL.h>
 
 class OpenGLHelpers {
 
@@ -49,7 +54,7 @@ public:
                                      double   dTXTRMax);
   static void TriangleFan(BVector *pvPoints, int nPoints);
   static void TriangleFanWithNormals(BVector *pvPoints, BVector *pvNormals, int nPoints);
-  static void Line(BVector& p1, BVector& p2);
+  static void Line(BVector p1, BVector p2);
   static void Lines(BVector *pvPoints, int nPoints);
 
   static void CreateTexName(int nTexIndex, GLuint *pnTexName);
@@ -59,7 +64,7 @@ public:
   static void BindMipMapTexture(int nWidth, int nHeight, int nComponents, GLenum format, GLubyte *pStart, int nTexIndex, GLuint nTexName);
   static void BindTexture(int nWidth, int nHeight, int nComponents, GLenum format, GLubyte *pStart, int nTexIndex, GLuint nTexName, bool bForceCreate = false);
   static void SetTexCoord(double x, double y);
-  static void DrawVeil(double dRed, double dGreen, double dBlue, double dAlpha, CRect &rectWnd);
+  static void DrawVeil(double dRed, double dGreen, double dBlue, double dAlpha, SDL_Rect &rectWnd);
   static void DrawTexturedRectangle(double dX, 
                                     double dY, 
                                     double dTexX, 

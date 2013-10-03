@@ -4,7 +4,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "stdafx.h"
 #include "BMenu.h"
 #include "BTextRenderer.h"
 #include "BGame.h"
@@ -22,7 +21,7 @@ BMenu::BMenu() {
   m_bDrawLine = true;
 
   m_listMenu.SetItems(0, 0);
-  m_align = BTextRenderer::TTextAlign::ALIGN_CENTER;
+  m_align = BTextRenderer::ALIGN_CENTER;
 }
 
 

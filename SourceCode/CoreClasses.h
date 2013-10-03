@@ -32,27 +32,27 @@ public:
   inline BVector(double a, double b, double c) {m_dX = a; m_dY = b; m_dZ = c;};
 
   inline void    Set(double a, double b, double c) {m_dX = a; m_dY = b; m_dZ = c;};
-  inline BVector operator+(BVector& p) {
+  inline BVector operator+(BVector p) {
     BVector vRet;
     vRet.m_dX = m_dX + p.m_dX;
     vRet.m_dY = m_dY + p.m_dY;
     vRet.m_dZ = m_dZ + p.m_dZ;
     return vRet;
   };
-  inline BVector& operator+=(BVector& p) {
+  inline BVector& operator+=(BVector p) {
     m_dX += p.m_dX;
     m_dY += p.m_dY;
     m_dZ += p.m_dZ;
     return *this;
   };
-  inline BVector operator-(BVector& p) {
+  inline BVector operator-(BVector p) {
     BVector vRet;
     vRet.m_dX = m_dX - p.m_dX;
     vRet.m_dY = m_dY - p.m_dY;
     vRet.m_dZ = m_dZ - p.m_dZ;
     return vRet;
   };
-  inline BVector& operator-=(BVector& p) {
+  inline BVector& operator-=(BVector p) {
     m_dX -= p.m_dX;
     m_dY -= p.m_dY;
     m_dZ -= p.m_dZ;
@@ -66,14 +66,14 @@ public:
     return vRet;
   };
   inline double Length() {return sqrt((m_dX * m_dX) + (m_dY * m_dY) + (m_dZ * m_dZ));};
-  inline BVector CrossProduct(BVector& p) {
+  inline BVector CrossProduct(BVector p) {
     BVector vRet;
     vRet.Set(m_dY * p.m_dZ - m_dZ * p.m_dY,
              m_dZ * p.m_dX - m_dX * p.m_dZ,
              m_dX * p.m_dY - m_dY * p.m_dX);
     return vRet;
   };
-  inline double  ScalarProduct(BVector& p) {
+  inline double  ScalarProduct(BVector p) {
     return m_dX * p.m_dX + m_dY * p.m_dY + m_dZ * p.m_dZ;
   };
   inline void    ToUnitLength() {

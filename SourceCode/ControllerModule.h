@@ -8,9 +8,9 @@
 
 #include "BaseClasses.h"
 
-#define DIRECTINPUT_VERSION 0x0800
+#include <string>
 
-#include "DInput.h"
+using namespace std;
 
 class BControllerState {
 public:
@@ -26,17 +26,17 @@ public:
 
 class BKeyMap {
 public:
-  UINT m_unPropeller;
-  UINT m_unPropellerReverse;
-  UINT m_unLeft;
-  UINT m_unRight;
-  UINT m_unAccelerate;
-  UINT m_unReverse;
-  UINT m_unBreak;
-  UINT m_unJet;
-  UINT m_unHeli;
-  UINT m_unLift;
-  UINT m_unCamera;
+  unsigned m_unPropeller;
+  unsigned m_unPropellerReverse;
+  unsigned m_unLeft;
+  unsigned m_unRight;
+  unsigned m_unAccelerate;
+  unsigned m_unReverse;
+  unsigned m_unBreak;
+  unsigned m_unJet;
+  unsigned m_unHeli;
+  unsigned m_unLift;
+  unsigned m_unCamera;
 
   BKeyMap();
 };
@@ -53,8 +53,8 @@ public:
   TJoyItem m_jiPart;
 
   BControllerMapItem();
-  CString ToString(bool& rbFlipped);
-  bool    FromString(CString sItem);
+  //string ToString(bool& rbFlipped);
+  //bool    FromString(string sItem);
 };
 
 class BControllerMap {
@@ -75,25 +75,25 @@ public:
 class ControllerModule {
 public:
   static bool           m_bInitialized;
-  static LPDIRECTINPUT  m_lpDirectInput;
+  //static LPDIRECTINPUT  m_lpDirectInput;
   static int            m_nControllers;
-  static CString        m_sControllers[20];
-  static GUID           m_guids[20];
+  static string        m_sControllers[20];
+  //static GUID           m_guids[20];
   static int            m_nCurrent;
   static bool           m_bCurrentInitialized;
-  static HWND           m_hwnd;
-  static LPDIRECTINPUTDEVICE2 m_pDIJoystick;
+  //static HWND           m_hwnd;
+  //static LPDIRECTINPUTDEVICE2 m_pDIJoystick;
   static BKeyMap        m_keymap;
   static BControllerMap m_controllermap;
 
        ControllerModule();
-  static void Initialize(HWND hwndFrameWnd);
-  static bool SwitchToController(int nIndex);
-  static bool GetControllerState(BControllerState& rcs, DIJOYSTATE *pRawState);
+  //static void Initialize(HWND hwndFrameWnd);
+  //static bool SwitchToController(int nIndex);
+  //static bool GetControllerState(BControllerState& rcs, DIJOYSTATE *pRawState);
 
-  static double GetValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState);
-  static bool   GetButtonEventFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState);
-  static bool   GetButtonValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState);
+  //static double GetValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState);
+  //static bool   GetButtonEventFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState);
+  //static bool   GetButtonValueFromRaw(BControllerMapItem* pcmi, DIJOYSTATE *pRawState);
 };
 
 
