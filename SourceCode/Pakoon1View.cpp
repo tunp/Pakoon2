@@ -21,6 +21,7 @@
 #include "BUI.h"
 
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -4745,13 +4746,15 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
     n100SecondsTotal = -n100SecondsTotal;
   }
 
-  sRaceTime << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
-  sAirTime << nSecondsAir << "." << n100SecondsAir;
-  sAirTime2 << nSecAirBest << "." << n100SecAirBest;
+	sRaceTime.fill('0');
+	sAirTime.fill('0');
+	sAirTime2.fill('0');
+	
+  sRaceTime << setw(2) << nMinutesTotal << ":" << setw(2) << nSecondsTotal << "." << setw(2) << n100SecondsTotal;
+  sAirTime << setw(2) << nSecondsAir << "." << setw(2) << n100SecondsAir;
+  sAirTime2 << setw(2) << nSecAirBest << "." << setw(2) << n100SecAirBest;
 
-  sSpeed << BGame::GetSimulation()->GetVehicle()->m_dSpeed * 
-                         g_dPhysicsStepsInSecond * 
-                         3.6;
+  sSpeed << (int) (BGame::GetSimulation()->GetVehicle()->m_dSpeed * g_dPhysicsStepsInSecond * 3.6);
 
 
   // Race time, air time and speed
@@ -4848,10 +4851,9 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   // Draw offset from goal
   if(BGame::m_gameMode != BGame::SLALOM) {
     stringstream sGoal;
-    sGoal << vGoal.m_dX - BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dX << "m";
+    sGoal << (int) (vGoal.m_dX - BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dX) << "m";
     if(sGoal.str().at(0) != '-') {
-      sGoal.str("+");
-      sGoal << sGoal;
+      sGoal.str("+" + sGoal.str());
       glTranslatef(100, 0, 0); // on right
     } else {
       glTranslatef(-100, 0, 0); // on left
@@ -4870,6 +4872,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   // Draw faint fps
   if(BGame::m_cOnScreenInfo & BGame::FPS) {
     stringstream sFPS;
+    sFPS.precision(3);
     sFPS << g_dRate;
     glScalef(0.5, 0.5, 0.5);
     glTranslatef(m_rectWnd.w * 2 - sFPS.str().length() * 25 - 5, 10, 0); // use a little margin for visual pleasense
@@ -4893,7 +4896,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
 
       double dDist = BGame::m_remotePlayer[i].m_vLocation.m_dY - BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dY;
       stringstream sPos;
-      sPos << "(" << ((dDist > 0) ? "ahead" : "behind") << " " << ((dDist > 0) ? dDist : -dDist) << ")";
+      sPos << "(" << ((dDist > 0) ? "ahead" : "behind") << " " << (int) ((dDist > 0) ? dDist : -dDist) << ")";
 
       double dAlpha = 1.0 - (fabs(dDist) / 1000.0);
       if(dAlpha < 0.2) {

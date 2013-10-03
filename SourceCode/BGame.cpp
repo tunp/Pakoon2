@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
 
@@ -1606,6 +1607,7 @@ void BGame::UpdateHighScoreMenu() {
     // Update Highscore menu's selection lists
 
     stringstream sTmp;
+    sTmp.fill('0');
     int nMinutesTotal = 0;
     int nSecondsTotal = 0;
     int n100SecondsTotal = 0;
@@ -1617,7 +1619,7 @@ void BGame::UpdateHighScoreMenu() {
       nMinutesTotal = dRace / g_dPhysicsStepsInSecond / 60;
       nSecondsTotal = (dRace - (nMinutesTotal * g_dPhysicsStepsInSecond * 60)) / g_dPhysicsStepsInSecond;
       n100SecondsTotal = (100 * (dRace - (nMinutesTotal * g_dPhysicsStepsInSecond * 60 + nSecondsTotal * g_dPhysicsStepsInSecond))) / g_dPhysicsStepsInSecond;
-      sTmp << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
+      sTmp << setw(2) << nMinutesTotal << ":" << setw(2) << nSecondsTotal << "." << setw(2) << n100SecondsTotal;
       sHighscoresSpeed[i] = sTmp.str();
     } else {
       sHighscoresSpeed[i] = " ";
@@ -1628,7 +1630,7 @@ void BGame::UpdateHighScoreMenu() {
       nSecondsTotal = (dSlalom - (nMinutesTotal * g_dPhysicsStepsInSecond * 60)) / g_dPhysicsStepsInSecond;
       n100SecondsTotal = (100 * (dSlalom - (nMinutesTotal * g_dPhysicsStepsInSecond * 60 + nSecondsTotal * g_dPhysicsStepsInSecond))) / g_dPhysicsStepsInSecond;
       sTmp.str("");
-      sTmp << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
+      sTmp << setw(2) << nMinutesTotal << ":" << setw(2) << nSecondsTotal << "." << setw(2) << n100SecondsTotal;
       sHighscoresSlalom[i] = sTmp.str();
     } else {
       sHighscoresSlalom[i] = " ";
@@ -1639,7 +1641,7 @@ void BGame::UpdateHighScoreMenu() {
       nSecondsTotal = (dAir - (nMinutesTotal * g_dPhysicsStepsInSecond * 60)) / g_dPhysicsStepsInSecond;
       n100SecondsTotal = (100 * (dAir - (nMinutesTotal * g_dPhysicsStepsInSecond * 60 + nSecondsTotal * g_dPhysicsStepsInSecond))) / g_dPhysicsStepsInSecond;
       sTmp.str("");
-      sTmp << nMinutesTotal << ":" << nSecondsTotal << "." << n100SecondsTotal;
+      sTmp << setw(2) << nMinutesTotal << ":" << setw(2) << nSecondsTotal << "." << setw(2) << n100SecondsTotal;
       sHighscoresAir[i] = sTmp.str();
     } else {
       sHighscoresAir[i] = " ";
