@@ -8,7 +8,6 @@
 #include "BSimulation.h"
 #include "BTextRenderer.h"
 #include "BGame.h"
-#include "Pakoon1Doc.h"
 #include "Pakoon1View.h"
 #include "BMenu.h"
 

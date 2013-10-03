@@ -11,10 +11,8 @@
 #include "OpenGLHelpers.h"
 #include "OpenGLExtFunctions.h"
 #include "BTextures.h"
-#include "resource.h"
 #include "BGame.h"
 #include "FileIOHelpers.h"
-#include "Pakoon1Doc.h"
 #include "Pakoon1View.h"
 
 #include <sstream>

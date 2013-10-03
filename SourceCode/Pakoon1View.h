@@ -17,7 +17,6 @@
 #include "BaseClasses.h"
 #include "BGame.h"
 #include "BMessages.h"
-#include "Pakoon1Doc.h"
 
 #include <string>
 
@@ -174,7 +173,7 @@ public:
   void (CPakoon1View::*m_pDrawFunction)();
   void (CPakoon1View::*m_pKeyDownFunction)(unsigned, unsigned, unsigned);
 
-  CPakoon1Doc* GetDocument();
+  //CPakoon1Doc* GetDocument();
 
 // Operations
 public:

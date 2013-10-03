@@ -3,7 +3,6 @@
 // (c) Copyright 2002, Mikko Oksalahti (see end of file for details)
 //
 
-#include "Pakoon1Doc.h"
 #include "Pakoon1View.h"
 
 #include "OpenGLHelpers.h"
