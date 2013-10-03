@@ -728,6 +728,7 @@ void BGame::SetupMenus() {
   m_menuChooseScene.m_nItems = nScenes;
   m_menuChooseScene.m_sItems = new string[nScenes];
   m_menuChooseScene.m_items = new BMenuItem[nScenes];
+  m_menuChooseScene.m_listMenu.m_dOffsetToLeft = 0.05;
 
   // Load .Scene files
     i = 0;
@@ -745,6 +746,14 @@ void BGame::SetupMenus() {
                                          sImageFile,
                                          scenes[x]);
     m_menuChooseScene.m_items[i].m_nAssocImage = BTextures::LoadTexture(sImageFile, false);
+    BVector vTmp;
+    FileHelpers::GetKeyVectorFromINIFile("Properties",
+                                         "MapPosition",
+                                         BVector(580, 85, 0),
+                                         vTmp,
+                                         scenes[x]);
+    m_menuChooseScene.m_items[i].m_nValue = int(vTmp.m_dX);
+    m_menuChooseScene.m_items[i].m_nValue2 = int(vTmp.m_dY);
     ++i;
   }
   for(i = 0; i < m_menuChooseScene.m_nItems; ++i) {
