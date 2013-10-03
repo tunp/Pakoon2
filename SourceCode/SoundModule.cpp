@@ -8,6 +8,8 @@
 #include "BGame.h"
 #include "FileIOHelpers.h"
 
+#include <ctime>
+
 bool SoundModule::m_bRunning = false;
 
 /*int  SoundModule::m_chaMenuMusic = 0;

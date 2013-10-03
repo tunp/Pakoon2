@@ -97,7 +97,7 @@ void BMessages::Show(int nCharsPerLine,
     pNew->m_nCharWidth   = pNew->m_nCharPartWidth * 3 + pNew->m_nCharPartGap * 2;
     pNew->m_nCharHeight  = pNew->m_nCharPartWidth * 5 + pNew->m_nCharPartGap * 4;
     pNew->m_nCharGap     = pNew->m_nCharPartGap * 4;
-    pNew->m_nTotalWidth  = sText.length() * pNew->m_nCharWidth + abs(sText.length() - 1) * pNew->m_nCharGap;
+    pNew->m_nTotalWidth  = sText.length() * pNew->m_nCharWidth + abs((int)sText.length() - 1) * pNew->m_nCharGap;
   }
 }
 

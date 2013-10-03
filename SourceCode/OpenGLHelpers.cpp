@@ -16,8 +16,8 @@ bool OpenGLHelpers::m_bMultiTexturing = false;
 
 // Multitexturing support functions
 #ifdef _WIN32
-//PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB = NULL;
-//PFNGLACTIVETEXTUREARBPROC   glActiveTextureARB = NULL;
+PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB = NULL;
+PFNGLACTIVETEXTUREARBPROC   glActiveTextureARB = NULL;
 #endif
 
 GLuint OpenGLHelpers::m_nDLTex = 0;

@@ -2586,7 +2586,7 @@ bool BMultiPlay::EndMultiplaySession() {
 
 bool BMultiPlay::send(char to_id, char *buffer, char len, int ignore_place) {
 	//to_id -1 = send everyone
-	char new_buffer[len + 2];
+	char *new_buffer = new char[len + 2];
 	new_buffer[0] = len;
 	new_buffer[1] = to_id;
 	memcpy(new_buffer + 2, buffer, len);
@@ -2600,6 +2600,7 @@ bool BMultiPlay::send(char to_id, char *buffer, char len, int ignore_place) {
 
 				if (result < len) {
 					cout << "SDLNet_TCP_Send: " << SDLNet_GetError() << endl;
+					delete[] new_buffer;
 					return false;
 				}
 			}
@@ -2608,10 +2609,11 @@ bool BMultiPlay::send(char to_id, char *buffer, char len, int ignore_place) {
 		int result = SDLNet_TCP_Send(own_tcpsock, new_buffer, len);
 		if (result < len) {
 			cout << "SDLNet_TCP_Send: " << SDLNet_GetError() << endl;
+			delete[] new_buffer;
 			return false;
 		}
 	}
-
+	delete[] new_buffer;
 	return true;
 }
 
