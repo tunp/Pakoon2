@@ -1,0 +1,24 @@
+; Scene file saved by Pakoon Scene Editor v1.ONE
+
+[Properties]
+
+ Name = Mutalahti, Finland
+ Image = ./Textures/IceWorld.tga
+ GroundFriction = 0.25
+ Ground1Scaler = 0.02
+ Ground2Scaler = 0.09
+ SkyTexture = ./Textures/SkyDetailed.tga
+ Ground1Texture = ./Textures/Snowy1.tga
+ Ground2Texture = ./Textures/Snowy1.tga
+ EnvMapTexture = ./Textures/IceWorld_EnvMap.tga
+ BestAirTime = 6279.52000
+ TerrainStyle = Basic
+ MapPosition = 599, 77, 0
+ Checksum = pMfnFIMruqPSVgdhBPoFyFUG1xqHJJEvbKu2GTCNPk7u
+
+[Geometry]
+
+ Origin = 381056.000000, 281728.000000, 0.000000
+ StartLocation = 10.000000, -20.000000, -1526.000000
+ Goal = 704.190770, 6000.000000, 0.000000
+

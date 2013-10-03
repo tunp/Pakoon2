@@ -1,0 +1,202 @@
+[Properties]
+
+Name = Chevrolet-1957
+Image = ./Textures/Chevy57.tga
+SteeringAid = Off
+FuelLocation = 0, 2, 0
+FuelDistance = 1.5
+Checksum = TkKrivL7sNuJdjVTcRkRaKOqGJNGAmCpSVquETniMH2c
+
+[Geometry]
+
+RightDir = +X
+ForwardDir = +Z
+DownDir = -Y
+Scale = 0.0225
+
+[Part1]
+
+Shape = ./Models/Chevy57_RedPaint.obj
+Color = 0.8, 0.16, 0.1
+;Color = 0.3, 0.7, 1
+;Color = 0.7, 0.95, 1
+Ambient = 0.85
+Diffuse = 1
+Specular = 1
+Brilliance = 20
+Texture = ./Textures/BasicShinyFinish.tga
+TextureMapping = EnvMap
+
+[Part2]
+
+Shape = ./Models/Chevy57_Chrome.obj
+Color = 1, 1, 1
+Ambient = 0.75
+Diffuse = 1
+Specular = 1.0
+Brilliance = 10
+Texture = INT_TXTR_CHROME
+TextureMapping = EnvMap
+
+[Part3]
+
+Shape = ./Models/Chevy57_Window.obj
+Color = 0.5, 0.5, 1.0
+Ambient = 0.75
+Diffuse = 1
+Specular = 1.0
+Brilliance = 10
+Texture = INT_TXTR_CHROME
+TextureMapping = EnvMap
+
+[Part4]
+
+Shape = ./Models/Chevy57_Black.obj
+Color = 0.2, 0.2, 0.2
+Ambient = 0.65
+Diffuse = 1
+Specular = 0.5
+Brilliance = 1
+Texture = INT_TXTR_NONE
+
+[Part5]
+
+Shape = ./Models/Chevy57_White.obj
+Color = 1, 1, 0.95
+Ambient = 0.65
+Diffuse = 1
+Specular = 1.0
+Brilliance = 10
+Texture = INT_TXTR_NONE
+
+[PartShadow]
+
+Shape = ./Models/BogianShadow.obj
+
+[Body]
+
+BodyPoint1 = -0.9, 1, -0.15, 1, 1
+BodyPoint2 =  0.9, 1, -0.15, 1, 1
+BodyPoint3 = -0.9, -2.3, -0.15, 1, 1
+BodyPoint4 =  0.9, -2.3, -0.15, 1, 1
+BodyPoint5 = -0.9, 1.75, -0.1,   1, 0.1
+BodyPoint6 =  0.9, 1.75, -0.1,   1, 0.1
+BodyPoint7 = -0.9, 1.85, -0.7,   1, 1
+BodyPoint8 =  0.9, 1.85, -0.7,   1, 1
+BodyPoint9 = -0.8, -0.25, -1.2,  1, 1
+BodyPoint10 =  0.8, -0.25, -1.2,  1, 1
+BodyPoint11 = -0.9, -3.5, -0.1,  1, 1
+BodyPoint12 =  0.9, -3.5, -0.1,  1, 1
+BodyPoint13 = -0.9, -3.7, -0.8,  1, 1
+BodyPoint14 =  0.9, -3.7, -0.8,  1, 1
+BodyPoint15 = -1, 0, 0,  1, 0.1
+BodyPoint16 =  1, 0, 0,  1, 0.1
+
+ForwardPoints = 3, 1, 4, 2
+RightPoints = 1, 2, 3, 4
+
+;LiftPoint1 = 1
+;LiftPoint2 = 3
+
+LiftPoint1 = 8
+LiftPoint2 = 14
+
+TotalMass = 1000.0
+
+[Aerodynamics]
+
+BodyPoint1  = 0,   0,   1,       0.5, 1,  0
+BodyPoint2  = 0,   0,   1,       0.5, 1,  0
+BodyPoint3  = 0,   0,   1,       0.5, 1,  0
+BodyPoint4  = 0,   0,   1,       0.5, 1,  0
+BodyPoint5  = 0,   1,  0,      0.5, 1,  0
+BodyPoint6  = 0,   1,  0,      0.5, 1,  0
+BodyPoint7  = 0,   0.05, -1, 	 0.5, 1,  0
+BodyPoint8  = 0,   0.05, -1,  	 0.5, 1,  0
+BodyPoint9  = 0,  0, -1,        0.5, 1,  0
+BodyPoint10 = 0,  0, -1,        0.5, 1,  0
+BodyPoint11 = -1,  0,  0, 	 0.25, 0.25,  0
+BodyPoint12 = 1,  0,  0,   	 0.25, 0.25,  0
+BodyPoint13 = 0,  0, -1, 	 0.5, 1,  0
+BodyPoint14 = 0,  0, -1, 	 0.5, 1,  0
+BodyPoint15 = 0, -1, 0,          0.5, 1,  0
+BodyPoint16 = 0, -1, 0,           0.5, 1,  0
+
+
+[Wheels]
+
+Wheel1Turn = Turns, 30, 1
+Wheel1Side = Left
+Wheel1Drive = 0.85
+Wheel1Brake = 1
+Wheel1Friction = 0.5
+Wheel1Radius = 0.36
+Wheel1ProfileHeight = 0.12
+Wheel1Width = 0.2
+Wheel1Style = ChromeDome
+Wheel1SuspBodyPoint = 1
+Wheel1SuspBasePoint = -0.9, 1, -1.4
+Wheel1SuspDir = 0, 0, 1
+Wheel1SuspRelaxedDistance = 1.6
+Wheel1SuspThrow = 1
+Wheel1SuspStiffness = 0.05
+Wheel1MinSusp = 0.07
+Wheel1MaxSusp = 0.3
+
+Wheel2Turn = Turns, 30, 1
+Wheel2Side = Right
+Wheel2Drive = 0.85
+Wheel2Brake = 1
+Wheel2Friction = 0.5
+Wheel2Radius = 0.36
+Wheel2ProfileHeight = 0.12
+Wheel2Width = 0.2
+Wheel2Style = ChromeDome
+Wheel2SuspBodyPoint = 2
+Wheel2SuspBasePoint = 0.9, 1, -1.4
+Wheel2SuspDir = 0, 0, 1
+Wheel2SuspRelaxedDistance = 1.6
+Wheel2SuspThrow = 1
+Wheel2SuspStiffness = 0.05
+Wheel2MinSusp = 0.07
+Wheel2MaxSusp = 0.3
+
+Wheel3Turn = Fixed
+Wheel3Side = Left
+Wheel3Drive = 1
+Wheel3Brake = 1
+Wheel3Friction = 0.5
+Wheel3Radius = 0.36
+Wheel3ProfileHeight = 0.12
+Wheel3Width = 0.2
+Wheel3Style = ChromeDome
+Wheel3SuspBodyPoint = 3
+Wheel3SuspBasePoint = -0.9, -2.3, -1.4
+Wheel3SuspDir = 0, 0, 1
+Wheel3SuspRelaxedDistance = 1.6
+Wheel3SuspThrow = 1
+Wheel3SuspStiffness = 0.05
+Wheel3MinSusp = 0.07
+Wheel3MaxSusp = 0.3
+
+Wheel4Turn = Fixed
+Wheel4Side = Right
+Wheel4Drive = 1
+Wheel4Brake = 1
+Wheel4Friction = 0.5
+Wheel4Radius = 0.36
+Wheel4ProfileHeight = 0.12
+Wheel4Width = 0.2
+Wheel4Style = ChromeDome
+Wheel4SuspBodyPoint = 4
+Wheel4SuspBasePoint = 0.9, -2.3, -1.4
+Wheel4SuspDir = 0, 0, 1
+Wheel4SuspRelaxedDistance = 1.6
+Wheel4SuspThrow = 1
+Wheel4SuspStiffness = 0.05
+Wheel4MinSusp = 0.07
+Wheel4MaxSusp = 0.3
+
+[Engine]
+
+HorsePowers = 125.0

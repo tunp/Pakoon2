@@ -1,0 +1,24 @@
+; Scene file saved by Pakoon Scene Editor v1.ONE
+
+[Properties]
+
+ Name = Oskaloosa, Iowa USA
+ Image = ./Textures/IceWorld.tga
+ GroundFriction = 0.25
+ Ground1Scaler = 0.02
+ Ground2Scaler = 0.09
+ SkyTexture = ./Textures/SkyDetailed.tga
+ Ground1Texture = ./Textures/Snowy1.tga
+ Ground2Texture = ./Textures/Snowy1.tga
+ EnvMapTexture = ./Textures/IceWorld_EnvMap.tga
+ BestAirTime = 6883.57333
+ TerrainStyle = GrandValley
+ MapPosition = 249, 139, 0
+ Checksum = MWPcgwcDnXMvYLlKskDnhGIAsGprmUgdeqNgtvXBcAEo
+
+[Geometry]
+
+ Origin = 1862160.000000, 3281700.000000, 0.000000
+ StartLocation = -65.000000, -2.000000, 0.000000
+ Goal = -31.542082, 6000.000000, 0.000000
+

@@ -1,0 +1,24 @@
+; Scene file saved by Pakoon Scene Editor v1.ONE
+
+[Properties]
+
+ Name = Japura, Brazil
+ Image = ./Textures/IceWorld.tga
+ GroundFriction = 0.35
+ Ground1Scaler = 0.02
+ Ground2Scaler = 0.09
+ SkyTexture = ./Textures/SkyDetailed.tga
+ Ground1Texture = ./Textures/Grass256.tga
+ Ground2Texture = ./Textures/Grass256.tga
+ EnvMapTexture = ./Textures/Envmap_Grass.tga
+ BestAirTime = 6279.52000
+ TerrainStyle = TheBigDrop
+ MapPosition = 319, 262, 0
+ Checksum = IbhTCtGMlEelvQb3Thgv4rBaQQKITMrToKOLjhoo7vXR
+
+[Geometry]
+
+ Origin = 121056.000000, 151728.000000, 0.000000
+ StartLocation = 10.000000, -20.000000, -1526.000000
+ Goal = 252.508851, 6000.000000, 0.000000
+
