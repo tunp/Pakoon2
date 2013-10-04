@@ -240,7 +240,7 @@ void SoundModule::SetGameMusicVolume(int nVol) {
   }*/
 }
 
-void SoundModule::SetCrashSoundVolume(int cha, int nVol) {
+void SoundModule::SetCrashSoundVolume(int nVol) {
   int nNewVol = int(double(nVol) * double(m_nVehicleSoundsVolume) / 255.0);
   if(nNewVol > 255) {
     nNewVol = 255;
@@ -722,7 +722,7 @@ void SoundModule::PlayCrashSound(double dVolume) {
     }
     if(sCrashSound.isLoaded()) {
 		sCrashSound.setFreq(22050 + rand() % 10000);
-		sCrashSound.setVolume(55 + int(dVolume * 200.0));
+		SetCrashSoundVolume(55 + int(dVolume * 200.0));
 		playOnSoundPool(sCrashSound);
     }
   }
