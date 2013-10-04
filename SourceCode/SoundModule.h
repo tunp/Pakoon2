@@ -316,7 +316,8 @@ class SoundModule {
 
   static int m_nGameMusicFiles;
   
-  static vector<Sound> playPool;
+  static SDL_mutex *mix_mutex;
+  static vector<Sound *> playPool;
   static vector<Sound *> sounds;
 
   //static void FreeSound(FSOUND_SAMPLE **pSound);
@@ -400,6 +401,8 @@ public:
                              BVector& rvLisVel);
                              
   static void mix(void *userdata, Uint8 *stream, int len);
+  static void mixOne(Sound *sound, Uint8 *stream, int len);
+  static void playOnSoundPool(Sound &sound);
 };
 
 

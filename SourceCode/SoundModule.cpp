@@ -86,8 +86,9 @@ int  SoundModule::m_nSpace = 1;
 
 int  SoundModule::m_nGameMusicFiles = 1;
 
-vector<Sound> SoundModule::playPool;
+vector<Sound *> SoundModule::playPool;
 vector<Sound *> SoundModule::sounds;
+SDL_mutex *SoundModule::mix_mutex;
 
 SoundModule::SoundModule() {
 }
@@ -168,6 +169,8 @@ void SoundModule::Initialize() {
 	sounds.push_back(&sHeliSound);
 	sounds.push_back(&sJetSound);
 	sounds.push_back(&sIntroSound);
+	
+	mix_mutex = SDL_CreateMutex();
 }
 
 /*void SoundModule::FreeSound(FSOUND_SAMPLE **pSound) {
@@ -198,6 +201,7 @@ void SoundModule::Close() {
   FreeSound(&m_pHeliSound);
   FSOUND_Close();*/
   m_bRunning = false;
+  SDL_DestroyMutex(mix_mutex);
 }
 
 void SoundModule::SetMenuMusicVolume(int nVol) {
@@ -717,11 +721,9 @@ void SoundModule::PlayCrashSound(double dVolume) {
       sCrashSound.setLoop(false);
     }
     if(sCrashSound.isLoaded()) {
-		Sound playing = sCrashSound;
-		playing.play();
-		playing.setFreq(22050 + rand() % 10000);
-		playing.setVolume(55 + int(dVolume * 200.0));
-		playPool.push_back(playing);
+		sCrashSound.setFreq(22050 + rand() % 10000);
+		sCrashSound.setVolume(55 + int(dVolume * 200.0));
+		playOnSoundPool(sCrashSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -755,10 +757,8 @@ void SoundModule::PlayMenuBrowseSound() {
       sMenuBrowseSound.setLoop(false);
     }
     if(sMenuBrowseSound.isLoaded()) {
-		Sound playing = sMenuBrowseSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sMenuBrowseSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sMenuBrowseSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -787,10 +787,8 @@ void SoundModule::PlayMenuScrollSound() {
       sMenuScrollSound.setLoop(false);
     }
     if(sMenuScrollSound.isLoaded()) {
-		Sound playing = sMenuScrollSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sMenuScrollSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sMenuScrollSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -819,10 +817,8 @@ void SoundModule::PlayMenuBackSound() {
       sMenuBackSound.setLoop(false);
     }
     if(sMenuBackSound.isLoaded()) {
-		Sound playing = sMenuBackSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sMenuBackSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sMenuBackSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -851,10 +847,8 @@ void SoundModule::PlaySlalomPortSound() {
       sSlalomPortSound.setLoop(false);
     }
     if(sSlalomPortSound.isLoaded()) {
-		Sound playing = sSlalomPortSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sSlalomPortSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sSlalomPortSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -883,10 +877,8 @@ void SoundModule::PlayDisqualifiedSound() {
       sDisqualifiedSound.setLoop(false);
     }
     if(sDisqualifiedSound.isLoaded()) {
-		Sound playing = sDisqualifiedSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sDisqualifiedSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sDisqualifiedSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -915,10 +907,8 @@ void SoundModule::PlayCountdown123Sound() {
       sCountdown123Sound.setLoop(false);
     }
     if(sCountdown123Sound.isLoaded()) {
-		Sound playing = sCountdown123Sound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sCountdown123Sound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sCountdown123Sound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -947,10 +937,8 @@ void SoundModule::PlayCountdownGoSound() {
       sCountdownGoSound.setLoop(false);
     }
     if(sCountdownGoSound.isLoaded()) {
-		Sound playing = sCountdownGoSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sCountdownGoSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sCountdownGoSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -979,10 +967,8 @@ void SoundModule::PlayMultiplayerJoinSound() {
       sMultiplayerJoinSound.setLoop(false);
     }
     if(sMultiplayerJoinSound.isLoaded()) {
-		Sound playing = sMultiplayerJoinSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sMultiplayerJoinSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sMultiplayerJoinSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -1011,10 +997,8 @@ void SoundModule::PlayMultiplayerLeftSound() {
       sMultiplayerLeftSound.setLoop(false);
     }
     if(sMultiplayerLeftSound.isLoaded()) {
-		Sound playing = sMultiplayerLeftSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sMultiplayerLeftSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sMultiplayerLeftSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -1043,10 +1027,8 @@ void SoundModule::PlayGoalFanfarSound() {
       sGoalFanfarSound.setLoop(false);
     }
     if(sGoalFanfarSound.isLoaded()) {
-		Sound playing = sGoalFanfarSound;
-		playing.play();
-		playing.setVolume(m_nVehicleSoundsVolume);
-		playPool.push_back(playing);
+		sGoalFanfarSound.setVolume(m_nVehicleSoundsVolume);
+		playOnSoundPool(sGoalFanfarSound);
     }
   }
   /*static clock_t clockPrev = clock();
@@ -1139,50 +1121,49 @@ void SoundModule::mix(void *userdata, Uint8 *stream, int len) {
 	memset(stream, 0, len);
 	
 	for (int y = 0; y < sounds.size(); y++) {
-		char *samples = new char[len];
-		sounds[y]->getSamples(samples, len);
-		Sint16 *p_stream = (Sint16 *)stream;
-		Sint16 *p_samples = (Sint16 *)samples;
-		for (int x = 0; x < len; x += 2) {
-			Sint32 val = (Sint32) *p_stream + *p_samples;
-			if (val > 32767) {
-				val = 32767;
-			} else if (val < -32766) {
-				val = -32766;
-			}
-			//*p_stream += *p_samples;
-			*p_stream = val;
-			p_stream++;
-			p_samples++;
-		}
-		delete[] samples;
+		mixOne(sounds[y], stream, len);
 	}
 	
+	SDL_LockMutex(mix_mutex);
 	for (int y = 0; y < playPool.size(); y++) {
-		if (playPool[y].isPlaying()) {
-			char *samples = new char[len];
-			playPool[y].getSamples(samples, len);
-			Sint16 *p_stream = (Sint16 *)stream;
-			Sint16 *p_samples = (Sint16 *)samples;
-			for (int x = 0; x < len; x += 2) {
-				Sint32 val = (Sint32) *p_stream + *p_samples;
-				if (val > 32767) {
-					val = 32767;
-				} else if (val < -32766) {
-					val = -32766;
-				}
-				//*p_stream += *p_samples;
-				*p_stream = val;
-				p_stream++;
-				p_samples++;
-			}
-			delete[] samples;
-		} else {
-			//FIXME
-			//playPool.erase(playPool.begin() + y);
-			//y--;
+		mixOne(playPool[y], stream, len);
+	}
+	SDL_UnlockMutex(mix_mutex);
+}
+
+void SoundModule::mixOne(Sound *sound, Uint8 *stream, int len) {
+	char *samples = new char[len];
+	sound->getSamples(samples, len);
+	Sint16 *p_stream = (Sint16 *)stream;
+	Sint16 *p_samples = (Sint16 *)samples;
+	for (int x = 0; x < len; x += 2) {
+		Sint32 val = (Sint32) *p_stream + *p_samples;
+		if (val > 32767) {
+			val = 32767;
+		} else if (val < -32766) {
+			val = -32766;
+		}
+		//*p_stream += *p_samples;
+		*p_stream = val;
+		p_stream++;
+		p_samples++;
+	}
+	delete[] samples;
+}
+
+void SoundModule::playOnSoundPool(Sound &sound) {
+	SDL_LockMutex(mix_mutex);
+	for (int y = 0; y < playPool.size(); y++) {
+		if (!playPool[y]->isPlaying()) {
+			delete playPool[y];
+			playPool.erase(playPool.begin() + y);
+			y--;
 		}
 	}
+	Sound *new_sound = new Sound(sound);
+	new_sound->play();
+	playPool.push_back(new_sound);
+	SDL_UnlockMutex(mix_mutex);
 }
 
 // PAKOON! Game, Source Code and Developer Package Copyright
