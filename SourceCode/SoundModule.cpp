@@ -598,6 +598,7 @@ void SoundModule::StartIntroSound() {
   if(m_bRunning) {
     if(!sIntroSound.isLoaded()) {
       sIntroSound.loadSound("Sounds/AtlantisOwesMeMoney.ogg");
+      sIntroSound.setLoop(false);
     }
     if(sIntroSound.isLoaded()) {
       sIntroSound.play();
