@@ -38,7 +38,7 @@ public:
   string   m_sId;
   string   m_sText;
   time_t    m_timeRemove;
-  clock_t   m_clockStarted;
+  unsigned   m_clockStarted;
   bool      m_bFaint;
   bool      m_bSecondary;
   BMessage *m_pNext;

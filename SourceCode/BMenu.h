@@ -76,7 +76,7 @@ public:
   double     m_dTitleY;
 
   bool       m_bDrawLine;
-  clock_t    m_clockStarted;
+  unsigned    m_clockStarted;
 
   BUISelectionList m_listMenu;
   BTextRenderer::TTextAlign m_align;

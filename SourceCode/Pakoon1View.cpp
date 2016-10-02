@@ -397,14 +397,14 @@ void CPakoon1View::OnDrawIntro() {
   Setup2DRendering();
 
   static bool bInitClock = true;
-  static clock_t clockIntro;
+  static unsigned clockIntro;
   if(bInitClock) {
     SoundModule::PreCacheIntroSound();
     SoundModule::StartIntroSound();
-    clockIntro = clock();
+    clockIntro = SDL_GetTicks();
     bInitClock = false;
   }
-  double dPhase = double(clock() - clockIntro) / double(CLOCKS_PER_SEC) - 0.5;
+  double dPhase = double(SDL_GetTicks() - clockIntro) / 1000.0 - 0.5;
 
   double dMOSAlpha = (5.0 - fabs(dPhase - 5.0)) / 2.5;
   if((dMOSAlpha > 1.0) || (dPhase > 5.0)) {
@@ -612,7 +612,7 @@ void CPakoon1View::OnDrawCurrentMenu() {
   // Check for highlight exit
   if(BGame::m_bMultiplayOn && 
      BGame::m_bOKToProceedInMultiplayMenu && 
-     ((clock() - m_clockHighlightMenu) > CLOCKS_PER_SEC)) {
+     ((SDL_GetTicks() - m_clockHighlightMenu) > 1000)) {
     m_clockHighlightMenu = 0;
     ReturnPressedOnCurrentMenu();
     return;
@@ -671,10 +671,10 @@ void CPakoon1View::OnDrawCurrentMenu() {
 
   bool bScrolling = false;
   double dScrollPhase = 0;
-  clock_t clockNow = clock();
-  if((clockNow - m_clockMenuScroll) < (CLOCKS_PER_SEC / 2)) {
+  unsigned clockNow = SDL_GetTicks();
+  if((clockNow - m_clockMenuScroll) < 500) {
     bScrolling = true;
-    dScrollPhase = double(clockNow - m_clockMenuScroll) / double(CLOCKS_PER_SEC / 2);
+    dScrollPhase = double(clockNow - m_clockMenuScroll) / 500.0;
     dScrollPhase = (1.0 + sin(((dScrollPhase * 2.0) - 1.0) * 3.1415926 * 0.5)) * 0.5;
   }
 
@@ -1048,7 +1048,7 @@ void CPakoon1View::CheckForGameStart() {
     m_pDrawFunction = &CPakoon1View::OnDrawGame;
     m_pKeyDownFunction = &CPakoon1View::OnKeyDownGame;
     m_game.m_bFadingIn = true;
-    m_game.m_clockFadeStart = clock();
+    m_game.m_clockFadeStart = SDL_GetTicks();
     SoundModule::StopMenuMusic();
     SoundModule::StartGameMusic();
     SoundModule::SetGameMusicVolume(int(double(BGame::m_nMusicVolume) / 100.0 * 255.0));
@@ -1241,8 +1241,8 @@ void CPakoon1View::DrawEarth(BMenu *pMenu) {
   static BVector vPrevCamera(0, -1000, 0);
   static BVector vNewCamera(0, -1000, 0);
   static BVector vCamera(0, -1000, 0);
-  static clock_t clockPrevStart = 0;
-  clock_t clockNow = clock();
+  static unsigned clockPrevStart = 0;
+  unsigned clockNow = SDL_GetTicks();
 
   string sTmp;
   int nSelected = pMenu->m_listMenu.GetSelectedItem(sTmp);
@@ -1256,13 +1256,13 @@ void CPakoon1View::DrawEarth(BMenu *pMenu) {
     vNewCamera.m_dY = sin(dX / 1024.0 * 2.0 * g_cdPI) * cos((256.0 - dY) / 256.0 * g_cdPI / 2.0) * 1000.0;
     vNewCamera.m_dZ = sin((256.0 - dY) / 256.0 * g_cdPI / 2.0) * -1000.0;
     vPrevCamera = vCamera;
-    clockPrevStart = clock();
+    clockPrevStart = SDL_GetTicks();
   }
 
   vCamera = vNewCamera;
-  if((clockNow - clockPrevStart) < (CLOCKS_PER_SEC / 2)) {
+  if((clockNow - clockPrevStart) < 500) {
     // We are going towards the new location
-    double dPhase = double(clockNow - clockPrevStart) / double(CLOCKS_PER_SEC / 2);
+    double dPhase = double(clockNow - clockPrevStart) / 500.0;
     if(dPhase > 1.0) {
       dPhase = 1.0;
     }
@@ -1398,7 +1398,7 @@ void CPakoon1View::DrawEarth(BMenu *pMenu) {
   vToCamera.ToUnitLength();
   vToCamera = vToCamera * 300.0;
 
-  double dAlpha = BGame::GetSmoothAlpha(); // fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+  double dAlpha = BGame::GetSmoothAlpha(); // fabs(double(SDL_GetTicks() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
 
   dAlpha = 0.5 + dAlpha * 0.5;
   glDisable(GL_CULL_FACE);
@@ -1574,8 +1574,8 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
       double dItemsAlpha[2];
       nItemsToDraw[0] = -1;
       nItemsToDraw[1] = -1;
-      clock_t clockNow = clock();
-      double dCurSecond = double(clockNow - pMenu->m_clockStarted) / double(CLOCKS_PER_SEC);
+      unsigned clockNow = SDL_GetTicks();
+      double dCurSecond = double(clockNow - pMenu->m_clockStarted) / 1000.0;
 
       if((BGame::m_pMenuCurrent == &(BGame::m_menuCredits)) && 
          (dCurSecond > (1 + pMenu->m_items[pMenu->m_nItems - 1].m_nValue + pMenu->m_items[pMenu->m_nItems - 1].m_nValue2))) {
@@ -1970,7 +1970,7 @@ void CPakoon1View::DrawMultiplayMessage(int i, string sMsg, double dAlpha, bool 
 
   if(!bNormal) {
     // Draw cursor
-    double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+    double dAlpha = fabs(double(SDL_GetTicks() % 1000) - 500.0) / 500.0;
     OpenGLHelpers::SetColorFull(0.5, 0.5, 1, dAlpha);
     glBegin(GL_QUADS);
     double dLen = BUI::TextRenderer()->GetCharWidth() * 0.5;
@@ -1996,10 +1996,10 @@ void CPakoon1View::DrawMultiplayMessages() {
 
     glPushMatrix();
     double dAlpha = 1.0;
-    clock_t clockNow = clock();
+    unsigned clockNow = SDL_GetTicks();
     if((BGame::m_nMultiplayMessages) && 
-       ((BGame::m_clockMultiplayMessages[0] - clockNow) < (CLOCKS_PER_SEC / 2))) {
-      dAlpha = double(BGame::m_clockMultiplayMessages[0] - clockNow) / double(CLOCKS_PER_SEC / 2);
+       ((BGame::m_clockMultiplayMessages[0] - clockNow) < 500.0)) {
+      dAlpha = double(BGame::m_clockMultiplayMessages[0] - clockNow) / 500.0;
       glTranslatef(0, -40 + dAlpha * 40.0, 0);
     }
 
@@ -2080,7 +2080,7 @@ void CPakoon1View::DrawRemoteMenuTriangleAt(BMenu *pMenu, int i, int nRelativeTr
   glPushMatrix();
   glTranslated(dXOffset - 1 - nRelativeTriPos * 20, dYBase - 0.5, 0);
 
-  double dAlpha = BGame::GetSmoothAlpha(); // fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+  double dAlpha = BGame::GetSmoothAlpha(); // fabs(double(SDL_GetTicks() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
   dAlpha = 0.5 + 0.5 * dAlpha;
 
   if(BGame::m_remotePlayer[nPlayer].m_bSelectionMade) {
@@ -2224,7 +2224,7 @@ void CPakoon1View::DrawMenuItemSliderAtRelPos(int nX, int nY, int nItems, int nI
 
     double dDimmer = 0.75;
     if(pMenuItem->m_bOpen) {
-      double dAlpha = BGame::GetSmoothAlpha(); // fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+      double dAlpha = BGame::GetSmoothAlpha(); // fabs(double(SDL_GetTicks() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
       dDimmer = 0.6 + 0.4 * dAlpha;
     }
 
@@ -2528,7 +2528,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         m_pDrawFunction = &CPakoon1View::OnDrawGame;
         m_pKeyDownFunction = &CPakoon1View::OnKeyDownGame;
         m_game.m_bFadingIn = true;
-        m_game.m_clockFadeStart = clock();
+        m_game.m_clockFadeStart = SDL_GetTicks();
         m_bInitClock = true;
 
         if(BGame::m_bMultiplayOn) {
@@ -2681,7 +2681,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
       case 4: // CREDITS
         BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
         BGame::m_pMenuCurrent = &(BGame::m_menuCredits);
-        BGame::m_menuCredits.m_clockStarted = clock();
+        BGame::m_menuCredits.m_clockStarted = SDL_GetTicks();
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_DOWN);
@@ -2998,7 +2998,7 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
           BGame::m_bShowGameMenu = true;
           m_pDrawFunction = &CPakoon1View::OnDrawGame;
           // m_game.m_bFadingIn = true;
-          // m_game.m_clockFadeStart = clock();
+          // m_game.m_clockFadeStart = SDL_GetTicks();
           SDL_ShowCursor(0);
         } else {
           StartMenuScroll(SCROLL_RIGHT);
@@ -3097,7 +3097,7 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
 
 //*************************************************************************************************
 void CPakoon1View::StartMenuScroll(TMenuScroll scroll) {
-  m_clockMenuScroll = clock();
+  m_clockMenuScroll = SDL_GetTicks();
   m_scrollDir = scroll;
 }
 
@@ -3251,7 +3251,7 @@ void CPakoon1View::HighlightMenuSelection(string sSelection) {
   }
   
   // Highlight commonly selected menu item
-  m_clockHighlightMenu = clock();
+  m_clockHighlightMenu = SDL_GetTicks();
   BGame::m_bOKToProceedInMultiplayMenu = true;
   
 }
@@ -3262,8 +3262,8 @@ void CPakoon1View::HighlightMenuSelection(string sSelection) {
 //*************************************************************************************************
 void CPakoon1View::OnDrawGame() {
   static int nFrameNo = 0;
-  static clock_t clockLastCheckPoint = clock();
-  static clock_t clockLastCheckPoint2 = clock();
+  static unsigned clockLastCheckPoint = SDL_GetTicks();
+  static unsigned clockLastCheckPoint2 = SDL_GetTicks();
   static string sRate = "";
 
   BScene  *pScene  = BGame::GetSimulation()->GetScene();
@@ -3275,7 +3275,7 @@ void CPakoon1View::OnDrawGame() {
   BGame::UpdateAnalyzer();
 
   if(m_bInitClock) {
-    clockLastCheckPoint = clock();
+    clockLastCheckPoint = SDL_GetTicks();
     m_bInitClock = false;
   }
 
@@ -3363,7 +3363,7 @@ void CPakoon1View::OnDrawGame() {
       } else {
         BGame::m_dRaceTime = 0.0;
       }
-      m_clockTimerStart = clock();
+      m_clockTimerStart = SDL_GetTicks();
       BGame::m_cOnScreenInfo |= BGame::TIMER_STARTED;
 
       if(!pScene->m_bVerified) {
@@ -3533,8 +3533,8 @@ void CPakoon1View::OnDrawGame() {
              (GLint) (double(m_rectWnd.h) * dScreenFormat));
 
   static double dSortaClock = 0.0;
-  static clock_t clockPrev = SDL_GetTicks();
-  clock_t clockNow = SDL_GetTicks();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   dSortaClock += 0.001 * double(clockNow - clockPrev);
   clockPrev = clockNow;
   double dVert;
@@ -3657,7 +3657,7 @@ void CPakoon1View::OnDrawGame() {
     if(nRefK > BGame::m_nRefK) {
       BGame::m_nRefK = nRefK;
       BGame::m_cOnScreenInfo |= BGame::REF_TIME;
-      m_clockTimerStart = clock();
+      m_clockTimerStart = SDL_GetTicks();
       double dRefTime = BGame::m_dRaceTime - BGame::m_dRefTime[nRefK];
       char cSign = '+';
       if(dRefTime < 0.0) {
@@ -3783,7 +3783,7 @@ void CPakoon1View::OnDrawGame() {
 
   // On top of everything, draw fade in if we are in the first second
   if(BGame::m_bFadingIn) {
-    if((clock() - BGame::m_clockFadeStart) > CLOCKS_PER_SEC) {
+    if((SDL_GetTicks() - BGame::m_clockFadeStart) > 1000) {
       m_game.m_bFadingIn = false;
       if(BGame::m_bMultiplayOn) {
         string sMsg = "0";
@@ -3807,8 +3807,8 @@ void CPakoon1View::OnDrawGame() {
 
       static int nPrevCountdownID = -1; // just a helper to control the sound effects
 
-      clock_t clockNow = clock();
-      if((clockNow - BGame::m_clockMultiRaceStarter) < (CLOCKS_PER_SEC * 3)) {
+      unsigned clockNow = SDL_GetTicks();
+      if((clockNow - BGame::m_clockMultiRaceStarter) < 3000) {
         // Draw countdown numbers
 
         OpenGLHelpers::SwitchToTexture(0);
@@ -3816,14 +3816,14 @@ void CPakoon1View::OnDrawGame() {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
 
         string sCountdown = "";
-        if((clockNow - BGame::m_clockMultiRaceStarter) < (CLOCKS_PER_SEC * 1)) {
+        if((clockNow - BGame::m_clockMultiRaceStarter) < 1000) {
           sCountdown = "3";
           OpenGLHelpers::SetColorFull(1, 0.25, 0.25, 1);
           if(nPrevCountdownID != 3) {
             nPrevCountdownID = 3;
             SoundModule::PlayCountdown123Sound();
           }
-        } else if((clockNow - BGame::m_clockMultiRaceStarter) < (CLOCKS_PER_SEC * 2)) {
+        } else if((clockNow - BGame::m_clockMultiRaceStarter) < 2000) {
           sCountdown = "2";
           OpenGLHelpers::SetColorFull(1, 0.75, 0.25, 1);
           if(nPrevCountdownID != 2) {
@@ -3877,8 +3877,8 @@ void CPakoon1View::OnDrawGame() {
   End2DRendering();
 
   // Calculate framerates
-  clockNow = clock();
-  g_d10LastFPS[nFrameNo] = double(clockNow - clockLastCheckPoint2) / double(CLOCKS_PER_SEC);
+  clockNow = SDL_GetTicks();
+  g_d10LastFPS[nFrameNo] = double(clockNow - clockLastCheckPoint2) / 1000.0;
   if(g_d10LastFPS[nFrameNo] < 0.00001) {
     g_d10LastFPS[nFrameNo] = 999.9;
   } else {
@@ -3888,7 +3888,7 @@ void CPakoon1View::OnDrawGame() {
 
   // if(++nFrameNo == 15) {
   if(++nFrameNo == 30) {
-    g_dRate = 30.0 / (double(clockNow - (clockLastCheckPoint)) / double(CLOCKS_PER_SEC));
+    g_dRate = 30.0 / (double(clockNow - (clockLastCheckPoint)) / 1000.0);
     g_dAveRate += g_dRate;
     if(m_nMenuTime) {
       m_nMenuTime = 0;
@@ -4197,11 +4197,11 @@ void CPakoon1View::DrawOldTubeEffect() {
 
 //*************************************************************************************************
 void CPakoon1View::DrawKeyboardHint() {
-  clock_t clockNow = clock();
-  if((clockNow - m_game.m_clockHintStart) > CLOCKS_PER_SEC * 2) {
+  unsigned clockNow = SDL_GetTicks();
+  if((clockNow - m_game.m_clockHintStart) > 2000) {
     m_game.m_bShowHint = false;
   } else {
-    double dAlpha = 1.0 - double(clockNow - m_game.m_clockHintStart) / double(CLOCKS_PER_SEC * 2);
+    double dAlpha = 1.0 - double(clockNow - m_game.m_clockHintStart) / 2000.0;
 
     // OpenGLHelpers::SetColorFull(0.3, 0.6, 0.8, dAlpha);
     OpenGLHelpers::SetColorFull(0.9, 0.2, 0.1, dAlpha);
@@ -4494,12 +4494,12 @@ void CPakoon1View::DrawExtraScreenTexts() {
     if(BGame::m_cOnScreenInfo & BGame::TIMER_STARTED) {
       // TIMER STARTED
       double dAlpha = 1.0;
-      clock_t clockNow = clock();
-      if((clockNow - m_clockTimerStart) > (CLOCKS_PER_SEC * 2)) {
+      unsigned clockNow = SDL_GetTicks();
+      if((clockNow - m_clockTimerStart) > 2000) {
         BGame::m_cOnScreenInfo -= BGame::TIMER_STARTED;
         dAlpha = 0.0;
       } else {
-        dAlpha = 1.0 - double(clockNow - m_clockTimerStart) / double(CLOCKS_PER_SEC * 2);
+        dAlpha = 1.0 - double(clockNow - m_clockTimerStart) / 2000.0;
       }
       OpenGLHelpers::SetColorFull(0.5, 0.5, 1, dAlpha);
       OpenGLHelpers::DrawTexturedRectangle(m_rectWnd.w / 2.0 - 166 / 2.0, 
@@ -4514,12 +4514,12 @@ void CPakoon1View::DrawExtraScreenTexts() {
     if(BGame::m_cOnScreenInfo & BGame::REF_TIME) {
       // REFERENCE TIME
       double dAlpha = 1.0;
-      clock_t clockNow = clock();
-      if((clockNow - m_clockTimerStart) > (CLOCKS_PER_SEC * 4)) {
+      unsigned clockNow = SDL_GetTicks();
+      if((clockNow - m_clockTimerStart) > 4000) {
         BGame::m_cOnScreenInfo -= BGame::REF_TIME;
         dAlpha = 0.0;
       } else {
-        dAlpha = 1.0 - double(clockNow - m_clockTimerStart) / double(CLOCKS_PER_SEC * 4);
+        dAlpha = 1.0 - double(clockNow - m_clockTimerStart) / 4000.0;
       }
       if((BGame::m_sRefTime.length() > 0) && (BGame::m_sRefTime.at(0) == '-')) {
         OpenGLHelpers::SetColorFull(0, 1, 0, dAlpha);
@@ -4577,7 +4577,7 @@ void CPakoon1View::DrawExtraScreenTexts() {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // not mipmapped
       // NEW TRACK RECORD!
       double dAlpha = 1.0;
-      if((clock() % (CLOCKS_PER_SEC / 2)) > (CLOCKS_PER_SEC / 4)) {
+      if((SDL_GetTicks() % 500) > 250) {
         dAlpha = 0.25;
       }
       OpenGLHelpers::SetColorFull(0.2, 1, 0.2, dAlpha);
@@ -4762,7 +4762,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   bool bHurryUp = ((BGame::m_gameMode == BGame::AIRTIME) && (BGame::m_dRaceTime < 15 * g_dPhysicsStepsInSecond));
   if((BGame::m_cOnScreenInfo & BGame::NEW_RECORD) || bHurryUp) {
     // NEW TRACK RECORD!
-    if((clock() % (CLOCKS_PER_SEC / 2)) > (CLOCKS_PER_SEC / 4)) {
+    if((SDL_GetTicks() % 500) > 250) {
       dAlpha = 0.25;
     }
     if((BGame::m_gameMode == BGame::SPEEDRACE) || 
@@ -6116,8 +6116,8 @@ void CPakoon1View::OnKeyDownGame(unsigned nChar, unsigned nRepCnt, unsigned nFla
           {
             bProcessed = true;
             // Check whether this is the second click
-            static clock_t clockPrev = 0;
-            clock_t clockNow = clock();
+            static unsigned clockPrev = 0;
+            unsigned clockNow = SDL_GetTicks();
             if((clockNow - clockPrev) < (CLOCKS_PER_SEC / 3)) {
               m_game.GetSimulation()->GetVehicle()->m_bWireframe = !m_game.GetSimulation()->GetVehicle()->m_bWireframe;
               // m_bWireframe = !m_bWireframe;
@@ -6191,8 +6191,8 @@ void CPakoon1View::OnKeyDownGame(unsigned nChar, unsigned nRepCnt, unsigned nFla
             bProcessed = true;
 
             // Check whether this is the second click
-            static clock_t clockPrev = 0;
-            clock_t clockNow = clock();
+            static unsigned clockPrev = 0;
+            unsigned clockNow = SDL_GetTicks();
             if((clockNow - clockPrev) < (CLOCKS_PER_SEC / 3)) {
               BGame::FreezeSimulation(false);
               // Start Analyzer
@@ -6239,9 +6239,9 @@ void CPakoon1View::OnKeyDownGame(unsigned nChar, unsigned nRepCnt, unsigned nFla
             bProcessed = true;
 
             // Check whether this is the second click
-            static clock_t clockPrev = 0;
-            clock_t clockNow = clock();
-            if((clockNow - clockPrev) < (CLOCKS_PER_SEC / 3)) {
+            static unsigned clockPrev = 0;
+            unsigned clockNow = SDL_GetTicks();
+            if((clockNow - clockPrev) < (1000 / 3)) {
             BGame::FreezeSimulation(false);
               m_game.GetSceneEditor()->Activate();
               m_messages.Remove("sceneeditor");
@@ -6298,7 +6298,7 @@ void CPakoon1View::OnKeyDownGame(unsigned nChar, unsigned nRepCnt, unsigned nFla
 
   if(!bProcessed) {
     m_game.m_bShowHint = true;
-    m_game.m_clockHintStart = clock();
+    m_game.m_clockHintStart = SDL_GetTicks();
   }
 }
 

@@ -57,18 +57,18 @@ bool    BGame::m_bShowQuickHelp;
 bool    BGame::m_bDrawOnScreenTracking;
 double  BGame::m_dNavSatHandleAngle;
 double  BGame::m_dServiceHandleAngle;
-clock_t BGame::m_clockFrozenStart = 0;
-clock_t BGame::m_clockLastLift = 0;
+unsigned BGame::m_clockFrozenStart = 0;
+unsigned BGame::m_clockLastLift = 0;
 int     BGame::m_nFreezeRefCount = 0;
 int     BGame::m_nPhysicsSteps; 
 bool    BGame::m_bShowHint;
-clock_t BGame::m_clockHintStart;
+unsigned BGame::m_clockHintStart;
 int     BGame::m_nYesNoSelection = 1; // Yes by default
 bool    BGame::m_bShowGameMenu = false;
 bool    BGame::m_bShowCancelQuestion = false;
 bool    BGame::m_bSceneEditorMode = true;
 bool    BGame::m_bFadingIn = false;
-clock_t BGame::m_clockFadeStart = 0;
+unsigned BGame::m_clockFadeStart = 0;
 
 string BGame::m_sScene = "";
 string BGame::m_sVehicle = "";
@@ -107,7 +107,7 @@ double BGame::m_dPurchasePrice = 100.0;
 bool    BGame::m_bMultiProcessor = false;
 
 bool    BGame::m_bAnalyzerMode = false;
-clock_t BGame::m_clockAnalyzerStarted = 0;
+unsigned BGame::m_clockAnalyzerStarted = 0;
 int     BGame::m_nVisualize = 255; // all on
 
 bool        BGame::m_bRaceStarted;
@@ -134,7 +134,7 @@ bool        BGame::m_bMultiplayOn;
 bool        BGame::m_bExitingMultiplay;
 bool        BGame::m_bOKToProceedInMultiplayMenu;
 bool        BGame::m_bMultiplayRaceStarter;
-clock_t     BGame::m_clockMultiRaceStarter;
+unsigned     BGame::m_clockMultiRaceStarter;
 int       BGame::m_clockOffsetFromZeroTime;
 int         BGame::m_nPlayersInGoal;
 int       BGame::m_nMultiplayPort = 2345;
@@ -142,7 +142,7 @@ int       BGame::m_nMultiplayPort = 2345;
 int         BGame::m_nMultiplayMessages;
 string     BGame::m_sMultiplayMessages[5];
 bool        BGame::m_bChatMessage[5];
-clock_t     BGame::m_clockMultiplayMessages[5];
+unsigned     BGame::m_clockMultiplayMessages[5];
 bool        BGame::m_bTABChatting;
 string     BGame::m_sChatMsg;
 
@@ -199,7 +199,7 @@ BGame::BGame() {
   m_bDrawOnScreenTracking = true;
   m_nPhysicsSteps = 10;
   m_bShowHint = false;
-  m_clockHintStart = clock();
+  m_clockHintStart = SDL_GetTicks();
   m_nCarDetails = 1;
 
   static string sYesNo[2] = {"Yes", "No"};
@@ -417,7 +417,7 @@ void BGame::CheckForGameStart() {
   if(bAllReady) {    
     GetMultiplay()->SendBroadcastMsg(BMultiPlay::START_GAME, "");
     m_bMultiplayRaceStarter = true;
-    m_clockMultiRaceStarter = clock();
+    m_clockMultiRaceStarter = SDL_GetTicks();
     //GetView()->Invalidate();
   }
 }
@@ -497,10 +497,10 @@ void BGame::BroadcastInGoal() {
 //*************************************************************************************************
 void BGame::BroadcastCarPosition() {
   // Send local car location to other remote players
-  static clock_t clockNow;
-  clockNow = clock(); 
+  static unsigned clockNow;
+  clockNow = SDL_GetTicks(); 
 
-  if((clockNow - GetMultiplay()->GetParams()->m_clockPosLastSent) > (CLOCKS_PER_SEC / 50)) {
+  if((clockNow - GetMultiplay()->GetParams()->m_clockPosLastSent) > (1000 / 50)) {
 
     GetMultiplay()->GetParams()->m_clockPosLastSent = clockNow;
 
@@ -555,7 +555,7 @@ void BGame::RemoveOldestMultiplayMessage(bool bForce) {
   bool bCheckNext = true;
   do {
     if(m_nMultiplayMessages) {
-      if(bForce || (m_clockMultiplayMessages[0] < clock())) {
+      if(bForce || (m_clockMultiplayMessages[0] < SDL_GetTicks())) {
         // Delete first message
         for(int i = 1; i < m_nMultiplayMessages; ++i) {
           m_sMultiplayMessages[i - 1] = m_sMultiplayMessages[i];
@@ -567,7 +567,7 @@ void BGame::RemoveOldestMultiplayMessage(bool bForce) {
       if(bForce) {
         bCheckNext = false;
       } else {
-        bCheckNext = m_nMultiplayMessages && (m_clockMultiplayMessages[0] < clock());
+        bCheckNext = m_nMultiplayMessages && (m_clockMultiplayMessages[0] < SDL_GetTicks());
       }
     } else {
       bCheckNext = false;
@@ -587,7 +587,7 @@ void BGame::ShowMultiplayMessage(string sMsg, bool bChat) {
   // Add new message to the queue
   m_sMultiplayMessages[m_nMultiplayMessages] = sMsg;
   m_bChatMessage[m_nMultiplayMessages] = bChat;
-  m_clockMultiplayMessages[m_nMultiplayMessages] = clock() + CLOCKS_PER_SEC * 8;
+  m_clockMultiplayMessages[m_nMultiplayMessages] = SDL_GetTicks() + 8000;
   ++m_nMultiplayMessages;
 }
 
@@ -1210,7 +1210,7 @@ void BGame::FreezeSimulation(bool bPause) {
   if(m_nFreezeRefCount == 0) {
     SoundModule::SetGameMusicVolume(int(double(BGame::m_nMusicVolume) / 100.0 * 128.0));
     m_nPhysicsSteps = m_simulation.m_nPhysicsStepsBetweenRender;
-    m_clockFrozenStart = clock();
+    m_clockFrozenStart = SDL_GetTicks();
     m_bFrozen = true;
     if(bPause) {
       GetSimulation()->m_bPaused = true;
@@ -1220,7 +1220,7 @@ void BGame::FreezeSimulation(bool bPause) {
 }
 
 //*************************************************************************************************
-clock_t BGame::ContinueSimulation() {
+unsigned BGame::ContinueSimulation() {
   if(m_nFreezeRefCount > 0) {
     --m_nFreezeRefCount;
     if((m_nFreezeRefCount == 0) && GetSimulation()->m_bPaused) {
@@ -1228,13 +1228,13 @@ clock_t BGame::ContinueSimulation() {
       GetSimulation()->m_bPaused = false;
       m_simulation.m_nPhysicsStepsBetweenRender = m_nPhysicsSteps;
       m_bFrozen = false;
-      return clock() - m_clockFrozenStart;
+      return SDL_GetTicks() - m_clockFrozenStart;
     }
     if(m_nFreezeRefCount == 0) {
       m_simulation.m_nPhysicsStepsBetweenRender = m_nPhysicsSteps;
       SoundModule::SetGameMusicVolume(int(double(BGame::m_nMusicVolume) / 100.0 * 255.0));
       m_bFrozen = false;
-      return clock() - m_clockFrozenStart;
+      return SDL_GetTicks() - m_clockFrozenStart;
     }
   }
   return 0;
@@ -1268,9 +1268,9 @@ void BGame::UpdateAnalyzer() {
 
   // See in which phase we are in
   static int nPhase = -1;
-  clock_t clockNow = clock();
+  unsigned clockNow = SDL_GetTicks();
 
-  int nNewPhase = (clockNow - m_clockAnalyzerStarted) / CLOCKS_PER_SEC / 3;
+  int nNewPhase = (clockNow - m_clockAnalyzerStarted) / 1000 / 3;
   if(nPhase != nNewPhase) {
     // Exit old phase
     if(nPhase != -1) {
@@ -1535,7 +1535,7 @@ static double g_cdPI = 3.141592654;
 
 //*************************************************************************************************
 double BGame::GetSmoothAlpha() {
-  double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+  double dAlpha = fabs(double(SDL_GetTicks() % 1000) - 500.0) / 500.0;
   // return sin(dAlpha * g_cdPI / 2.0);
   return dAlpha;
 }
@@ -2478,7 +2478,7 @@ void BMultiPlay::ProcessMultiplayMessage(char *data, int data_size, BClientConne
         // Start the race!
 
         BGame::m_bMultiplayRaceStarter = true;
-        BGame::m_clockMultiRaceStarter = clock();
+        BGame::m_clockMultiRaceStarter = SDL_GetTicks();
         break;
 
       case CLOCK_IS_NOW_0:

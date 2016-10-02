@@ -68,7 +68,7 @@ void BSceneEditor::Draw(SDL_Rect &rectWnd) {
   BTextures::Use(BTextures::PANEL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-  double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+  double dAlpha = fabs(double(SDL_GetTicks() % 1000) - 500.0) / 500.0;
   OpenGLHelpers::SetColorFull(dAlpha / 2, dAlpha / 2, 1, 1);
   glPushMatrix();
   glTranslated(30, rectWnd.h - 70.0, 0);
@@ -442,7 +442,7 @@ BObject *BSceneEditor::GetActiveObject() {
 void BSceneEditor::HighlightActiveObject() {
   // Draw a glowing sphere around the active object.
   // Also, if the object is BASE or CLIENT, draw it's active radius.
-  double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+  double dAlpha = fabs(double(SDL_GetTicks() % 1000) - 500.0) / 500.0;
 
   if(!m_sActiveObject.empty()) {
     // Find the active object from scene

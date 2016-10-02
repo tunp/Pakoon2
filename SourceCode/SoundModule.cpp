@@ -708,10 +708,10 @@ void SoundModule::SetJetSoundPhase(double dPhase) {
 
 
 void SoundModule::PlayCrashSound(double dVolume) {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02) && 
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02) && 
      (dVolume > 0.1)) {
     if(dVolume > 1.0) {
       dVolume = 1.0;
@@ -727,10 +727,10 @@ void SoundModule::PlayCrashSound(double dVolume) {
 		playOnSoundPool(sCrashSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02) && 
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02) && 
      (dVolume > 0.1)) {
     if(dVolume > 1.0) {
       dVolume = 1.0;
@@ -748,10 +748,10 @@ void SoundModule::PlayCrashSound(double dVolume) {
 }
 
 void SoundModule::PlayMenuBrowseSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sMenuBrowseSound.isLoaded()) {
       sMenuBrowseSound.loadSound("Sounds/menu-scroll.ogg");
@@ -762,10 +762,10 @@ void SoundModule::PlayMenuBrowseSound() {
 		playOnSoundPool(sMenuBrowseSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pMenuBrowseSound) {
       m_pMenuBrowseSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\menu-scroll.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -778,10 +778,10 @@ void SoundModule::PlayMenuBrowseSound() {
 }
 
 void SoundModule::PlayMenuScrollSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sMenuScrollSound.isLoaded()) {
       sMenuScrollSound.loadSound("Sounds/menu-change_setting.ogg");
@@ -792,10 +792,10 @@ void SoundModule::PlayMenuScrollSound() {
 		playOnSoundPool(sMenuScrollSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pMenuScrollSound) {
       m_pMenuScrollSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\menu-change_setting.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -808,10 +808,10 @@ void SoundModule::PlayMenuScrollSound() {
 }
 
 void SoundModule::PlayMenuBackSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sMenuBackSound.isLoaded()) {
       sMenuBackSound.loadSound("Sounds/menu-back.ogg");
@@ -822,10 +822,10 @@ void SoundModule::PlayMenuBackSound() {
 		playOnSoundPool(sMenuBackSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pMenuBackSound) {
       m_pMenuBackSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\menu-back.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -838,10 +838,10 @@ void SoundModule::PlayMenuBackSound() {
 }
 
 void SoundModule::PlaySlalomPortSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sSlalomPortSound.isLoaded()) {
       sSlalomPortSound.loadSound("Sounds/player-slalom_portsuccess.ogg");
@@ -852,10 +852,10 @@ void SoundModule::PlaySlalomPortSound() {
 		playOnSoundPool(sSlalomPortSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pSlalomPortSound) {
       m_pSlalomPortSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\player-slalom_portsuccess.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -868,10 +868,10 @@ void SoundModule::PlaySlalomPortSound() {
 }
 
 void SoundModule::PlayDisqualifiedSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sDisqualifiedSound.isLoaded()) {
       sDisqualifiedSound.loadSound("Sounds/player-disqualify.ogg");
@@ -882,10 +882,10 @@ void SoundModule::PlayDisqualifiedSound() {
 		playOnSoundPool(sDisqualifiedSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pDisqualifiedSound) {
       m_pDisqualifiedSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\player-disqualify.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -898,10 +898,10 @@ void SoundModule::PlayDisqualifiedSound() {
 }
 
 void SoundModule::PlayCountdown123Sound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sCountdown123Sound.isLoaded()) {
       sCountdown123Sound.loadSound("Sounds/player-countdown-1.ogg");
@@ -912,10 +912,10 @@ void SoundModule::PlayCountdown123Sound() {
 		playOnSoundPool(sCountdown123Sound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pCountdown123Sound) {
       m_pCountdown123Sound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\player-countdown-1.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -928,10 +928,10 @@ void SoundModule::PlayCountdown123Sound() {
 }
 
 void SoundModule::PlayCountdownGoSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sCountdownGoSound.isLoaded()) {
       sCountdownGoSound.loadSound("Sounds/player-countdown-go.ogg");
@@ -942,10 +942,10 @@ void SoundModule::PlayCountdownGoSound() {
 		playOnSoundPool(sCountdownGoSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pCountdownGoSound) {
       m_pCountdownGoSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\player-countdown-go.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -958,10 +958,10 @@ void SoundModule::PlayCountdownGoSound() {
 }
 
 void SoundModule::PlayMultiplayerJoinSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sMultiplayerJoinSound.isLoaded()) {
       sMultiplayerJoinSound.loadSound("Sounds/multiplayer-joined.ogg");
@@ -972,10 +972,10 @@ void SoundModule::PlayMultiplayerJoinSound() {
 		playOnSoundPool(sMultiplayerJoinSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pMultiplayerJoinSound) {
       m_pMultiplayerJoinSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\multiplayer-joined.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -988,10 +988,10 @@ void SoundModule::PlayMultiplayerJoinSound() {
 }
 
 void SoundModule::PlayMultiplayerLeftSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sMultiplayerLeftSound.isLoaded()) {
       sMultiplayerLeftSound.loadSound("Sounds/multiplayer-left.ogg");
@@ -1002,10 +1002,10 @@ void SoundModule::PlayMultiplayerLeftSound() {
 		playOnSoundPool(sMultiplayerLeftSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pMultiplayerLeftSound) {
       m_pMultiplayerLeftSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\multiplayer-left.wav", FSOUND_LOOP_OFF, 0, 0);
@@ -1018,10 +1018,10 @@ void SoundModule::PlayMultiplayerLeftSound() {
 }
 
 void SoundModule::PlayGoalFanfarSound() {
-  static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!sGoalFanfarSound.isLoaded()) {
       sGoalFanfarSound.loadSound("Sounds/GoalFanfar.ogg");
@@ -1032,10 +1032,10 @@ void SoundModule::PlayGoalFanfarSound() {
 		playOnSoundPool(sGoalFanfarSound);
     }
   }
-  /*static clock_t clockPrev = clock();
-  clock_t clockNow = clock();
+  /*static unsigned clockPrev = SDL_GetTicks();
+  unsigned clockNow = SDL_GetTicks();
   if(m_bRunning && 
-     ((double(clockNow - clockPrev) / double(CLOCKS_PER_SEC)) > 0.02)) {
+     ((double(clockNow - clockPrev) / 1000.0) > 0.02)) {
     clockPrev = clockNow;
     if(!m_pGoalFanfarSound) {
       m_pGoalFanfarSound = FSOUND_Sample_Load(FSOUND_FREE, ".\\Sounds\\GoalFanfar.wav", FSOUND_LOOP_OFF, 0, 0);

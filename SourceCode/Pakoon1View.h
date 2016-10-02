@@ -58,9 +58,9 @@ class CPakoon1View {
 
 
 public:
-  clock_t m_nMenuTime; // Time spent viewing menu
-  clock_t m_clockTimerStart;
-  clock_t m_clockHighlightMenu;
+  unsigned m_nMenuTime; // Time spent viewing menu
+  unsigned m_clockTimerStart;
+  unsigned m_clockHighlightMenu;
 private:
 
   int     m_chaMenuMusic; // Channel for the menu background music
@@ -72,7 +72,7 @@ private:
   enum TMenuScroll {SCROLL_LEFT, SCROLL_RIGHT, SCROLL_UP, SCROLL_DOWN};
 
   TMenuScroll m_scrollDir;
-  clock_t     m_clockMenuScroll;
+  unsigned     m_clockMenuScroll;
 
   void ProcessMouseInput(unsigned nFlags, SDL_Point point);
 

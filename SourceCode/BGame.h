@@ -47,7 +47,7 @@ public:
   string m_sHostIPAddress;
   string m_sPlayerName;
   int     m_nMyPlace;
-  clock_t m_clockPosLastSent;
+  unsigned m_clockPosLastSent;
 
   BMultiplayParams() {m_bHost = true; 
                       m_sHostIPAddress = m_sPlayerName = ""; 
@@ -203,7 +203,7 @@ class BGame {
   static BServiceWnd       m_serviceWnd;
   static BSceneEditor      m_sceneEditor;
 
-  static clock_t           m_clockFrozenStart;
+  static unsigned           m_clockFrozenStart;
   static int               m_nFreezeRefCount;
 
   static bool    CheckHighscoresValidity();
@@ -252,8 +252,8 @@ public:
   static bool m_bDrawOnScreenTracking;
   static bool m_bFrozen;
   static bool m_bShowHint;
-  static clock_t m_clockHintStart;
-  static clock_t m_clockLastLift;
+  static unsigned m_clockHintStart;
+  static unsigned m_clockLastLift;
   static double m_dNavSatHandleAngle;
   static double m_dServiceHandleAngle;
   static int    m_nGameMenuSelection;
@@ -262,7 +262,7 @@ public:
   static bool   m_bShowCancelQuestion;
   static bool   m_bSceneEditorMode;
   static bool   m_bFadingIn;
-  static clock_t m_clockFadeStart;
+  static unsigned m_clockFadeStart;
   static BMenu *m_pMenuCurrent;
   static BMenu *m_pMenuPrevious;
   static bool   m_bMenusCreated;
@@ -301,7 +301,7 @@ public:
   static bool    m_bMultiProcessor;
 
   static bool    m_bAnalyzerMode;
-  static clock_t m_clockAnalyzerStarted;
+  static unsigned m_clockAnalyzerStarted;
   static int     m_nVisualize;
 
   static BUISelectionList m_listYesNo;
@@ -338,7 +338,7 @@ public:
   static bool       m_bExitingMultiplay;
   static bool       m_bOKToProceedInMultiplayMenu;
   static bool       m_bMultiplayRaceStarter;
-  static clock_t    m_clockMultiRaceStarter;
+  static unsigned    m_clockMultiRaceStarter;
   static int      m_clockOffsetFromZeroTime;
   static int        m_nPlayersInGoal;
   static int      m_nMultiplayPort;
@@ -346,7 +346,7 @@ public:
   static int        m_nMultiplayMessages;
   static string    m_sMultiplayMessages[5];
   static bool       m_bChatMessage[5];
-  static clock_t    m_clockMultiplayMessages[5];
+  static unsigned    m_clockMultiplayMessages[5];
   static bool       m_bTABChatting;
   static string    m_sChatMsg;
 
@@ -400,7 +400,7 @@ public:
   static void           UpdateHighScoreMenu();
 
   static void           FreezeSimulation(bool bPause = false);
-  static clock_t        ContinueSimulation();
+  static unsigned        ContinueSimulation();
   static void           SetupMenus();
   static void           SetupMultiplayMenu();
   static void           UpdateSettings();

@@ -504,14 +504,14 @@ int BSimulation::Paint(bool bCreateDLs, bool bWireframe, bool bNormals, SDL_Rect
   int nOffTime = 0;
   glPushMatrix();
   if(BGame::m_nVisualize & BGame::TERRAIN) {
-    clock_t clockStart = clock();
+    unsigned clockStart = SDL_GetTicks();
     m_terrain.MakeTerrainValid(m_vehicle.m_vLocation, 
                                m_camera.m_vLocation, 
                                m_camera.m_orientation.m_vForward, 
                                bCreateDLs, 
                                bWireframe, 
                                bNormals);
-    nOffTime = clock() - clockStart;
+    nOffTime = SDL_GetTicks() - clockStart;
     
     // Render terrain
     if(BGame::m_bNight) {

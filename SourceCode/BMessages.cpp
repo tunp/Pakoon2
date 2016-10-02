@@ -76,7 +76,7 @@ void BMessages::Show(int nCharsPerLine,
     time_t timeNow;
     pNew->m_pNext = 0;
     pNew->m_nCharsPerLine = nCharsPerLine;
-    pNew->m_clockStarted = clock();
+    pNew->m_clockStarted = SDL_GetTicks();
     pNew->m_timeRemove = time(&timeNow) + nSeconds;
     pNew->m_sText = sText;
     pNew->m_sId = sId;
@@ -171,7 +171,7 @@ BMessage *BMessages::RenderMessage(BMessage *pMsg) {
     // Draw message
     if(!pMsg->m_blink || 
        (pMsg->m_blink && 
-        (((clock() - pMsg->m_clockStarted) % 1000) < 750))) {
+        (((SDL_GetTicks() - pMsg->m_clockStarted) % 1000) < 750))) {
       OpenGLHelpers::SetColorFull(0, 0, 0, 1);
       glPushMatrix();
       glTranslated(-double(pMsg->m_nTotalWidth) / 2.0, double(pMsg->m_nCharHeight) / 2.0, 0);

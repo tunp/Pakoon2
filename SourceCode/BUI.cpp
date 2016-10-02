@@ -209,12 +209,12 @@ void BUISelectionList::DrawAt(double dX,
       dXOffset = -dLen;
     }
 
-    double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+    double dAlpha = fabs(double(SDL_GetTicks() % 1000) - 500.0) / 500.0;
     dAlpha = 0.5 + 0.5 * dAlpha;
 
     if(BGame::m_bMultiplayOn &&
        BGame::m_bOKToProceedInMultiplayMenu) {
-      dAlpha = (clock() % CLOCKS_PER_SEC) / (CLOCKS_PER_SEC / 8) % 2;
+      dAlpha = (SDL_GetTicks() % 1000) / (1000 / 8) % 2;
     }
 
     if(!bFlashCursor || BGame::m_remotePlayer[BGame::GetMultiplay()->m_params.m_nMyPlace].m_bSelectionMade) {
@@ -495,7 +495,7 @@ void BUIEdit::DrawAt(double dX, double dY, bool bCursor, BTextRenderer::TTextAli
     double dXOffset = BUI::TextRenderer()->GetStringWidth(m_sValue);
     double dLen = dCharWidth * 0.7;
 
-    double dAlpha = fabs(double(clock() % CLOCKS_PER_SEC) - (double(CLOCKS_PER_SEC) / 2.0)) / (double(CLOCKS_PER_SEC) / 2.0);
+    double dAlpha = fabs(double(SDL_GetTicks() % 1000) - 500.0) / 500.0;
 
     OpenGLHelpers::SetColorFull(1, 0.5, 0, 0.5 + 0.5 * dAlpha);
     glTranslated(-1, -1, 0);
