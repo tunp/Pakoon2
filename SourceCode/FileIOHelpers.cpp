@@ -74,7 +74,7 @@ map<string, map<string, string> > FileHelpers::readMapFromFile(string filename) 
 			}
 		}
 	} else {
-		cout << "Cannot open file" << endl;
+		cout << "Cannot open file " << filename.c_str() << endl;
 	}
 	ini_file.close();
 	
