@@ -194,6 +194,7 @@ void BSimulation::PrePaint() {
 
     SetUpCamera(&m_rectWnd);
 
+#ifdef ENABLE_MULTIPLAY
     // Check for goal in multiplay
     if(BGame::m_bMultiplayOn && (BGame::m_bRaceStarted && !BGame::m_bRaceFinished)) {
       if(m_vehicle.m_vLocation.m_dY > 6000.0) {
@@ -209,6 +210,7 @@ void BSimulation::PrePaint() {
         break;
       }
     }
+#endif
   }
 
   if(BGame::m_bRaceStarted && !BGame::m_bRaceFinished) {
@@ -828,6 +830,7 @@ double BSimulation::PointInsideObject(BVector& rvPoint, BVector& rvNormal, doubl
 }
 
 
+#ifdef ENABLE_MULTIPLAY
 //*****************************************************************************
 double BSimulation::PointInsideRemoteCar(BVector& rvPoint, BVector& rvNormal, double &rdFriction, double &rdBaseDepth) {
   double  dDepth;
@@ -922,6 +925,7 @@ double BSimulation::PointInsideRemoteCar(BVector& rvPoint, BVector& rvNormal, do
   }
   return -1.0;
 }
+#endif
 
 
 
@@ -1628,6 +1632,7 @@ void BSimulation::DrawShadowAndTrails() {
     glEnd();  
   }
 
+#ifdef ENABLE_MULTIPLAY
   // Multiplayer shadows
   if(BGame::m_bMultiplayOn) {
     OpenGLHelpers::SetColorFull(1, 1, 1, 1);
@@ -1676,6 +1681,7 @@ void BSimulation::DrawShadowAndTrails() {
       glEnd();  
     }
   }
+#endif
 
   // Trails
   DrawTrails();

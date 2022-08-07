@@ -212,6 +212,7 @@ void BUISelectionList::DrawAt(double dX,
     double dAlpha = fabs(double(SDL_GetTicks() % 1000) - 500.0) / 500.0;
     dAlpha = 0.5 + 0.5 * dAlpha;
 
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn &&
        BGame::m_bOKToProceedInMultiplayMenu) {
       dAlpha = (SDL_GetTicks() % 1000) / (1000 / 8) % 2;
@@ -220,6 +221,7 @@ void BUISelectionList::DrawAt(double dX,
     if(!bFlashCursor || BGame::m_remotePlayer[BGame::GetMultiplay()->m_params.m_nMyPlace].m_bSelectionMade) {
       dAlpha = 0.75;
     }
+#endif
 
     glPushMatrix();
     glTranslated(dXOffset - 1, dYBase - 0.5, 0);
@@ -310,11 +312,13 @@ void BUISelectionList::DrawAt(double dX,
     // Triangle 
     if(bWithTriangle) {
       double dR, dG, dB;
+#ifdef ENABLE_MULTIPLAY
       if(BGame::m_bMultiplayOn) {
         BGame::GetMultiplayerColor(BGame::GetMultiplay()->m_params.m_nMyPlace, dR, dG, dB);
       } else {
         BGame::GetMultiplayerColor(0, dR, dG, dB);
       }
+#endif
       OpenGLHelpers::SetColorFull(dR, dG, dB, dAlpha);
 
       glBegin(GL_TRIANGLES);

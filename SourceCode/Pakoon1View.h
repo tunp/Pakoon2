@@ -90,11 +90,13 @@ private:
   void DrawOldTubeEffect();
   void FixCarToBasicOrientation(double dSpeedFactor);
 
+#ifdef ENABLE_MULTIPLAY
   void DrawMultiplayMenuStuff(BMenu *pMenu, double dX, double dY);
   void DrawRemoteMenuTriangleAt(BMenu *pMenu, int i, int nRelativeTriPos, int nPlayer);
   void DrawMultiplayMessage(int i, string sMsg, double dAlpha, bool bNormal, bool bChatColor);
   void DrawMultiplayMessages();
   void DrawFinalPosition();
+#endif
 
   void CheckForGameStart();
 
@@ -153,11 +155,13 @@ public:
   void DrawMouseCursor(SDL_Rect &rectWnd);
   BVector ColorForGForce(double dGForce);
 
+#ifdef ENABLE_MULTIPLAY
   void BroadcastMenuBrowse();
   void BroadcastMenuSelection();
   void BroadcastSelectedVehicleFilename(string sFilename);
 
   void CheckForMultiplayMenuProceed();
+#endif
   void HighlightMenuSelection(string sSelection);
 
 private:

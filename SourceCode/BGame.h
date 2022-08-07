@@ -17,7 +17,9 @@
 #include "BUI.h"
 
 #include <SDL2/SDL.h>
+#ifdef ENABLE_MULTIPLAY
 #include <SDL2/SDL_net.h>
+#endif
 #include <string>
 #include <vector>
 #include <ctime>
@@ -26,6 +28,7 @@ using namespace std;
 
 class CPakoon1View;
 
+#ifdef ENABLE_MULTIPLAY
 class BMultiPlay;
 class BClientConnection {
 private:
@@ -189,13 +192,16 @@ public:
   
   BClientConnection *client_connection;
 };
+#endif
 
 
 
 //*****************************************************************************
 class BGame {
 
+#ifdef ENABLE_MULTIPLAY
   static BMultiPlay        m_multiplay;
+#endif
   static BSimulation       m_simulation;
   static BPlayer           m_player;
   static BCmdModule        m_cmdModule;
@@ -327,13 +333,16 @@ public:
 
   static bool    m_bNight;
 
+#ifdef ENABLE_MULTIPLAY
   static int           m_nRemotePlayers;
   static BRemotePlayer m_remotePlayer[4];
+#endif
 
   static double     m_dRefTime[7];
   static int        m_nRefK;
   static string    m_sRefTime;
 
+#ifdef ENABLE_MULTIPLAY
   static bool       m_bMultiplayOn;
   static bool       m_bExitingMultiplay;
   static bool       m_bOKToProceedInMultiplayMenu;
@@ -349,6 +358,7 @@ public:
   static unsigned    m_clockMultiplayMessages[5];
   static bool       m_bTABChatting;
   static string    m_sChatMsg;
+#endif
 
   //static GUID       m_guidServiceProviders[10];
 
@@ -361,6 +371,7 @@ public:
   ~BGame();
 
   // Multiplay stuff
+#ifdef ENABLE_MULTIPLAY
   static int            AddRemotePlayer(int id, char *pPlayerName, BClientConnection *client_connection);
   static void           HandlePlayerExit(char *pPlayerInfo);
   static void           HandlePlayerAbnormalExit(int id);
@@ -375,9 +386,12 @@ public:
   static void           ShowMultiplayMessage(string sMsg, bool bChat = false);
   static void           RemoveOldestMultiplayMessage(bool bForce = false);
   static int            GetMyPlace() {return GetMultiplay()->GetParams()->m_nMyPlace;}
+#endif
 
   // General stuff
+#ifdef ENABLE_MULTIPLAY
   static BMultiPlay    *GetMultiplay()   {return &m_multiplay;}
+#endif
   static BSimulation   *GetSimulation()  {return &m_simulation;}
   static BPlayer       *GetPlayer()      {return &m_player;}
   static BCmdModule    *Command()        {return &m_cmdModule;}
@@ -407,7 +421,9 @@ public:
   static void           EnumerateScreenResolutions();
   static bool           FindStringFromArray(string s, string *psArray, int nItems, int &rnIndex);
 
+#ifdef ENABLE_MULTIPLAY
   static int          GetMultiplayClock() {return SDL_GetTicks() - m_clockOffsetFromZeroTime;}
+#endif
 
   static double         GetSmoothAlpha();
 

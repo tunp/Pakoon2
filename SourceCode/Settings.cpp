@@ -117,21 +117,29 @@ void Settings::ReadSettings(BSimulation *pSimulation) {
       sLine[strlen(sLine) - 1] = '\0'; // eat up the newline from end
     }
     string sTmp = sLine + strlen("PlayerName = ");
+#ifdef ENABLE_MULTIPLAY
     BGame::GetMultiplay()->m_params.m_sPlayerName = sTmp;
+#endif
     fgets(sLine, 1024, fp);
+#ifdef ENABLE_MULTIPLAY
     BGame::GetMultiplay()->m_params.m_bHost = (sLine[strlen("Role = ")] == 'S');
+#endif
     fgets(sLine, 1024, fp);
     if(strlen(sLine) > strlen("HostIP = ")) {
       sLine[strlen(sLine) - 1] = '\0'; // eat up the newline from end
     }
     sTmp = sLine + strlen("HostIP = ");
+#ifdef ENABLE_MULTIPLAY
     BGame::GetMultiplay()->m_params.m_sHostIPAddress = sTmp;
+#endif
 
     fgets(sLine, 1024, fp);
     sscanf(sLine, "CarDetails = %d", &(BGame::m_nCarDetails));
 
     fgets(sLine, 1024, fp);
+#ifdef ENABLE_MULTIPLAY
     sscanf(sLine, "MultiplayPortNumber = %d", &(BGame::m_nMultiplayPort));
+#endif
 
     fclose(fp);
   } else {
@@ -209,13 +217,17 @@ void Settings::WriteSettings(BSimulation *pSimulation) {
     fprintf(fp, "CONTROLLERMAP-Camera     = %s\n", sTmp);*/
     fprintf(fp, "WaterSurface = %d\n", BGame::m_nWaterSurface);
 
+#ifdef ENABLE_MULTIPLAY
     fprintf(fp, "PlayerName = %s\n", BGame::GetMultiplay()->m_params.m_sPlayerName.c_str());
     fprintf(fp, "Role = %s\n", BGame::GetMultiplay()->m_params.m_bHost ? "Server" : "Client");
     fprintf(fp, "HostIP = %s\n", BGame::GetMultiplay()->m_params.m_sHostIPAddress.c_str());
+#endif
 
     fprintf(fp, "CarDetails = %d\n", BGame::m_nCarDetails);
 
+#ifdef ENABLE_MULTIPLAY
     fprintf(fp, "MultiplayPortNumber = %d\n", BGame::m_nMultiplayPort);
+#endif
 
     fclose(fp);
   } else {

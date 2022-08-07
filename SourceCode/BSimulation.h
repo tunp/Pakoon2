@@ -162,7 +162,9 @@ public:
   double PointUnderGround(BVector vPoint, BVector& rvNormal, double &rdFriction, double &rdBaseDepth, double &rdThermoLoss);
   double PointUnderGroundAccurate(BVector vPoint, BVector& rvNormal, double &rdFriction, double &rdBaseDepth, double &rdThermoLoss);
   double PointInsideObject(BVector& rvPoint, BVector& rvNormal, double &rdFriction, double &rdBaseDepth);
+#ifdef ENABLE_MULTIPLAY
   double PointInsideRemoteCar(BVector& rvPoint, BVector& rvNormal, double &rdFriction, double &rdBaseDepth);
+#endif
   double PointUnderGroundShadow(BVector vPoint, BVector& rvNormal);
   double PointUnderObjectsShadow(double& rdCandidate, BVector& rvPoint, BVector& rvNormal, bool& rbChanged);
   double Friction(BBodyPoint& rPoint);

@@ -339,10 +339,14 @@ void BTerrainBlock::SetTextureCoordinate(BVector vPoint) {
     }
     */
     //glMultiTexCoord2fARB(GL_TEXTURE0_ARB, float(vPoint.m_dX) / 1000.0f, float(vPoint.m_dY) / 1000.0f);
+#ifndef __EMSCRIPTEN__
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, float(vPoint.m_dX) * BTerrain::m_fGroundTextureScaler1, float(vPoint.m_dY) * BTerrain::m_fGroundTextureScaler1);
+#endif
     // Use second texture unit
     //glMultiTexCoord2fARB(GL_TEXTURE1_ARB, float(vPoint.m_dX) / 100.0f, float(vPoint.m_dY) / 100.0f);
+#ifndef __EMSCRIPTEN__
     glMultiTexCoord2fARB(GL_TEXTURE1_ARB, float(vPoint.m_dX) * BTerrain::m_fGroundTextureScaler2, float(vPoint.m_dY) * BTerrain::m_fGroundTextureScaler2);
+#endif
   } else {
     // No multitexturing, use second texture unit coordinates
     glTexCoord2f(float(vPoint.m_dX) * BTerrain::m_fGroundTextureScaler1, float(vPoint.m_dY) * BTerrain::m_fGroundTextureScaler1);
@@ -745,7 +749,11 @@ BTerrain::BTerrain() {
   m_vCameraLookDir.Set(0, 1, 0);
   m_sSceneName = "";
 
+#ifdef __EMSCRIPTEN__
+  SetRenderResolution(RENDER_SLOW_MACHINE);
+#else
   SetRenderResolution(RENDER_MEDIUM);
+#endif
 }
 
 

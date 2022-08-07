@@ -39,6 +39,7 @@ void OpenGLHelpers::Init() {
 
 
 void OpenGLHelpers::SwitchToTexture(int nTexture, bool bDisable) {
+#ifndef __EMSCRIPTEN__
   if(m_bMultiTexturing) {
     if(nTexture == 0) {
       glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -46,6 +47,7 @@ void OpenGLHelpers::SwitchToTexture(int nTexture, bool bDisable) {
       glActiveTextureARB(GL_TEXTURE1_ARB);
     }
   }
+#endif
   if(bDisable) {
     glDisable(GL_TEXTURE_2D);
   } else {
@@ -53,10 +55,12 @@ void OpenGLHelpers::SwitchToTexture(int nTexture, bool bDisable) {
   }
 
   if(bDisable) {
+#ifndef __EMSCRIPTEN__
     // This is a hack but I don't know how to get rid of the second texture.
     if(m_bMultiTexturing) {
       glMultiTexCoord2fARB(GL_TEXTURE1_ARB, 1.0f/512.0f, 1.0f/512.0f);
     }
+#endif
   } else {
     glCallList(m_nDLTex);
   }
@@ -73,7 +77,9 @@ bool OpenGLHelpers::LoadExtensionFunctions() {
     glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC) wglGetProcAddress("glMultiTexCoord2fARB");
     glActiveTextureARB   = (PFNGLACTIVETEXTUREARBPROC)   wglGetProcAddress("glActiveTextureARB");
     #endif
+#ifndef __EMSCRIPTEN__
     m_bMultiTexturing = true;
+#endif
     // m_bMultiTexturing = false; // no need for multitexturing yet
     return true;
   } else {
@@ -474,7 +480,9 @@ void OpenGLHelpers::BindTexture(int nWidth, int nHeight, int nComponents, GLenum
 
 void OpenGLHelpers::SetTexCoord(double x, double y) {
   if(m_bMultiTexturing) {
+#ifndef __EMSCRIPTEN__
     glMultiTexCoord2fARB(GL_TEXTURE0_ARB, float(x), float(y));
+#endif
   } else {
     glTexCoord2f(x, y);
   }

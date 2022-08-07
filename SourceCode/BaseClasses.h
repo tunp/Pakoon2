@@ -17,6 +17,11 @@
 
 #include <string>
 
+#ifndef __EMSCRIPTEN__
+#define ENABLE_MULTIPLAY
+#endif
+
+
 using namespace std;
 
 const int g_cnMaxTrailPoints = 100;

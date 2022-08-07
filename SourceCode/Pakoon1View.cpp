@@ -572,8 +572,10 @@ void CPakoon1View::PrepareReferenceTimes(BRaceRecord &raceRecord) {
         dFraction1 = dFraction1 / dSum;
         dFraction2 = dFraction2 / dSum;
 
+#ifdef ENABLE_MULTIPLAY
         BGame::m_dRefTime[nK] = raceRecord.m_frames[i - 1].m_dTime * dFraction1 + 
                                 raceRecord.m_frames[i].m_dTime * dFraction2;
+#endif
         if(nRefK >= 6) {
           break;
         }
@@ -609,6 +611,7 @@ void CPakoon1View::OnDrawCurrentMenu() {
     return;
   }
 
+#ifdef ENABLE_MULTIPLAY
   // Check for highlight exit
   if(BGame::m_bMultiplayOn && 
      BGame::m_bOKToProceedInMultiplayMenu && 
@@ -617,6 +620,7 @@ void CPakoon1View::OnDrawCurrentMenu() {
     ReturnPressedOnCurrentMenu();
     return;
   }
+#endif
 
   SDL_LockMutex(BGame::m_csMutex);
 
@@ -718,6 +722,7 @@ void CPakoon1View::OnDrawCurrentMenu() {
     BUI::TextRenderer()->StopRenderingText();
   }
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bMultiplayOn) {
     // Draw Multiplay indicator
     BUI::TextRenderer()->StartRenderingText();
@@ -768,6 +773,7 @@ void CPakoon1View::OnDrawCurrentMenu() {
 
     BUI::TextRenderer()->StopRenderingText();
   }
+#endif
 
   if(bScrolling) {
     DrawMenuTitle(BGame::m_pMenuPrevious, 1.0 - dScrollPhase, true);
@@ -841,7 +847,9 @@ void CPakoon1View::OnDrawCurrentMenu() {
     glPopMatrix();
   }
 
+#ifdef ENABLE_MULTIPLAY
   DrawMultiplayMessages();
+#endif
 
   //*************************************************
   // Finish draw
@@ -874,6 +882,7 @@ void CPakoon1View::CheckForGameStart() {
                                                           BGame::GetSimulation()->GetScene()->m_dGroundTextureScaler2);
     // Prepare to enter game
 
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn) {
       for(int i = 0; i < BGame::m_nRemotePlayers; ++i) {
         BGame::m_remotePlayer[i].m_bReadyToStart = false;
@@ -885,6 +894,7 @@ void CPakoon1View::CheckForGameStart() {
     } else {
       BGame::m_nRemotePlayers = 0;
     }
+#endif
 
     BGame::m_bRaceStarted  = false;
     BGame::m_bRaceFinished = false;
@@ -908,6 +918,7 @@ void CPakoon1View::CheckForGameStart() {
 
     BGame::GetSimulation()->GetCamera()->m_dFollowHeight = -3.0;
 
+#ifdef ENABLE_MULTIPLAY
     // initialize multiplay remote cars
     if(BGame::m_bMultiplayOn) {
 
@@ -973,6 +984,7 @@ void CPakoon1View::CheckForGameStart() {
     BGame::m_dRefTime[5] = -1.0;
     BGame::m_dRefTime[6] = -1.0;
     BGame::m_nRefK = 0;
+#endif
     BScene *pScene = BGame::GetSimulation()->GetScene();
     if(BGame::m_gameMode == BGame::SLALOM) {
       PrepareReferenceTimes(pScene->m_raceRecordSlalomTime);
@@ -997,6 +1009,7 @@ void CPakoon1View::CheckForGameStart() {
     BVector vLoc = BGame::GetSimulation()->GetVehicle()->m_vLocation;
     BGame::GetSimulation()->GetVehicle()->Move(vStartLocation - vLoc);
 
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn) {
       // Position the car according to its place in the multiplay list
       switch(BGame::GetMyPlace()) {
@@ -1011,6 +1024,7 @@ void CPakoon1View::CheckForGameStart() {
           break;
       }
     }
+#endif
 
     BGame::GetSimulation()->UpdateCar();
 
@@ -1036,10 +1050,12 @@ void CPakoon1View::CheckForGameStart() {
                                                            false, 
                                                            false);
 
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn) {
       // report car size to other remote players
       BGame::BroadcastCarSize();
     }
+#endif
 
     // Switch to game mode
 
@@ -1055,9 +1071,11 @@ void CPakoon1View::CheckForGameStart() {
     SoundModule::SetVehicleSoundsVolume(int(double(BGame::m_nVehicleVolume) / 100.0 * 255.0));
     m_bInitClock = true;
 
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn) {
       BGame::m_bForceBreak = true;
     }
+#endif
 
     SDL_ShowCursor(0);
   }
@@ -1460,12 +1478,14 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
                                !(pMenu->m_items[pMenu->m_listMenu.m_nSelected].m_bOpen) : true,
                                pMenu);
 
+#ifdef ENABLE_MULTIPLAY
       // Draw remote multiplayer selections
       if(BGame::m_bMultiplayOn) {
         DrawMultiplayMenuStuff(pMenu, 
                                m_rectWnd.w / 2 - int(double(m_rectWnd.w) * pMenu->m_listMenu.m_dOffsetToLeft), 
                                m_rectWnd.h / 2);
       }
+#endif
 
       // If there are menu items that have an associated component,
       // draw them also
@@ -1720,6 +1740,7 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
     if(pMenu->m_type == BMenu::GAMEMODE) {
       glPushMatrix();
       glTranslated(m_rectWnd.w / 2, m_rectWnd.h / 2, 0);
+#ifdef ENABLE_MULTIPLAY
       if(BGame::m_bExitingMultiplay) {
         DrawPanel(dCharWidth * 26, dCharHeight * 6, 0.3, 0.05, 0);
         BUI::TextRenderer()->StartRenderingText();
@@ -1728,12 +1749,14 @@ void CPakoon1View::DrawMenu(BMenu *pMenu) {
         BUI::TextRenderer()->StopRenderingText();
         BGame::m_listYesNo.DrawAt(0, -dCharHeight * 1.5, BTextRenderer::ALIGN_CENTER, 1, 1, 1, false);
       }
+#endif
       glPopMatrix();
     }
   }
 }
 
 
+#ifdef ENABLE_MULTIPLAY
 //*************************************************************************************************
 void CPakoon1View::DrawFinalPosition() {
   if(!BGame::m_bShowGameMenu && 
@@ -2099,6 +2122,7 @@ void CPakoon1View::DrawRemoteMenuTriangleAt(BMenu *pMenu, int i, int nRelativeTr
 
   glPopMatrix();
 }
+#endif
 
 
 //*************************************************************************************************
@@ -2334,10 +2358,12 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
     case 4:
       // Quit (Return to main menu)
 
+#ifdef ENABLE_MULTIPLAY
       BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::WANTS_TO_SELECT_NEW_RACE;
       BGame::BroadcastStateChange();
 
       BGame::m_bOKToProceedInMultiplayMenu = false;
+#endif
 
       { // Choose new random menu background
         stringstream sTitle;
@@ -2353,18 +2379,24 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
       m_nMenuTime += BGame::ContinueSimulation();
       m_game.m_bShowGameMenu = false;
       BGame::m_bMenuMode = true;
+#ifdef ENABLE_MULTIPLAY
       if(BGame::m_bMultiplayOn) {
         BGame::m_pMenuCurrent = &(BGame::m_menuChooseGameMode);
       } else {
         BGame::m_pMenuCurrent = &(BGame::m_menuMain);
       }
+#else
+      BGame::m_pMenuCurrent = &(BGame::m_menuMain);
+#endif
       m_pKeyDownFunction = &CPakoon1View::OnKeyDownCurrentMenu;
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownCurrentMenu);
 
+#ifdef ENABLE_MULTIPLAY
       if(BGame::m_bMultiplayOn) {
         BroadcastMenuBrowse();
       }
+#endif
 
       m_pDrawFunction = &CPakoon1View::OnDrawCurrentMenu;
       BGame::m_bGameLoading = false;
@@ -2425,6 +2457,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
                                                               BGame::GetSimulation()->GetScene()->m_dGroundTextureScaler2);
         // Prepare to enter game
 
+#ifdef ENABLE_MULTIPLAY
         if(BGame::m_bMultiplayOn) {
           for(int i = 0; i < BGame::m_nRemotePlayers; ++i) {
             BGame::m_remotePlayer[i].m_bReadyToStart = false;
@@ -2436,6 +2469,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         } else {
           BGame::m_nRemotePlayers = 0;
         }
+#endif
 
         BGame::m_bRaceStarted  = false;
         BGame::m_bRaceFinished = false;
@@ -2452,6 +2486,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         BGame::m_cOnScreenInfo &= BGame::FPS; // Preserve fps setting
         BGame::GetSimulation()->GetTerrain()->CreateTerrainDisplayLists();
 
+#ifdef ENABLE_MULTIPLAY
         // Initialize reference times
         BGame::m_dRefTime[0] = -1.0;
         BGame::m_dRefTime[1] = -1.0;
@@ -2461,6 +2496,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         BGame::m_dRefTime[5] = -1.0;
         BGame::m_dRefTime[6] = -1.0;
         BGame::m_nRefK = 0;
+#endif
         BScene *pScene = BGame::GetSimulation()->GetScene();
         if(BGame::m_gameMode == BGame::SLALOM) {
           PrepareReferenceTimes(pScene->m_raceRecordSlalomTime);
@@ -2482,6 +2518,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         BVector vLoc = BGame::GetSimulation()->GetVehicle()->m_vLocation;
         BGame::GetSimulation()->GetVehicle()->Move(vStartLocation - vLoc);
 
+#ifdef ENABLE_MULTIPLAY
         if(BGame::m_bMultiplayOn) {
           // Position the car according to its place in the multiplay list
           switch(BGame::GetMyPlace()) {
@@ -2496,6 +2533,7 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
               break;
           }
         }
+#endif
 
         BGame::GetSimulation()->UpdateCar();
 
@@ -2531,9 +2569,11 @@ void CPakoon1View::ReturnPressedOnGameMenu() {
         m_game.m_clockFadeStart = SDL_GetTicks();
         m_bInitClock = true;
 
+#ifdef ENABLE_MULTIPLAY
         if(BGame::m_bMultiplayOn) {
           BGame::m_bForceBreak = true;
         }
+#endif
 
         SDL_ShowCursor(0);
 
@@ -2651,11 +2691,13 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         break;
       case 1: // MULTIPLAYER
 
+#ifdef ENABLE_MULTIPLAY
         BGame::GetMultiplay()->InitMultiplaySession();
         BGame::SetupMultiplayMenu();
 
         BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
         BGame::m_pMenuCurrent = &(BGame::m_menuMultiplay);
+#endif
         BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                      &CPakoon1View::OnKeyDownCurrentMenu);
         StartMenuScroll(SCROLL_RIGHT);
@@ -2700,6 +2742,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         setExit();
         break;
     }
+#ifdef ENABLE_MULTIPLAY
   } else if(BGame::m_pMenuCurrent->m_type == BMenu::MULTIPLAYER) {
 
     // See if we need to open/close sublist/slider
@@ -2769,11 +2812,13 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
           break;
         }
     }
+#endif
   } else if(BGame::m_pMenuCurrent->m_type == BMenu::GAMEMODE) {
 
     // Get rid of intro sound, if it's still playing
     SoundModule::StopIntroSound(); 
 
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bExitingMultiplay) {
       // Check whether user wants to exit multiplay or not
       string sTmp;
@@ -2799,6 +2844,10 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BroadcastMenuSelection();
       } else {
         BGame::m_bOKToProceedInMultiplayMenu = false;
+#else
+    if (1) {
+      if (1) {
+#endif
         string sTmp;
         int nSelected = BGame::m_pMenuCurrent->m_listMenu.GetSelectedItem(sTmp);
 
@@ -2818,14 +2867,17 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
             BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                          &CPakoon1View::OnKeyDownCurrentMenu);
             StartMenuScroll(SCROLL_RIGHT);
+#ifdef ENABLE_MULTIPLAY
             BroadcastMenuBrowse();
-                        
+#endif
+
             break;
         }
       }
     }
   } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_SCENE) {
 
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn) {
       BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::PREPARING_TO_RACE;
       BGame::BroadcastStateChange();
@@ -2835,6 +2887,9 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
       BroadcastMenuSelection();
     } else {
       BGame::m_bOKToProceedInMultiplayMenu = false;
+#else
+    if (1) {
+#endif
       // Load Scene
       BGame::m_sScene = BGame::m_pMenuCurrent->m_items[nSelected].m_sAssocFile;
 
@@ -2843,8 +2898,10 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
       BUI::StartUsingSelectionList(&(BGame::m_pMenuCurrent->m_listMenu), 
                                    &CPakoon1View::OnKeyDownCurrentMenu);
       StartMenuScroll(SCROLL_RIGHT);
+#ifdef ENABLE_MULTIPLAY
       BroadcastMenuBrowse();
-      
+#endif
+
     }
   } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_VEHICLE) {
 
@@ -2884,6 +2941,7 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
       }
     } else {
 
+#ifdef ENABLE_MULTIPLAY
       if(BGame::m_bMultiplayOn && !BGame::m_bOKToProceedInMultiplayMenu) {
 
         // Broadcast the selected vehicle filename for all remote players
@@ -2899,6 +2957,9 @@ void CPakoon1View::ReturnPressedOnCurrentMenu() {
         BroadcastMenuSelection();
       } else {
         BGame::m_bOKToProceedInMultiplayMenu = false;
+#else
+     if (1) {
+#endif
         // Initiate game load
         BGame::m_bGameLoading = false;
         BGame::m_bGameReadyToStart = true;
@@ -3032,6 +3093,7 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
       }
     }
   } else if(BGame::m_pMenuCurrent->m_type == BMenu::GAMEMODE) {
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn) {
       BGame::m_bExitingMultiplay = true;
 
@@ -3039,6 +3101,9 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
       BGame::m_listYesNo.SelectItem("No");
       BUI::StartUsingSelectionList(&(BGame::m_listYesNo), &CPakoon1View::OnKeyDownCurrentMenu);
     } else {
+#else
+    if (1) {
+#endif
       StartMenuScroll(SCROLL_LEFT);
       BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
       BGame::m_pMenuCurrent = &(BGame::m_menuMain);
@@ -3047,7 +3112,11 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
     }
     
   } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_SCENE) {
+#ifdef ENABLE_MULTIPLAY
     if(!BGame::m_bMultiplayOn) { // Don't allow back menu command on multiplay
+#else
+    if (1) {
+#endif
       StartMenuScroll(SCROLL_LEFT);
       BGame::m_pMenuPrevious = BGame::m_pMenuCurrent;
       BGame::m_pMenuCurrent = &(BGame::m_menuChooseGameMode);
@@ -3059,7 +3128,11 @@ void CPakoon1View::CancelPressedOnCurrentMenu() {
                                    &CPakoon1View::OnKeyDownCurrentMenu);
     }
   } else if(BGame::m_pMenuCurrent->m_type == BMenu::CHOOSE_VEHICLE) {
+#ifdef ENABLE_MULTIPLAY
     if(!BGame::m_bMultiplayOn) { // Don't allow back menu command on multiplay
+#else
+    if (1) {
+#endif
       if(BGame::m_bBuyingVehicle || BGame::m_bCannotBuyVehicle) {
         BGame::m_bBuyingVehicle = false;
         BGame::m_bCannotBuyVehicle = false;
@@ -3103,6 +3176,7 @@ void CPakoon1View::StartMenuScroll(TMenuScroll scroll) {
 
 
 
+#ifdef ENABLE_MULTIPLAY
 //*************************************************************************************************
 void CPakoon1View::BroadcastMenuBrowse() {
   if(BGame::m_bMultiplayOn) {
@@ -3227,16 +3301,19 @@ void CPakoon1View::CheckForMultiplayMenuProceed() {
     }    
   }
 }
+#endif
 
 
 
 //*************************************************************************************************
 void CPakoon1View::HighlightMenuSelection(string sSelection) {
-  // In multiplay mode, proceed as if return has been pressed
   int i;
+#ifdef ENABLE_MULTIPLAY
+  // In multiplay mode, proceed as if return has been pressed
   for(i = 0; i < BGame::m_nRemotePlayers; ++i) {
     BGame::m_remotePlayer[i].m_bSelectionMade = false;
   }
+#endif
 
   // Give 1 second feedback to user about the selection!!!
 
@@ -3252,7 +3329,9 @@ void CPakoon1View::HighlightMenuSelection(string sSelection) {
   
   // Highlight commonly selected menu item
   m_clockHighlightMenu = SDL_GetTicks();
+#ifdef ENABLE_MULTIPLAY
   BGame::m_bOKToProceedInMultiplayMenu = true;
+#endif
   
 }
 
@@ -3366,12 +3445,14 @@ void CPakoon1View::OnDrawGame() {
       m_clockTimerStart = SDL_GetTicks();
       BGame::m_cOnScreenInfo |= BGame::TIMER_STARTED;
 
+#ifdef ENABLE_MULTIPLAY
       if(!pScene->m_bVerified) {
         BGame::ShowMultiplayMessage("UNVERIFIED SCENE");
       }
       if(!BGame::GetSimulation()->GetVehicle()->m_bVerified) {
         BGame::ShowMultiplayMessage("UNVERIFIED CAR");
       }
+#endif
     }
   }
   if(!BGame::m_bRaceFinished && (BGame::GetSimulation()->GetVehicle()->m_vLocation.m_dY > 6000.0)) {
@@ -3398,8 +3479,10 @@ void CPakoon1View::OnDrawGame() {
 
         SoundModule::PlayGoalFanfarSound();
 
+#ifdef ENABLE_MULTIPLAY
         BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::FINISHED;
         BGame::BroadcastStateChange();
+#endif
 
         pScene->m_raceRecord.m_dTotalTime = BGame::m_dRaceTime;
         int nMinutes = BGame::m_dRaceTime / g_dPhysicsStepsInSecond / 60;
@@ -3458,8 +3541,10 @@ void CPakoon1View::OnDrawGame() {
       } else {
 
         if(!(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_GOAL)) {
+#ifdef ENABLE_MULTIPLAY
           BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::MISSED_GOAL;
           BGame::BroadcastStateChange();
+#endif
           BGame::m_cOnScreenInfo |= BGame::DISQUALIFIED_GOAL;
           SoundModule::PlayDisqualifiedSound();
         }
@@ -3470,6 +3555,7 @@ void CPakoon1View::OnDrawGame() {
   // Give losers a booster
   double dAccFactor = BGame::GetSimulation()->GetVehicle()->m_dAccelerationFactor;
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bMultiplayOn) {
     double dMaxDist = -9000.0;
 
@@ -3492,6 +3578,7 @@ void CPakoon1View::OnDrawGame() {
       BGame::GetSimulation()->GetVehicle()->m_dAccelerationFactor = BGame::GetSimulation()->GetVehicle()->m_dAccelerationFactor * dFactor;
     }
   }
+#endif
 
   m_game.GetSimulation()->m_rectWnd = m_rectWnd;
   if(!m_game.m_bFrozen) {
@@ -3503,6 +3590,7 @@ void CPakoon1View::OnDrawGame() {
     m_game.GetSimulation()->PrePaint();
   }
 
+#ifdef ENABLE_MULTIPLAY
   // Restore original acceleration factor
   if(BGame::m_bMultiplayOn) {
     BGame::GetSimulation()->GetVehicle()->m_dAccelerationFactor = dAccFactor;
@@ -3512,6 +3600,7 @@ void CPakoon1View::OnDrawGame() {
   if(BGame::m_bMultiplayOn) {
     BGame::BroadcastCarPosition();
   }
+#endif
 
   if(pCamera->m_locMode == BCamera::INCAR) {
     gluPerspective(pCamera->m_dAngleOfView, aspect, 1.0f, float(cdWorldHemisphereRadius * 1.5));
@@ -3612,12 +3701,14 @@ void CPakoon1View::OnDrawGame() {
   m_nMenuTime += m_game.GetSimulation()->Paint(m_bCreateDLs, m_bWireframe, m_bNormals, m_rectWnd);
   m_bCreateDLs = false;
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bMultiplayOn) {
     // Draw remote cars
     SDL_LockMutex(BGame::m_csMutex);
     DrawRemoteCars();
     SDL_UnlockMutex(BGame::m_csMutex);
   }
+#endif
 
 
   // Draw ghost car, if there is one
@@ -3707,12 +3798,16 @@ void CPakoon1View::OnDrawGame() {
           if(!(BGame::m_cOnScreenInfo & BGame::DISQUALIFIED_WRONG_SIDE)) {
             BGame::m_cOnScreenInfo |= BGame::DISQUALIFIED_WRONG_SIDE;
 
+#ifdef ENABLE_MULTIPLAY
             if(!BGame::m_bMultiplayOn) {
               BGame::m_bForceBreak = true;
             } else {
               BGame::m_remotePlayer[BGame::GetMyPlace()].m_state = BRemotePlayer::MISSED_POLE;
               BGame::BroadcastStateChange();
             }
+#else
+            BGame::m_bForceBreak = true;
+#endif
             BGame::m_bRaceFinished = true;
             SoundModule::PlayDisqualifiedSound();
           }
@@ -3785,6 +3880,7 @@ void CPakoon1View::OnDrawGame() {
   if(BGame::m_bFadingIn) {
     if((SDL_GetTicks() - BGame::m_clockFadeStart) > 1000) {
       m_game.m_bFadingIn = false;
+#ifdef ENABLE_MULTIPLAY
       if(BGame::m_bMultiplayOn) {
         string sMsg = "0";
         sMsg[0] = char(BGame::GetMultiplay()->m_params.m_nMyPlace + 1);
@@ -3798,9 +3894,11 @@ void CPakoon1View::OnDrawGame() {
           BGame::CheckForGameStart();
         }
       }
+#endif
     }
   }
 
+#ifdef ENABLE_MULTIPLAY
   // Draw multiplay countdown, if needed
   if(BGame::m_bMultiplayOn) {
     if(BGame::m_bMultiplayRaceStarter) {
@@ -3873,6 +3971,7 @@ void CPakoon1View::OnDrawGame() {
   }
 
   DrawMultiplayMessages();
+#endif
 
   End2DRendering();
 
@@ -3945,6 +4044,7 @@ void CPakoon1View::OnDrawGame() {
 }
 
 
+#ifdef ENABLE_MULTIPLAY
 //*************************************************************************************************
 void CPakoon1View::DrawRemoteCars() {
 
@@ -4165,6 +4265,7 @@ void CPakoon1View::DrawRemoteCars() {
 
   }
 }
+#endif
 
 
 //*************************************************************************************************
@@ -4231,6 +4332,7 @@ void CPakoon1View::DrawKeyboardHint() {
 //*************************************************************************************************
 void CPakoon1View::DrawGameMenu() {
 
+#ifdef ENABLE_MULTIPLAY
   // Check if restart should be disabled
   if(BGame::m_bMultiplayOn) {
     bool bDisableRestart = false;
@@ -4242,6 +4344,7 @@ void CPakoon1View::DrawGameMenu() {
     }
     BGame::m_menuGame.m_items[1].m_bDisabled = bDisableRestart;
   }
+#endif
 
   // Main menu
   BGame::m_menuGame.m_listMenu.DrawAt(m_rectWnd.w / 2, 
@@ -4594,6 +4697,7 @@ void CPakoon1View::DrawExtraScreenTexts() {
     glDisable(GL_TEXTURE_2D);
   }  
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bMultiplayOn) {
 
     int i, j;
@@ -4687,6 +4791,7 @@ void CPakoon1View::DrawExtraScreenTexts() {
 
     BUI::TextRenderer()->StopRenderingText();
   }
+#endif
 
 }
 
@@ -4802,6 +4907,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
   string sPolesPassed;
   string sRacePosition = BGame::m_sRacePosition;
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bMultiplayOn) {
     /*
     int nAhead = 0;
@@ -4819,6 +4925,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
     val << BGame::m_remotePlayer[BGame::GetMyPlace()].m_nRacePosition << "/" << BGame::m_nRemotePlayers;
     sRacePosition = val.str();
   }
+#endif
 
   if(BGame::m_gameMode == BGame::SLALOM) {
 	  stringstream val;
@@ -4827,6 +4934,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
     DrawGameStringAt(sPolesPassed, m_rectWnd.w - sPolesPassed.length() * 28, m_rectWnd.h - 36 - 74 - 20 - 50);
   }
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bMultiplayOn) {
     if(!sRacePosition.empty() && sRacePosition.at(0) == '1') {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
@@ -4838,6 +4946,9 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
       OpenGLHelpers::SetColorFull(1, 0.25, 0.25, 1);
     }
   } else {
+#else
+  if (1) {
+#endif
     if(!sRacePosition.empty() && sRacePosition.at(0) == '1') {
       OpenGLHelpers::SetColorFull(0.25, 1, 0.25, 1);
     } else {
@@ -4884,6 +4995,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
 
   glDisable(GL_TEXTURE_2D);
 
+#ifdef ENABLE_MULTIPLAY
   // Draw multiplay names
   if(BGame::m_bMultiplayOn) {
     BUI::TextRenderer()->StartRenderingText();
@@ -4920,6 +5032,7 @@ void CPakoon1View::DrawOnScreenGameTexts(BVector vGoal) {
     }
     BUI::TextRenderer()->StopRenderingText();
   }
+#endif
 }
 
 
@@ -5752,11 +5865,13 @@ void CPakoon1View::OnDraw() {
 //*************************************************************************************************
 void CPakoon1View::OnChar(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bMultiplayOn && BGame::m_bTABChatting) {
     this->OnKeyDownTABChatting(nChar);
     
     return;
   }
+#endif
 
   if(m_pDrawFunction != &CPakoon1View::OnDrawGame) {
     return;
@@ -5819,10 +5934,12 @@ void CPakoon1View::OnKeyDownGame(unsigned nChar, unsigned nRepCnt, unsigned nFla
     return;
   }
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bTABChatting) {
 
     return;
   }
+#endif
 
   static bool bOpen = false;
   // Check for user input
@@ -5839,9 +5956,11 @@ void CPakoon1View::OnKeyDownGame(unsigned nChar, unsigned nRepCnt, unsigned nFla
   // Process non-writing key commands always
   switch(nChar) {
     case SDLK_TAB: 
+#ifdef ENABLE_MULTIPLAY
       if(BGame::m_bMultiplayOn) {
         BGame::m_bTABChatting = true;
       }
+#endif
       bProcessed = true;
       break;
     case SDLK_LCTRL:
@@ -6321,10 +6440,12 @@ void CPakoon1View::FixCarToBasicOrientation(double dSpeedFactor) {
 //*************************************************************************************************
 void CPakoon1View::OnKeyDownCurrentMenu(unsigned nChar, unsigned nRepCnt, unsigned nFlags) {
   switch(nChar) {
+#ifdef ENABLE_MULTIPLAY
     case SDLK_TAB: 
       if(BGame::m_bMultiplayOn) {
         BGame::m_bTABChatting = true;
       }
+#endif
   }
 }
 
@@ -6657,6 +6778,7 @@ void CPakoon1View::OnKeyDownSceneEditor(unsigned nChar, unsigned nRepCnt, unsign
 
 
 
+#ifdef ENABLE_MULTIPLAY
 //*************************************************************************************************
 void CPakoon1View::OnKeyDownTABChatting(unsigned nChar) {
   unsigned char c = nChar;
@@ -6703,6 +6825,7 @@ void CPakoon1View::OnKeyDownTABChatting(unsigned nChar) {
     BGame::m_sChatMsg += c;
   }
 }
+#endif
 
 
 
@@ -6716,18 +6839,22 @@ void CPakoon1View::OnKeyDownSelectionList(unsigned nChar, unsigned nRepCnt, unsi
     m_pKeyDownFunction = BUI::StopUsingSelectionList();
   }
 
+#ifdef ENABLE_MULTIPLAY
   if(BGame::m_bTABChatting) {
     return;
   }
+#endif
 
   bool bAdvancePhase = false;
 
   switch(nChar) {
+#ifdef ENABLE_MULTIPLAY
     case SDLK_TAB: 
       if(BGame::m_bMultiplayOn) {
         BGame::m_bTABChatting = true;
       }
       break;
+#endif
     case SDLK_DOWN: 
       pList->AdvanceSelection(1);
       SoundModule::PlayMenuBrowseSound();
@@ -6774,10 +6901,12 @@ void CPakoon1View::OnKeyDownSelectionList(unsigned nChar, unsigned nRepCnt, unsi
       break;
   }
 
+#ifdef ENABLE_MULTIPLAY
   // If multiplaying, report menu selection to other players
   if(BGame::m_bMultiplayOn && pList->m_nSelected >= 0) {
     BroadcastMenuBrowse();
   }
+#endif
 
   if(bAdvancePhase && BGame::m_bSceneEditorMode) {
     BGame::GetSceneEditor()->AdvancePhase();

@@ -169,7 +169,11 @@ void BVehicle::LoadVehicleFromFile(string sFilename, bool bLocalCar) {
 
   // Check whether fine quality or low quality version should be loaded
   if((BGame::m_nCarDetails == 2) ||  // Always Low
+#ifdef ENABLE_MULTIPLAY
      (BGame::m_bMultiplayOn && (BGame::m_nCarDetails == 1))) { // Low if multiplay
+#else
+     0) {
+#endif
     // Check if low resolution version file is available
     string sNew = sFilename + "Coarse";
     FILE *fp;
@@ -950,7 +954,11 @@ void BVehicle::PreProcessWheels() {
     double dRadius = pWheel->m_dRadius;
 
     bool bCoarse = (BGame::m_nCarDetails == 2) ||  // Always Low
+#ifdef ENABLE_MULTIPLAY
                    (BGame::m_bMultiplayOn && (BGame::m_nCarDetails == 1)); // Low if multiplay
+#else
+                   0;
+#endif
 
     double dSectors = bCoarse ? 10 : 20;
 
@@ -1808,11 +1816,15 @@ void BVehicle::Paint(int m_nPhysicsSteps) {
   }
 
   if(m_nParts > 0) {
+#ifdef ENABLE_MULTIPLAY
     if(BGame::m_bMultiplayOn) {
       double dR, dG, dB;
       BGame::GetMultiplayerColor(BGame::GetMyPlace(), dR, dG, dB);
       OpenGLHelpers::SetColorFull(dR, dG, dB, 1);
     } else {
+#else
+    if (1) {
+#endif
       OpenGLHelpers::SetColorFull(m_pPart[0].m_dRed, m_pPart[0].m_dGreen, m_pPart[0].m_dBlue, 1);
     }
   }
@@ -2086,9 +2098,13 @@ double BVehicle::PointInsideMatter(BVector vPoint,         // [IN]  Point which 
   static double  dFriction3;
   static double  dBaseDepth3;
 
+#ifdef ENABLE_MULTIPLAY
   SDL_LockMutex(BGame::m_csMutex);
   double depthCars = BGame::GetSimulation()->PointInsideRemoteCar(vPoint, vNormal3, dFriction3, dBaseDepth3);
   SDL_UnlockMutex(BGame::m_csMutex);
+#else
+  double depthCars = 0;
+#endif
 
   // See which dominates
   if((depthObjects <= 0.0) || (depthGround > depthObjects)) {

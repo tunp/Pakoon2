@@ -37,7 +37,11 @@ int     BGame::m_nDispHz;
 char    BGame::m_cOnScreenInfo;
 int     BGame::m_nSkyDetail;
 int     BGame::m_nDistantDetail;
+#ifdef __EMSCRIPTEN__
+int     BGame::m_nTerrainResolution = 5; // SLOW MACHINE
+#else
 int     BGame::m_nTerrainResolution = 2;
+#endif
 int     BGame::m_nDustAndClouds;
 int     BGame::m_nCarDetails;
 int     BGame::m_nWaterSurface = 0;
@@ -123,13 +127,16 @@ bool        BGame::m_bSlalomPolesVisualOK;
 bool        BGame::m_bForceBreak;
 double      BGame::m_dLiftStarted;
 
+#ifdef ENABLE_MULTIPLAY
 int           BGame::m_nRemotePlayers;
 BRemotePlayer BGame::m_remotePlayer[4];
+#endif
 
 double      BGame::m_dRefTime[7];
 int         BGame::m_nRefK;
 string     BGame::m_sRefTime;
 
+#ifdef ENABLE_MULTIPLAY
 bool        BGame::m_bMultiplayOn;
 bool        BGame::m_bExitingMultiplay;
 bool        BGame::m_bOKToProceedInMultiplayMenu;
@@ -145,6 +152,7 @@ bool        BGame::m_bChatMessage[5];
 unsigned     BGame::m_clockMultiplayMessages[5];
 bool        BGame::m_bTABChatting;
 string     BGame::m_sChatMsg;
+#endif
 
 bool        BGame::m_bNight;
 
@@ -160,7 +168,9 @@ BUISelectionList BGame::m_listHSAirtime;
 int              BGame::m_nController;
 BControllerState BGame::m_controllerstate; // Access to a controller, such as a joystick or a wheel
 
+#ifdef ENABLE_MULTIPLAY
 BMultiPlay       BGame::m_multiplay;
+#endif
 //GUID             BGame::m_guidServiceProviders[10];
 
 
@@ -230,7 +240,9 @@ BGame::BGame() {
   m_bForceBreak = false;
   m_dLiftStarted = 0;
 
+#ifdef ENABLE_MULTIPLAY
   m_nRemotePlayers = 0;
+#endif
 
   // Setup common tracking targets
   m_simulation.AddTrackingTarget("FUEL", BVector(0, 0, 0), 1, 0, 0);         // Red Fuel
@@ -250,6 +262,7 @@ BGame::BGame() {
   m_nRefK = 0;
   m_sRefTime = "";
 
+#ifdef ENABLE_MULTIPLAY
   m_bMultiplayOn = false;
   m_bExitingMultiplay = false;
   m_bOKToProceedInMultiplayMenu = false;
@@ -261,6 +274,7 @@ BGame::BGame() {
   m_nMultiplayMessages = 0;
   m_bTABChatting = false;
   m_sChatMsg = "";
+#endif
 
   m_bNight = false;
 }
@@ -272,6 +286,7 @@ BGame::~BGame() {
 
 
 
+#ifdef ENABLE_MULTIPLAY
 //*************************************************************************************************
 int BGame::AddRemotePlayer(int id, char *pPlayerName, BClientConnection *client_connection) {
 
@@ -590,6 +605,7 @@ void BGame::ShowMultiplayMessage(string sMsg, bool bChat) {
   m_clockMultiplayMessages[m_nMultiplayMessages] = SDL_GetTicks() + 8000;
   ++m_nMultiplayMessages;
 }
+#endif
 
 
 
@@ -622,6 +638,7 @@ double BGame::GetRelativeProgress() {
 }
 
 
+#ifdef ENABLE_MULTIPLAY
 //*************************************************************************************************
 void BGame::SetupMultiplayMenu() {
   /*
@@ -635,6 +652,7 @@ void BGame::SetupMultiplayMenu() {
   }
   */
 }
+#endif
 
 
 
@@ -859,6 +877,7 @@ void BGame::SetupMenus() {
   m_menuChooseGameMode.m_listMenu.SelectItem(m_menuChooseGameMode.m_sItems[0]);
   m_menuChooseGameMode.m_align = BTextRenderer::ALIGN_CENTER;
 
+#ifdef ENABLE_MULTIPLAY
   //******************************************
   // MultiPlay
   //******************************************
@@ -916,6 +935,8 @@ void BGame::SetupMenus() {
   m_menuMultiplay.m_listMenu.SetItems(m_menuMultiplay.m_sItems, m_menuMultiplay.m_nItems);
   m_menuMultiplay.m_listMenu.SelectItem(m_menuMultiplay.m_sItems[0]);
   m_menuMultiplay.m_align = BTextRenderer::ALIGN_RIGHT;  
+
+#endif
 
   //******************************************
   // Settings
@@ -1788,6 +1809,7 @@ string BGame::GetHighscoresChecksum() {
 }*/
 
 
+#ifdef ENABLE_MULTIPLAY
 //*************************************************************************************************
 BRemotePlayer::~BRemotePlayer() {
   if(m_pVehicle && !m_bVehicleReused) {
@@ -2722,6 +2744,8 @@ int BClientConnection::receiveThread(void *ptr) {
 	
 	return 0;
 }
+
+#endif
 
 // PAKOON! Game, Source Code and Developer Package Copyright
 // =========================================================
