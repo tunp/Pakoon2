@@ -215,6 +215,9 @@ public:
   void OnMouseMove(unsigned nFlags, SDL_Point point);
   void OnLButtonDown(unsigned nFlags, SDL_Point point);
   void OnLButtonUp(unsigned nFlags, SDL_Point point);
+  void OnFingerDown(float x, float y, int finger_id);
+  void OnFingerUp(float x, float y, int finger_id);
+  void HandleBUITouch(SDL_Point point);
   //}}AFX_MSG
   //DECLARE_MESSAGE_MAP()
   

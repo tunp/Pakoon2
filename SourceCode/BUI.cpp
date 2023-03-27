@@ -377,7 +377,22 @@ void BUISelectionList::DrawAt(double dX,
   glPopMatrix();
 }
 
-
+bool BUISelectionList::OnFingerUp(float x, float y, double dX, double dY, bool bScrolling) {
+  double dCharHeight = BUI::TextRenderer()->GetCharHeight();
+  double tmp_y = y - dY; // touch pos related to mid screen
+  tmp_y += m_nItems * dCharHeight / 2; // DrawAt draws to center of the screen
+  tmp_y += dCharHeight / 2; // DrawTextAt draws item to center of given position
+  if (bScrolling) {
+    // Values from BUISelectionList::DrawAt
+    tmp_y -= dCharHeight * double(double(m_nItems) / 2 - m_nSelected);
+  }
+  tmp_y /= dCharHeight; // mouse position to menu index
+  if (tmp_y < 0 || tmp_y >= m_nItems) {
+    return false;
+  }
+  m_nSelected = tmp_y;
+  return true;
+}
 
 
 //*************************************************************************************************

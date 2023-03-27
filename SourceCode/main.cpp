@@ -42,6 +42,10 @@ void mainLoop(CPakoon1View *pakoon1) {
       point.x = event.motion.x;
       point.y = event.motion.y;
       //pakoon1.OnMouseMove(point);
+    } else if (event.type == SDL_FINGERDOWN) {
+      pakoon1->OnFingerDown(event.tfinger.x, event.tfinger.y, event.tfinger.fingerId);
+    } else if (event.type == SDL_FINGERUP) {
+      pakoon1->OnFingerUp(event.tfinger.x, event.tfinger.y, event.tfinger.fingerId);
     } else if (event.type == SDL_QUIT) {
       pakoon1->setExit();
     } else if (event.type == SDL_TEXTINPUT) {

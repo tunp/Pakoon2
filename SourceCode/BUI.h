@@ -71,6 +71,7 @@ public:
               bool bFlashCursor = true,
               BMenu *pMenu = 0,
               bool   bWithTriangle = true);
+  bool OnFingerUp(float x, float y, double dX, double dY, bool bScrolling);
 };
 
 

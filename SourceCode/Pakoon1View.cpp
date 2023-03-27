@@ -7173,6 +7173,80 @@ void CPakoon1View::OnLButtonUp(unsigned nFlags, SDL_Point point) {
 }
 
 
+void CPakoon1View::OnFingerDown(float x, float y, int finger_id) {
+}
+
+void CPakoon1View::OnFingerUp(float x, float y, int finger_id) {
+  SDL_Point point;
+  point.x = x * m_rectWnd.w;
+  point.y = y * m_rectWnd.h;
+  HandleBUITouch(point);
+}
+
+void CPakoon1View::HandleBUITouch(SDL_Point point) {
+  if (m_pKeyDownFunction == &CPakoon1View::OnKeyDownIntro) {
+    OnKeyDownIntro(0, 0, 0);
+  } else if (BGame::m_bMenuMode) {
+    BUISelectionList *pList = BUI::GetActiveSelectionList();
+    if (!pList) {
+      pList = &BGame::m_pMenuCurrent->m_listMenu;
+    }
+    double dX = m_rectWnd.w / 2;
+    double dY = m_rectWnd.h / 2;
+    dY += 64; // from OnDrawCurrentMenu
+
+    // Check if we have open submenu and need position of it
+    bool bScrolling = false;
+    string sTmp;
+    int nSelected = BGame::m_pMenuCurrent->m_listMenu.GetSelectedItem(sTmp);
+    if (nSelected != -1) {
+      BMenuItem *pMenuItem = &(BGame::m_pMenuCurrent->m_items[nSelected]);
+      if (pMenuItem->m_bOpen && pMenuItem->m_type == BMenuItem::STRING_FROM_LIST) {
+        double dCharHeight = BUI::TextRenderer()->GetCharHeight();
+        // Values from CPakoon1View::DrawMenu
+        dX += 35;
+        dY -= double(nSelected) * -dCharHeight + (dCharHeight * double(BGame::m_pMenuCurrent->m_nItems)) / 2.0;
+        bScrolling = true;
+      }
+    }
+
+    bool menu_item_pressed = pList->OnFingerUp(point.x, point.y, dX, dY, bScrolling);
+    if (menu_item_pressed) {
+      ReturnPressedOnCurrentMenu();
+    } else {
+      CancelPressedOnCurrentMenu();
+    }
+
+    nSelected = BGame::m_pMenuCurrent->m_listMenu.GetSelectedItem(sTmp);
+    if(nSelected != -1) {
+      BMenuItem *pMenuItem = &(BGame::m_pMenuCurrent->m_items[nSelected]);
+      if (pMenuItem->m_bOpen && pMenuItem->m_type == BMenuItem::SLIDER) {
+        *BUI::m_pnSliderValue = point.x - dX - 10;
+        if (*BUI::m_pnSliderValue < 0) {
+          *BUI::m_pnSliderValue = 0;
+        }
+        if (*BUI::m_pnSliderValue > 100) {
+          *BUI::m_pnSliderValue = 100;
+        }
+
+        // closing slider as no need to keep it open
+        ReturnPressedOnCurrentMenu();
+      }
+    }
+  } else if (m_game.m_bShowQuickHelp) {
+    OnKeyDownGame(SDLK_ESCAPE, 0, 0);
+  } else if (m_game.m_bShowGameMenu) {
+    double dX = m_rectWnd.w / 2;
+    double dY = m_rectWnd.h / 2;
+    bool menu_item_pressed = BGame::m_menuGame.m_listMenu.OnFingerUp(point.x, point.y, dX, dY, false);
+    if (menu_item_pressed) {
+      ReturnPressedOnGameMenu();
+    } else {
+      CancelPressedOnGameMenu();
+    }
+  }
+}
+
 
 //*************************************************************************************************
 void CPakoon1View::DrawMouseCursor(SDL_Rect &rectWnd) {
