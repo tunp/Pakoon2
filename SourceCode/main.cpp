@@ -57,7 +57,12 @@ void mainLoop(CPakoon1View *pakoon1) {
 }
 
 void emscripten_loop(void *pakoon1) {
-  mainLoop((CPakoon1View *)pakoon1);
+  if (((CPakoon1View *)pakoon1)->isExit()) {
+    emscripten_run_script("history.back()");
+    emscripten_cancel_main_loop();
+  } else {
+    mainLoop((CPakoon1View *)pakoon1);
+  }
 }
 
 int main(int argc, char **argv) {
