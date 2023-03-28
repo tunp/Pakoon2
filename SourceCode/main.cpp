@@ -1,4 +1,5 @@
 #include "SDL2/SDL.h"
+#include <SDL2/SDL_ttf.h>
 
 #include "Pakoon1View.h"
 
@@ -66,6 +67,12 @@ int main(int argc, char **argv) {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		cout << "SDL init failed" << endl;
 	}
+
+  if(TTF_Init() == -1) {
+    cout << "TTF_Init: " << TTF_GetError() << endl;
+    return 1;
+  }
+
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16); 
 	
@@ -96,6 +103,7 @@ int main(int argc, char **argv) {
   }
 #endif
 	
+  TTF_Quit();
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
